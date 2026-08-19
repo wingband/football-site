@@ -10,6 +10,17 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* 전광판 컨셉 색상 토큰 */
+  --color-pitch-night: #0b1210;
+  --color-turf: #14301f;
+  --color-turf-line: #24492e;
+  --color-floodlight: #eaf6e9;
+  --color-score-amber: #f5b942;
+  --color-live-red: #e5484d;
+
+  --font-display: var(--font-display);
+  --font-data: var(--font-data);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,4 +34,45 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+
+/* 골 셀레브레이션 캐릭터 애니메이션 */
+@keyframes celebrate {
+  0%, 100% { transform: translateY(0) scale(1); }
+  30% { transform: translateY(-6px) scale(1.05); }
+  50% { transform: translateY(0) scale(1); }
+}
+@keyframes armLeft {
+  0%, 100% { transform: rotate(0deg); transform-origin: 50px 52px; }
+  30% { transform: rotate(-15deg); transform-origin: 50px 52px; }
+}
+@keyframes armRight {
+  0%, 100% { transform: rotate(0deg); transform-origin: 50px 52px; }
+  30% { transform: rotate(15deg); transform-origin: 50px 52px; }
+}
+@keyframes sparkle {
+  0%, 100% { opacity: 0; transform: scale(0.5); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+.animate-celebrate {
+  animation: celebrate 1.4s ease-in-out infinite;
+}
+.animate-arm-left {
+  animation: armLeft 1.4s ease-in-out infinite;
+}
+.animate-arm-right {
+  animation: armRight 1.4s ease-in-out infinite;
+}
+.animate-sparkle-1 {
+  animation: sparkle 1.4s ease-in-out infinite;
+  animation-delay: 0s;
+}
+.animate-sparkle-2 {
+  animation: sparkle 1.4s ease-in-out infinite;
+  animation-delay: 0.2s;
+}
+.animate-sparkle-3 {
+  animation: sparkle 1.4s ease-in-out infinite;
+  animation-delay: 0.4s;
 }

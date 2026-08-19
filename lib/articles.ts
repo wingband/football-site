@@ -1,0 +1,111 @@
+import { neon } from "@neondatabase/serverless"
+
+export type Article = {
+  slug: string
+  title: string
+  matchId: number
+  leagueName: string
+  homeTeam: string
+  awayTeam: string
+  homeScore: number | null
+  awayScore: number | null
+  content: string
+  createdAt: string
+}
+
+// 목업 모드에서는 실제 DB를 전혀 건드리지 않고, 이 배열에만 임시로 저장(서버 재시작하면 초기화됨)
+const mockArticleStore: Article[] = []
+
+// Neon(=Vercel Postgres) 연결. DATABASE_URL 환경변수는 Vercel Storage에서 발급받은
+// 연결 문자열을 .env.local(로컬)과 Vercel 프로젝트 환경변수(배포)에 각각 넣어야 함.
+// 목업 모드일 땐 DATABASE_URL이 없어도 되도록, 실제 연결은 필요할 때만 만듦
+function getSql() {
+  return neon(process.env.DATABASE_URL!)
+}
+
+let tableReady: Promise<unknown> | null = null
+
+// 테이블이 없으면 자동으로 만들어주는 함수. 여러 요청이 겹쳐도 딱 한 번만 실행되도록
+// tableReady에 캐싱해둠
+function ensureTable() {
+  if (!tableReady) {
+    const sql = getSql()
+    tableReady = sql`
+      CREATE TABLE IF NOT EXISTS articles (
+        slug TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        match_id INTEGER NOT NULL UNIQUE,
+        league_name TEXT NOT NULL,
+        home_team TEXT NOT NULL,
+        away_team TEXT NOT NULL,
+        home_score INTEGER,
+        away_score INTEGER,
+        content TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )
+    `
+  }
+  return tableReady
+}
+
+// DB에서 온 snake_case 행을 우리 코드에서 쓰는 camelCase Article 타입으로 변환
+function rowToArticle(row: Record<string, unknown>): Article {
+  return {
+    slug: row.slug as string,
+    title: row.title as string,
+    matchId: row.match_id as number,
+    leagueName: row.league_name as string,
+    homeTeam: row.home_team as string,
+    awayTeam: row.away_team as string,
+    homeScore: row.home_score as number | null,
+    awayScore: row.away_score as number | null,
+    content: row.content as string,
+    createdAt: (row.created_at as Date).toISOString(),
+  }
+}
+
+export async function getAllArticles(): Promise<Article[]> {
+  if (process.env.USE_MOCK_DATA === "true") {
+    return [...mockArticleStore].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
+  }
+
+  await ensureTable()
+  const sql = getSql()
+  const rows = await sql`SELECT * FROM articles ORDER BY created_at DESC`
+  return rows.map(rowToArticle)
+}
+
+export async function getArticleBySlug(slug: string): Promise<Article | null> {
+  if (process.env.USE_MOCK_DATA === "true") {
+    return mockArticleStore.find((a) => a.slug === slug) ?? null
+  }
+
+  await ensureTable()
+  const sql = getSql()
+  const rows = await sql`SELECT * FROM articles WHERE slug = ${slug} LIMIT 1`
+  return rows.length > 0 ? rowToArticle(rows[0]) : null
+}
+
+export async function saveArticle(article: Article): Promise<void> {
+  if (process.env.USE_MOCK_DATA === "true") {
+    if (mockArticleStore.some((a) => a.matchId === article.matchId)) return
+    mockArticleStore.unshift(article)
+    return
+  }
+
+  await ensureTable()
+  const sql = getSql()
+  // match_id가 이미 있으면(같은 경기 기사가 이미 있으면) 조용히 건너뜀 (중복 방지)
+  await sql`
+    INSERT INTO articles (slug, title, match_id, league_name, home_team, away_team, home_score, away_score, content)
+    VALUES (${article.slug}, ${article.title}, ${article.matchId}, ${article.leagueName}, ${article.homeTeam}, ${article.awayTeam}, ${article.homeScore}, ${article.awayScore}, ${article.content})
+    ON CONFLICT (match_id) DO NOTHING
+  `
+}
+
+export function slugify(homeTeam: string, awayTeam: string, matchId: number): string {
+  const clean = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
+  return `${clean(homeTeam)}-vs-${clean(awayTeam)}-${matchId}`
+}
