@@ -35,6 +35,9 @@ export const metadata: Metadata = {
   },
   description:
     "전 세계 축구 리그의 실시간 스코어, 순위표, 라인업, AI 경기 분석을 한곳에서 확인하세요. 한국인 해외파 선수 소식도 매일 업데이트됩니다.",
+  verification: {
+    google: "dHUEnfghtcC90rFALlbmNhtyBzcT9034n9AcTiKBTAE",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
