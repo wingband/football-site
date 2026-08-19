@@ -147,12 +147,28 @@ export default async function TeamPage({
   }
 
   const season = getSeasonYear(info.team.country)
-  const [squad, fixtures, injuries, coach] = await Promise.all([
+  const [squad, fixtures, injuriesRaw, coachRaw] = await Promise.all([
     getTeamSquad(id),
     getTeamFixtures(id, season),
     getInjuries(id, season),
     getCoach(id),
   ])
+
+  // API가 같은 선수의 부상 기록을 중복으로 줄 때가 있어서, 선수 ID 기준으로 중복 제거
+  const seenInjuryPlayer = new Set<number>()
+  const injuries = injuriesRaw.filter((inj) => {
+    if (!inj?.player?.id || seenInjuryPlayer.has(inj.player.id)) return false
+    seenInjuryPlayer.add(inj.player.id)
+    return true
+  })
+
+  // API의 감독 정보가 갱신이 늦어 예전 감독이 남아있는 경우가 있어서,
+  // "현재(퇴임일 없음) 소속팀이 지금 보고 있는 이 팀과 실제로 일치하는지" 검증 후에만 표시
+  const coach =
+    coachRaw &&
+    coachRaw.career?.some((c) => c.end === null && c.team.name === info.team.name)
+      ? coachRaw
+      : null
 
   // API가 가끔 선수 정보가 비어있는 항목을 섞어서 줄 때가 있어서, 그런 항목은 미리 걸러냄
   const validSquad = squad.filter((p) => p?.player?.id != null)
