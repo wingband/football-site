@@ -154,9 +154,12 @@ export default async function TeamPage({
     getCoach(id),
   ])
 
+  // API가 가끔 선수 정보가 비어있는 항목을 섞어서 줄 때가 있어서, 그런 항목은 미리 걸러냄
+  const validSquad = squad.filter((p) => p?.player?.id != null)
+
   const squadByPosition = POSITION_ORDER.map((pos) => ({
     position: pos,
-    players: squad.filter((p) => p.position === pos),
+    players: validSquad.filter((p) => p.position === pos),
   })).filter((g) => g.players.length > 0)
 
   const now = Date.now()
