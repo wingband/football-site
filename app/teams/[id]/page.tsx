@@ -228,48 +228,81 @@ export default async function TeamPage({
           </div>
         )}
 
-        {/* 최근/다음 경기 */}
-        <div className="grid grid-cols-2 gap-4 mt-6">
-          <div className="bg-turf/40 border-l-2 border-score-amber p-4">
-            <h2 className="text-sm font-display uppercase tracking-wide text-floodlight/60 mb-3">최근 경기</h2>
-            <div className="space-y-2">
+        {/* 최근 경기 */}
+        {past.length > 0 && (
+          <div className="bg-turf/40 border-l-2 border-score-amber mt-6">
+            <div className="px-4 py-3 border-b border-turf-line/60">
+              <h2 className="text-sm font-display uppercase tracking-wide text-floodlight/60">
+                최근 경기
+              </h2>
+            </div>
+            <div>
               {past.map((f) => (
                 <Link
                   key={f.fixture.id}
                   href={`/matches/${f.fixture.id}`}
-                  className="flex items-center gap-2 text-xs hover:text-score-amber"
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-turf-line/40 transition-colors border-b border-turf-line/40 last:border-b-0"
                 >
-                  <img src={f.teams.home.logo} alt="" className="w-4 h-4" />
-                  <span className="flex-1 truncate">
-                    {f.teams.home.name} {f.goals.home}:{f.goals.away} {f.teams.away.name}
+                  <span className="text-xs text-floodlight/40 w-14 shrink-0 font-data">
+                    {new Date(f.fixture.date).toLocaleDateString("ko-KR", {
+                      month: "numeric",
+                      day: "numeric",
+                    })}
                   </span>
-                  <img src={f.teams.away.logo} alt="" className="w-4 h-4" />
+                  <div className="flex-1 flex items-center justify-center gap-2 text-sm">
+                    <img src={f.teams.home.logo} alt="" className="w-5 h-5" />
+                    <span className="text-floodlight/80">{f.teams.home.name}</span>
+                    <span className="text-score-amber font-data font-semibold mx-1">
+                      {f.goals.home ?? "-"} : {f.goals.away ?? "-"}
+                    </span>
+                    <span className="text-floodlight/80">{f.teams.away.name}</span>
+                    <img src={f.teams.away.logo} alt="" className="w-5 h-5" />
+                  </div>
                 </Link>
               ))}
-              {past.length === 0 && <p className="text-xs text-floodlight/30">기록 없음</p>}
             </div>
           </div>
+        )}
 
-          <div className="bg-turf/40 border-l-2 border-score-amber p-4">
-            <h2 className="text-sm font-display uppercase tracking-wide text-floodlight/60 mb-3">다음 경기</h2>
-            <div className="space-y-2">
+        {/* 다음 경기 */}
+        {upcoming.length > 0 && (
+          <div className="bg-turf/40 border-l-2 border-score-amber mt-6">
+            <div className="px-4 py-3 border-b border-turf-line/60">
+              <h2 className="text-sm font-display uppercase tracking-wide text-floodlight/60">
+                다음 경기
+              </h2>
+            </div>
+            <div>
               {upcoming.map((f) => (
                 <Link
                   key={f.fixture.id}
                   href={`/matches/${f.fixture.id}`}
-                  className="flex items-center gap-2 text-xs hover:text-score-amber"
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-turf-line/40 transition-colors border-b border-turf-line/40 last:border-b-0"
                 >
-                  <img src={f.teams.home.logo} alt="" className="w-4 h-4" />
-                  <span className="flex-1 truncate">
-                    {f.teams.home.name} vs {f.teams.away.name}
+                  <span className="text-xs text-floodlight/40 w-14 shrink-0 font-data">
+                    {new Date(f.fixture.date).toLocaleDateString("ko-KR", {
+                      month: "numeric",
+                      day: "numeric",
+                    })}
                   </span>
-                  <img src={f.teams.away.logo} alt="" className="w-4 h-4" />
+                  <div className="flex-1 flex items-center justify-center gap-2 text-sm">
+                    <img src={f.teams.home.logo} alt="" className="w-5 h-5" />
+                    <span className="text-floodlight/80">{f.teams.home.name}</span>
+                    <span className="text-floodlight/30 mx-1 font-data">vs</span>
+                    <span className="text-floodlight/80">{f.teams.away.name}</span>
+                    <img src={f.teams.away.logo} alt="" className="w-5 h-5" />
+                  </div>
+                  <span className="text-xs text-floodlight/40 font-data shrink-0">
+                    {new Date(f.fixture.date).toLocaleTimeString("ko-KR", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
                 </Link>
               ))}
-              {upcoming.length === 0 && <p className="text-xs text-floodlight/30">예정 경기 없음</p>}
             </div>
           </div>
-        </div>
+        )}
 
         {/* 부상자/결장 명단 */}
         {injuries.length > 0 && (
