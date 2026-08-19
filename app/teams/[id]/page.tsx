@@ -40,7 +40,7 @@ type Coach = {
   age: number | null
   nationality: string
   photo: string
-  career: { team: { name: string; logo: string }; start: string; end: string | null }[]
+  career: { team: { id: number; name: string; logo: string }; start: string; end: string | null }[]
 }
 
 async function getTeamInfo(teamId: string): Promise<TeamInfo | null> {
@@ -166,7 +166,7 @@ export default async function TeamPage({
   // "현재(퇴임일 없음) 소속팀이 지금 보고 있는 이 팀과 실제로 일치하는지" 검증 후에만 표시
   const coach =
     coachRaw &&
-    coachRaw.career?.some((c) => c.end === null && c.team.name === info.team.name)
+    coachRaw.career?.some((c) => c.end === null && c.team.id === info.team.id)
       ? coachRaw
       : null
 
@@ -218,11 +218,13 @@ export default async function TeamPage({
                 className="w-14 h-14 rounded-full bg-turf-line object-cover"
               />
               <div>
-                <p className="text-sm font-medium">{coach.name}</p>
-                <p className="text-xs text-floodlight/40 mt-0.5">
-                  {coach.nationality}
-                  {coach.age && ` · ${coach.age}세`}
-                </p>
+              <p className="text-sm font-medium">{coach.name}</p>
+                {(coach.nationality || coach.age) && (
+                  <p className="text-xs text-floodlight/40 mt-0.5">
+                    {coach.nationality}
+                    {coach.age && ` · ${coach.age}세`}
+                  </p>
+                )}
               </div>
             </div>
           </div>

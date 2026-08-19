@@ -614,7 +614,7 @@ export const MOCK_COACH = {
   nationality: "Spain",
   photo: "https://media.api-sports.io/football/coachs/1.png",
   career: [
-    { team: { name: "Manchester City", logo: "https://media.api-sports.io/football/teams/50.png" }, start: "2016-07-01", end: null },
+    { team: { id: 50, name: "Manchester City", logo: "https://media.api-sports.io/football/teams/50.png" }, start: "2016-07-01", end: null },
   ],
 }
 
