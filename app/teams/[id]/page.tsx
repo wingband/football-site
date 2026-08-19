@@ -103,11 +103,18 @@ async function getCoach(teamId: string, expectedTeamId: number): Promise<Coach |
   const data = await res.json()
   const coaches: Coach[] = data.response ?? []
 
-  // API가 그 팀 역대 감독 여러 명을 배열로 줄 수 있어서, 무조건 첫 번째를 쓰지 않고
-  // "지금 이 팀 소속(퇴임일 없음)"이 확실한 사람만 배열 전체에서 찾음
-  return (
-    coaches.find((c) => c.career?.some((car) => car.team.id === expectedTeamId && car.end === null)) ?? null
-  )
+  // API의 "퇴임일" 필드는 감독이 실제로 떠난 뒤에도 갱신 안 될 때가 많아서 신뢰도가 낮음.
+  // 대신 "이 팀 소속으로 가장 최근에 부임한 사람"을 찾는 게 실제 현재 감독일 확률이 훨씬 높음
+  let best: { coach: Coach; start: string } | null = null
+  for (const c of coaches) {
+    for (const car of c.career ?? []) {
+      if (car.team.id !== expectedTeamId) continue
+      if (!best || car.start > best.start) {
+        best = { coach: c, start: car.start }
+      }
+    }
+  }
+  return best?.coach ?? null
 }
 
 
