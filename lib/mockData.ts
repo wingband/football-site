@@ -625,3 +625,25 @@ export const MOCK_TROPHIES = [
   { league: "UEFA Champions League", country: "World", season: "2022/2023", place: "Winner" },
   { league: "FA Cup", country: "England", season: "2022/2023", place: "2nd Place" },
 ]
+
+
+
+// 축구 뉴스 목업 데이터
+export const MOCK_NEWS = [
+  {
+    title: "손흥민, LAFC 데뷔 후 첫 멀티골 기록",
+    link: "https://example.com/news/1",
+    image_url: "https://placehold.co/400x240/14301f/f5b942?text=Football+News",
+    pubDate: "2026-08-18 10:00:00",
+    source_name: "예시 스포츠",
+    description: "LAFC로 이적한 손흥민이 데뷔 이후 처음으로 한 경기 2골을 기록하며 팀 승리를 이끌었다.",
+  },
+  {
+    title: "프리미어리그 개막, 우승 후보는?",
+    link: "https://example.com/news/2",
+    image_url: "https://placehold.co/400x240/14301f/f5b942?text=Football+News",
+    pubDate: "2026-08-17 08:30:00",
+    source_name: "예시 스포츠",
+    description: "2026-27시즌 프리미어리그가 개막을 앞두고 있는 가운데, 전문가들의 우승 후보 전망이 엇갈리고 있다.",
+  },
+]
