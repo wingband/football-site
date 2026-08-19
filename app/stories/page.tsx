@@ -1,66 +1,43 @@
 import Link from "next/link"
 import type { Metadata } from "next"
-import { getArticleBySlug } from "@/lib/articles"
+import { getAllArticles } from "@/lib/articles"
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ slug: string }>
-}): Promise<Metadata> {
-  const { slug } = await params
-  const article = await getArticleBySlug(slug)
-
-  if (!article) return { title: "기사를 찾을 수 없습니다" }
-
-  return {
-    title: article.title,
-    description: article.content.slice(0, 100),
-  }
+export const metadata: Metadata = {
+  title: "경기 리뷰 아카이브",
+  description: "매일 자동으로 쌓이는 주요 경기 리뷰와 분석 기사 모음.",
 }
 
-export default async function StoryPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>
-}) {
-  const { slug } = await params
-  const article = await getArticleBySlug(slug)
-
-  if (!article) {
-    return (
-      <main className="min-h-screen bg-pitch-night text-floodlight p-8 font-sans">
-        <p className="text-floodlight/50">기사를 찾을 수 없습니다.</p>
-      </main>
-    )
-  }
+export default async function StoriesPage() {
+  const articles = await getAllArticles()
 
   return (
     <main className="min-h-screen bg-pitch-night text-floodlight p-8 font-sans">
       <div className="max-w-2xl mx-auto">
-        <p className="text-xs text-score-amber font-data mb-2">{article.leagueName}</p>
-        <h1 className="font-display text-2xl text-floodlight mb-2 leading-tight">
-          {article.title}
-        </h1>
-        <p className="text-xs text-floodlight/30 mb-8">
-          {new Date(article.createdAt).toLocaleDateString("ko-KR")}
+        <h1 className="font-display uppercase text-xl text-score-amber mb-1">경기 리뷰</h1>
+        <p className="text-xs text-floodlight/40 mb-8">
+          매일 자동으로 작성되는 주요 경기 분석 기사 ({articles.length}개)
         </p>
 
-        <div className="bg-turf/40 border-l-2 border-score-amber p-6">
-          <p className="text-[15px] text-floodlight/85 leading-relaxed whitespace-pre-line">
-            {article.content}
+        {articles.length === 0 && (
+          <p className="text-floodlight/40 text-sm">
+            아직 생성된 기사가 없습니다. 자동 생성이 실행되면 이곳에 쌓입니다.
           </p>
-        </div>
+        )}
 
-        <div className="flex justify-between mt-6 text-sm">
-          <Link href="/stories" className="text-floodlight/50 hover:text-score-amber">
-            ← 전체 리뷰 목록
-          </Link>
-          <Link
-            href={`/matches/${article.matchId}`}
-            className="text-floodlight/50 hover:text-score-amber"
-          >
-            경기 상세 보기 →
-          </Link>
+        <div className="space-y-3">
+          {articles.map((a) => (
+            <Link
+              key={a.slug}
+              href={`/stories/${a.slug}`}
+              className="block bg-turf/40 border-l-2 border-score-amber p-4 hover:bg-turf-line/30 transition-colors"
+            >
+              <p className="text-xs text-floodlight/40 mb-1 font-data">{a.leagueName}</p>
+              <h2 className="text-sm font-medium text-floodlight">{a.title}</h2>
+              <p className="text-[11px] text-floodlight/30 mt-2">
+                {new Date(a.createdAt).toLocaleDateString("ko-KR")}
+              </p>
+            </Link>
+          ))}
         </div>
       </div>
     </main>
