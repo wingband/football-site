@@ -18,9 +18,16 @@ async function getFootballNews(): Promise<NewsArticle[]> {
     { next: { revalidate: 3600 } }
   )
   const data = await res.json()
+
+  // NewsData.io는 에러가 나면 results가 배열이 아니라 에러 정보 객체로 옴.
+  // 배열이 아닌 경우엔 안전하게 빈 배열로 처리해서 페이지가 죽지 않게 함
+  if (!Array.isArray(data.results)) {
+    console.error("NewsData.io 에러:", data)
+    return []
+  }
+
   return data.results ?? []
 }
-
 export const metadata: Metadata = {
   title: "축구 뉴스",
   description: "전 세계 축구 관련 최신 뉴스를 한곳에서 확인하세요.",
