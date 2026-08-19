@@ -208,29 +208,6 @@ export default async function TeamPage({
             )}
           </div>
         </div>
-
-        {/* 감독 */}
-        {coach && (
-          <div className="bg-turf/40 border-l-2 border-score-amber p-5 mt-6">
-            <h2 className="text-sm font-display uppercase tracking-wide text-floodlight/60 mb-3">감독</h2>
-            <div className="flex items-center gap-4">
-              <img
-                src={coach.photo}
-                alt=""
-                className="w-14 h-14 rounded-full bg-turf-line object-cover"
-              />
-              <div>
-              <p className="text-sm font-medium">{coach.name}</p>
-                {(coach.nationality || coach.age) && (
-                  <p className="text-xs text-floodlight/40 mt-0.5">
-                    {coach.nationality}
-                    {coach.age && ` · ${coach.age}세`}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
         {/* 감독 */}
         {coach && (
           <div className="bg-turf/40 border-l-2 border-score-amber p-5 mt-6">
