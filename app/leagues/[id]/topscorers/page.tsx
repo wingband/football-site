@@ -18,7 +18,7 @@ async function getTopScorers(leagueId: string, season: number): Promise<ScorerEn
     `https://v3.football.api-sports.io/players/topscorers?league=${leagueId}&season=${season}`,
     {
       headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      next: { revalidate: 3600 },
+      cache: "no-store",
     }
   )
   const data = await res.json()
