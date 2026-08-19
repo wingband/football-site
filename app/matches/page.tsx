@@ -40,7 +40,7 @@ async function getFixturesByDate(date: string): Promise<Fixture[]> {
       headers: {
         "x-apisports-key": process.env.API_FOOTBALL_KEY!,
       },
-      next: { revalidate: 3600 },
+      cache: "no-store",
     }
   )
 
