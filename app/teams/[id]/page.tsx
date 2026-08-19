@@ -28,7 +28,7 @@ async function getTeamInfo(teamId: string): Promise<TeamInfo | null> {
 
   const res = await fetch(`https://v3.football.api-sports.io/teams?id=${teamId}`, {
     headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-    cache: "no-store",
+    next: { revalidate: 3600 },
   })
   const data = await res.json()
   return data.response?.[0] ?? null
@@ -39,7 +39,7 @@ async function getTeamSquad(teamId: string): Promise<SquadPlayer[]> {
 
   const res = await fetch(`https://v3.football.api-sports.io/players/squads?team=${teamId}`, {
     headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-    cache: "no-store",
+    next: { revalidate: 3600 },
   })
   const data = await res.json()
   return data.response?.[0]?.players ?? []
@@ -52,7 +52,7 @@ async function getTeamFixtures(teamId: string, season: number): Promise<TeamFixt
     `https://v3.football.api-sports.io/fixtures?team=${teamId}&season=${season}`,
     {
       headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      cache: "no-store",
+      next: { revalidate: 3600 },
     }
   )
   const data = await res.json()
