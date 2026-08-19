@@ -20,3 +20,5 @@ export default function Footer() {
     </footer>
   )
 }
+
+<p>© 2026 GoalLine. 비공식 축구 정보 서비스입니다.</p>

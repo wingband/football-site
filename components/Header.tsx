@@ -19,7 +19,7 @@ export default function Header() {
     <header className="sticky top-0 z-50 bg-pitch-night/95 backdrop-blur border-b border-turf-line/60">
       <div className="max-w-6xl mx-auto px-6 h-14 flex items-center gap-8">
         <Link href="/matches" className="font-display uppercase tracking-wide text-lg text-score-amber shrink-0">
-          Football Site
+          GoalLine
         </Link>
 
         <nav className="hidden md:flex items-center gap-6 text-sm text-floodlight/70 shrink-0">
