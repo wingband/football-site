@@ -26,9 +26,44 @@ export default function Header() {
           <Link href="/matches" className="hover:text-floodlight transition-colors">
             경기
           </Link>
+          <Link href="/stories" className="hover:text-floodlight transition-colors">
+            리뷰
+          </Link>
+          <Link href="/news" className="hover:text-floodlight transition-colors">
+            뉴스
+          </Link>
           <Link href="/transfers" className="hover:text-floodlight transition-colors">
             이적
           </Link>
+
+          {/* 콘텐츠 준비되면 다시 켜기: 정보 드롭다운, TV 일정
+          <div className="relative">
+            <button
+              onClick={() => setInfoOpen((v) => !v)}
+              onBlur={() => setTimeout(() => setInfoOpen(false), 150)}
+              className="hover:text-floodlight transition-colors flex items-center gap-1"
+            >
+              정보
+              <span className={`text-[10px] transition-transform ${infoOpen ? "rotate-180" : ""}`}>▼</span>
+            </button>
+            {infoOpen && (
+              <div className="absolute top-full left-0 mt-2 w-40 bg-turf border border-turf-line rounded-lg overflow-hidden shadow-xl">
+                <Link href="/about" className="block px-4 py-2.5 text-sm hover:bg-turf-line/60">
+                  회사
+                </Link>
+                <Link href="/careers" className="block px-4 py-2.5 text-sm hover:bg-turf-line/60">
+                  채용
+                </Link>
+                <Link href="/advertise" className="block px-4 py-2.5 text-sm hover:bg-turf-line/60">
+                  광고하기
+                </Link>
+              </div>
+            )}
+          </div>
+          <Link href="/tv-guide" className="hover:text-floodlight transition-colors">
+            TV 일정
+          </Link>
+          */}
         </nav>
 
         {/* 검색창 */}
