@@ -591,3 +591,37 @@ export const MOCK_TOP_SCORERS = [
     ],
   },
 ]
+
+
+// 부상자/결장 명단 목업 데이터
+export const MOCK_INJURIES = [
+  {
+    player: { id: 9999, name: "T. Injured Player", photo: "https://media.api-sports.io/football/players/9999.png" },
+    team: { name: "Manchester City" },
+    fixture: { date: "2026-08-15" },
+    type: "Injury",
+    reason: "Hamstring",
+  },
+]
+
+// 감독 정보 목업 데이터
+export const MOCK_COACH = {
+  id: 1,
+  name: "Pep Guardiola",
+  firstname: "Pep",
+  lastname: "Guardiola",
+  age: 55,
+  nationality: "Spain",
+  photo: "https://media.api-sports.io/football/coachs/1.png",
+  career: [
+    { team: { name: "Manchester City", logo: "https://media.api-sports.io/football/teams/50.png" }, start: "2016-07-01", end: null },
+  ],
+}
+
+// 트로피(우승 이력) 목업 데이터
+export const MOCK_TROPHIES = [
+  { league: "Premier League", country: "England", season: "2023/2024", place: "Winner" },
+  { league: "Premier League", country: "England", season: "2022/2023", place: "Winner" },
+  { league: "UEFA Champions League", country: "World", season: "2022/2023", place: "Winner" },
+  { league: "FA Cup", country: "England", season: "2022/2023", place: "2nd Place" },
+]

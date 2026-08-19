@@ -1,8 +1,13 @@
 import Link from "next/link"
-import { getSeasonYear } from "@/lib/season"
-import { MOCK_TEAM_INFO, MOCK_TEAM_SQUAD, MOCK_TEAM_FIXTURES } from "@/lib/mockData"
 import type { Metadata } from "next"
-
+import { getSeasonYear } from "@/lib/season"
+import {
+  MOCK_TEAM_INFO,
+  MOCK_TEAM_SQUAD,
+  MOCK_TEAM_FIXTURES,
+  MOCK_INJURIES,
+  MOCK_COACH,
+} from "@/lib/mockData"
 
 type TeamInfo = {
   team: { id: number; name: string; country: string; founded: number; logo: string }
@@ -23,12 +28,27 @@ type TeamFixture = {
   goals: { home: number | null; away: number | null }
 }
 
+type Injury = {
+  player: { id: number; name: string; photo: string }
+  type: string
+  reason: string
+}
+
+type Coach = {
+  id: number
+  name: string
+  age: number | null
+  nationality: string
+  photo: string
+  career: { team: { name: string; logo: string }; start: string; end: string | null }[]
+}
+
 async function getTeamInfo(teamId: string): Promise<TeamInfo | null> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_TEAM_INFO
 
   const res = await fetch(`https://v3.football.api-sports.io/teams?id=${teamId}`, {
     headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-    cache: "no-store",
+    next: { revalidate: 3600 },
   })
   const data = await res.json()
   return data.response?.[0] ?? null
@@ -39,7 +59,7 @@ async function getTeamSquad(teamId: string): Promise<SquadPlayer[]> {
 
   const res = await fetch(`https://v3.football.api-sports.io/players/squads?team=${teamId}`, {
     headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-    cache: "no-store",
+    next: { revalidate: 3600 },
   })
   const data = await res.json()
   return data.response?.[0]?.players ?? []
@@ -52,11 +72,36 @@ async function getTeamFixtures(teamId: string, season: number): Promise<TeamFixt
     `https://v3.football.api-sports.io/fixtures?team=${teamId}&season=${season}`,
     {
       headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      cache: "no-store",
+      next: { revalidate: 3600 },
     }
   )
   const data = await res.json()
   return data.response ?? []
+}
+
+async function getInjuries(teamId: string, season: number): Promise<Injury[]> {
+  if (process.env.USE_MOCK_DATA === "true") return MOCK_INJURIES
+
+  const res = await fetch(
+    `https://v3.football.api-sports.io/injuries?team=${teamId}&season=${season}`,
+    {
+      headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
+      next: { revalidate: 3600 },
+    }
+  )
+  const data = await res.json()
+  return data.response ?? []
+}
+
+async function getCoach(teamId: string): Promise<Coach | null> {
+  if (process.env.USE_MOCK_DATA === "true") return MOCK_COACH
+
+  const res = await fetch(`https://v3.football.api-sports.io/coachs?team=${teamId}`, {
+    headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
+    next: { revalidate: 3600 },
+  })
+  const data = await res.json()
+  return data.response?.[0] ?? null
 }
 
 const POSITION_LABEL: Record<string, string> = {
@@ -66,7 +111,6 @@ const POSITION_LABEL: Record<string, string> = {
   Attacker: "공격수",
 }
 const POSITION_ORDER = ["Goalkeeper", "Defender", "Midfielder", "Attacker"]
-
 
 export async function generateMetadata({
   params,
@@ -96,16 +140,18 @@ export default async function TeamPage({
 
   if (!info) {
     return (
-      <main className="min-h-screen bg-black text-white p-8">
-        <p className="text-gray-500">팀 정보를 찾을 수 없습니다.</p>
+      <main className="min-h-screen bg-pitch-night text-floodlight p-8 font-sans">
+        <p className="text-floodlight/40">팀 정보를 찾을 수 없습니다.</p>
       </main>
     )
   }
 
   const season = getSeasonYear(info.team.country)
-  const [squad, fixtures] = await Promise.all([
+  const [squad, fixtures, injuries, coach] = await Promise.all([
     getTeamSquad(id),
     getTeamFixtures(id, season),
+    getInjuries(id, season),
+    getCoach(id),
   ])
 
   const squadByPosition = POSITION_ORDER.map((pos) => ({
@@ -120,38 +166,59 @@ export default async function TeamPage({
     .slice(0, 5)
   const upcoming = fixtures
     .filter((f) => new Date(f.fixture.date).getTime() > now)
-    .sort((a, b) => new Date(a.fixture.date).getTime() - new Date(a.fixture.date).getTime())
+    .sort((a, b) => new Date(a.fixture.date).getTime() - new Date(b.fixture.date).getTime())
     .slice(0, 5)
 
   return (
-    <main className="min-h-screen bg-black text-white p-8">
+    <main className="min-h-screen bg-pitch-night text-floodlight p-8 font-sans">
       <div className="max-w-2xl mx-auto">
         {/* 팀 헤더 */}
-        <div className="flex items-center gap-4 bg-gray-900 rounded-2xl border border-gray-800 p-6">
+        <div className="flex items-center gap-4 bg-turf/40 border-l-2 border-score-amber p-6">
           <img src={info.team.logo} alt="" className="w-16 h-16" />
           <div>
-            <h1 className="text-xl font-bold">{info.team.name}</h1>
-            <p className="text-xs text-gray-500 mt-1">
+            <h1 className="font-display uppercase text-xl">{info.team.name}</h1>
+            <p className="text-xs text-floodlight/40 mt-1">
               {info.team.country} · 창단 {info.team.founded}년
             </p>
             {info.venue && (
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-floodlight/40">
                 홈구장: {info.venue.name} ({info.venue.city})
               </p>
             )}
           </div>
         </div>
 
+        {/* 감독 */}
+        {coach && (
+          <div className="bg-turf/40 border-l-2 border-score-amber p-5 mt-6">
+            <h2 className="text-sm font-display uppercase tracking-wide text-floodlight/60 mb-3">감독</h2>
+            <div className="flex items-center gap-4">
+              <img
+                src={coach.photo}
+                alt=""
+                className="w-14 h-14 rounded-full bg-turf-line object-cover"
+              />
+              <div>
+                <p className="text-sm font-medium">{coach.name}</p>
+                <p className="text-xs text-floodlight/40 mt-0.5">
+                  {coach.nationality}
+                  {coach.age && ` · ${coach.age}세`}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* 최근/다음 경기 */}
         <div className="grid grid-cols-2 gap-4 mt-6">
-          <div className="bg-gray-900 rounded-xl border border-gray-800 p-4">
-            <h2 className="text-sm font-semibold text-gray-400 mb-3">최근 경기</h2>
+          <div className="bg-turf/40 border-l-2 border-score-amber p-4">
+            <h2 className="text-sm font-display uppercase tracking-wide text-floodlight/60 mb-3">최근 경기</h2>
             <div className="space-y-2">
               {past.map((f) => (
                 <Link
                   key={f.fixture.id}
                   href={`/matches/${f.fixture.id}`}
-                  className="flex items-center gap-2 text-xs hover:text-green-400"
+                  className="flex items-center gap-2 text-xs hover:text-score-amber"
                 >
                   <img src={f.teams.home.logo} alt="" className="w-4 h-4" />
                   <span className="flex-1 truncate">
@@ -160,18 +227,18 @@ export default async function TeamPage({
                   <img src={f.teams.away.logo} alt="" className="w-4 h-4" />
                 </Link>
               ))}
-              {past.length === 0 && <p className="text-xs text-gray-600">기록 없음</p>}
+              {past.length === 0 && <p className="text-xs text-floodlight/30">기록 없음</p>}
             </div>
           </div>
 
-          <div className="bg-gray-900 rounded-xl border border-gray-800 p-4">
-            <h2 className="text-sm font-semibold text-gray-400 mb-3">다음 경기</h2>
+          <div className="bg-turf/40 border-l-2 border-score-amber p-4">
+            <h2 className="text-sm font-display uppercase tracking-wide text-floodlight/60 mb-3">다음 경기</h2>
             <div className="space-y-2">
               {upcoming.map((f) => (
                 <Link
                   key={f.fixture.id}
                   href={`/matches/${f.fixture.id}`}
-                  className="flex items-center gap-2 text-xs hover:text-green-400"
+                  className="flex items-center gap-2 text-xs hover:text-score-amber"
                 >
                   <img src={f.teams.home.logo} alt="" className="w-4 h-4" />
                   <span className="flex-1 truncate">
@@ -180,20 +247,46 @@ export default async function TeamPage({
                   <img src={f.teams.away.logo} alt="" className="w-4 h-4" />
                 </Link>
               ))}
-              {upcoming.length === 0 && <p className="text-xs text-gray-600">예정 경기 없음</p>}
+              {upcoming.length === 0 && <p className="text-xs text-floodlight/30">예정 경기 없음</p>}
             </div>
           </div>
         </div>
 
+        {/* 부상자/결장 명단 */}
+        {injuries.length > 0 && (
+          <div className="bg-turf/40 border-l-2 border-live-red p-4 mt-6">
+            <h2 className="text-sm font-display uppercase tracking-wide text-floodlight/60 mb-3">
+              부상/결장 명단
+            </h2>
+            <div className="space-y-3">
+              {injuries.map((inj, i) => (
+                <Link
+                  key={i}
+                  href={`/players/${inj.player.id}`}
+                  className="flex items-center gap-3 text-xs hover:opacity-80"
+                >
+                  <img
+                    src={inj.player.photo}
+                    alt=""
+                    className="w-8 h-8 rounded-full bg-turf-line object-cover"
+                  />
+                  <span className="flex-1 truncate">{inj.player.name}</span>
+                  <span className="text-live-red/80">{inj.reason || inj.type}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* 스쿼드 */}
         <div className="mt-6 space-y-4">
           {squadByPosition.map((group) => (
-            <div key={group.position} className="bg-gray-900 rounded-xl border border-gray-800 p-4">
-              <h2 className="text-sm font-semibold text-gray-400 mb-3">
+            <div key={group.position} className="bg-turf/40 border-l-2 border-score-amber p-4">
+              <h2 className="text-sm font-display uppercase tracking-wide text-floodlight/60 mb-3">
                 {POSITION_LABEL[group.position] ?? group.position}
               </h2>
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
-              {group.players.map((p) => (
+                {group.players.map((p) => (
                   <Link
                     key={p.player.id}
                     href={`/players/${p.player.id}`}
@@ -202,10 +295,10 @@ export default async function TeamPage({
                     <img
                       src={p.player.photo}
                       alt=""
-                      className="w-12 h-12 rounded-full bg-gray-800 object-cover mb-1"
+                      className="w-12 h-12 rounded-full bg-turf-line object-cover mb-1"
                     />
-                    <span className="text-xs text-gray-200 truncate w-full">{p.player.name}</span>
-                    <span className="text-[10px] text-gray-600">{p.player.age}세</span>
+                    <span className="text-xs text-floodlight/90 truncate w-full">{p.player.name}</span>
+                    <span className="text-[10px] text-floodlight/30">{p.player.age}세</span>
                   </Link>
                 ))}
               </div>

@@ -1,7 +1,6 @@
-import { getSeasonYear } from "@/lib/season"
-import { MOCK_PLAYER } from "@/lib/mockData"
 import type { Metadata } from "next"
-
+import { getSeasonYear } from "@/lib/season"
+import { MOCK_PLAYER, MOCK_TROPHIES } from "@/lib/mockData"
 
 type PlayerData = {
   player: {
@@ -26,6 +25,13 @@ type PlayerData = {
   }[]
 }
 
+type Trophy = {
+  league: string
+  country: string
+  season: string
+  place: string
+}
+
 async function getPlayer(playerId: string, season: number): Promise<PlayerData | null> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_PLAYER
 
@@ -33,24 +39,32 @@ async function getPlayer(playerId: string, season: number): Promise<PlayerData |
     `https://v3.football.api-sports.io/players?id=${playerId}&season=${season}`,
     {
       headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      cache: "no-store",
+      next: { revalidate: 3600 },
     }
   )
   const data = await res.json()
-
-  // 디버깅용 — 터미널에서 확인
-  console.log(`=== 선수 요청: id=${playerId}, season=${season} ===`)
-  console.log("errors:", data.errors)
-  console.log("results:", data.results)
-
   return data.response?.[0] ?? null
+}
+
+async function getTrophies(playerId: string): Promise<Trophy[]> {
+  if (process.env.USE_MOCK_DATA === "true") return MOCK_TROPHIES
+
+  const res = await fetch(
+    `https://v3.football.api-sports.io/trophies?player=${playerId}`,
+    {
+      headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
+      next: { revalidate: 3600 },
+    }
+  )
+  const data = await res.json()
+  return data.response ?? []
 }
 
 function StatBox({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="bg-gray-900 rounded-xl border border-gray-800 p-4 text-center">
-      <p className="text-2xl font-bold text-white">{value}</p>
-      <p className="text-xs text-gray-500 mt-1">{label}</p>
+    <div className="bg-turf/40 border-l-2 border-score-amber p-4 text-center">
+      <p className="font-display text-2xl text-score-amber">{value}</p>
+      <p className="text-xs text-floodlight/40 mt-1">{label}</p>
     </div>
   )
 }
@@ -90,8 +104,8 @@ export default async function PlayerPage({
 
   if (!data) {
     return (
-      <main className="min-h-screen bg-black text-white p-8">
-        <p className="text-gray-500">선수 정보를 찾을 수 없습니다.</p>
+      <main className="min-h-screen bg-pitch-night text-floodlight p-8 font-sans">
+        <p className="text-floodlight/40">선수 정보를 찾을 수 없습니다.</p>
       </main>
     )
   }
@@ -101,25 +115,29 @@ export default async function PlayerPage({
     (a, b) => (b.games.appearences ?? 0) - (a.games.appearences ?? 0)
   )[0]
 
+  const trophies = await getTrophies(id)
+  const winnerTrophies = trophies.filter((t) => t.place.toLowerCase().includes("winner"))
+  const otherTrophies = trophies.filter((t) => !t.place.toLowerCase().includes("winner"))
+
   return (
-    <main className="min-h-screen bg-black text-white p-8">
+    <main className="min-h-screen bg-pitch-night text-floodlight p-8 font-sans">
       <div className="max-w-2xl mx-auto">
-        <div className="flex items-center gap-5 bg-gray-900 rounded-2xl border border-gray-800 p-6">
+        <div className="flex items-center gap-5 bg-turf/40 border-l-2 border-score-amber p-6">
           <img
             src={player.photo}
             alt=""
-            className="w-24 h-24 rounded-full bg-gray-800 object-cover border-2 border-green-600"
+            className="w-24 h-24 rounded-full bg-turf-line object-cover border-2 border-score-amber"
           />
           <div>
-            <h1 className="text-xl font-bold">{player.name}</h1>
-            <p className="text-xs text-gray-500 mt-1">
+            <h1 className="font-display uppercase text-xl">{player.name}</h1>
+            <p className="text-xs text-floodlight/40 mt-1">
               {player.nationality} · {player.age}세
             </p>
             {stat && (
               <div className="flex items-center gap-2 mt-2">
                 <img src={stat.team.logo} alt="" className="w-4 h-4" />
-                <span className="text-sm text-gray-300">{stat.team.name}</span>
-                <span className="text-xs text-gray-600">· {stat.games.position}</span>
+                <span className="text-sm text-floodlight/80">{stat.team.name}</span>
+                <span className="text-xs text-floodlight/30">· {stat.games.position}</span>
               </div>
             )}
           </div>
@@ -134,48 +152,76 @@ export default async function PlayerPage({
               <StatBox label="평점" value={stat.games.rating ?? "-"} />
             </div>
 
-            <div className="bg-gray-900 rounded-xl border border-gray-800 p-5 mt-4">
-              <h2 className="text-sm font-semibold text-gray-400 mb-4">
+            <div className="bg-turf/40 border-l-2 border-score-amber p-5 mt-4">
+              <h2 className="text-sm font-display uppercase tracking-wide text-floodlight/60 mb-4">
                 {stat.league.name} 시즌 세부 기록
               </h2>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-500">출전 시간</span>
-                  <span className="text-gray-200">{stat.games.minutes ?? "-"}분</span>
+                  <span className="text-floodlight/40">출전 시간</span>
+                  <span className="text-floodlight/90 font-data">{stat.games.minutes ?? "-"}분</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">슈팅 (유효)</span>
-                  <span className="text-gray-200">
+                  <span className="text-floodlight/40">슈팅 (유효)</span>
+                  <span className="text-floodlight/90 font-data">
                     {stat.shots.total ?? "-"} ({stat.shots.on ?? "-"})
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">패스 (성공률)</span>
-                  <span className="text-gray-200">
+                  <span className="text-floodlight/40">패스 (성공률)</span>
+                  <span className="text-floodlight/90 font-data">
                     {stat.passes.total ?? "-"} ({stat.passes.accuracy ?? "-"}%)
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">드리블 시도 (성공)</span>
-                  <span className="text-gray-200">
+                  <span className="text-floodlight/40">드리블 시도 (성공)</span>
+                  <span className="text-floodlight/90 font-data">
                     {stat.dribbles.attempts ?? "-"} ({stat.dribbles.success ?? "-"})
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">듀얼 시도 (승리)</span>
-                  <span className="text-gray-200">
+                  <span className="text-floodlight/40">듀얼 시도 (승리)</span>
+                  <span className="text-floodlight/90 font-data">
                     {stat.duels.total ?? "-"} ({stat.duels.won ?? "-"})
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">경고 / 퇴장</span>
-                  <span className="text-gray-200">
+                  <span className="text-floodlight/40">경고 / 퇴장</span>
+                  <span className="text-floodlight/90 font-data">
                     🟨 {stat.cards.yellow ?? 0} · 🟥 {stat.cards.red ?? 0}
                   </span>
                 </div>
               </div>
             </div>
           </>
+        )}
+
+        {trophies.length > 0 && (
+          <div className="bg-turf/40 border-l-2 border-score-amber p-5 mt-4">
+            <h2 className="text-sm font-display uppercase tracking-wide text-floodlight/60 mb-4">
+              트로피
+            </h2>
+            <div className="space-y-2">
+              {winnerTrophies.map((t, i) => (
+                <div key={`w-${i}`} className="flex items-center gap-2 text-sm">
+                  <span className="text-score-amber">🏆</span>
+                  <span className="flex-1 text-floodlight/90">
+                    {t.league} ({t.country})
+                  </span>
+                  <span className="text-xs text-floodlight/40 font-data">{t.season}</span>
+                </div>
+              ))}
+              {otherTrophies.slice(0, 5).map((t, i) => (
+                <div key={`o-${i}`} className="flex items-center gap-2 text-sm text-floodlight/50">
+                  <span>🥈</span>
+                  <span className="flex-1">
+                    {t.league} ({t.country}) · {t.place}
+                  </span>
+                  <span className="text-xs text-floodlight/30 font-data">{t.season}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
       </div>
     </main>
