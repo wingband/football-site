@@ -14,7 +14,7 @@ async function getFootballNews(): Promise<NewsArticle[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_NEWS
 
   const res = await fetch(
-    `https://newsdata.io/api/1/news?apikey=${process.env.NEWSDATA_API_KEY}&q=football%20soccer&language=en&category=sports`,
+    `https://newsdata.io/api/1/news?apikey=${process.env.NEWSDATA_API_KEY}&q=soccer&language=en&category=sports`,
     { next: { revalidate: 3600 } }
   )
   const data = await res.json()

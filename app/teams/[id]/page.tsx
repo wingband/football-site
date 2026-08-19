@@ -93,7 +93,7 @@ async function getInjuries(teamId: string, season: number): Promise<Injury[]> {
   return data.response ?? []
 }
 
-async function getCoach(teamId: string): Promise<Coach | null> {
+async function getCoach(teamId: string, expectedTeamId: number): Promise<Coach | null> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_COACH
 
   const res = await fetch(`https://v3.football.api-sports.io/coachs?team=${teamId}`, {
@@ -101,8 +101,17 @@ async function getCoach(teamId: string): Promise<Coach | null> {
     next: { revalidate: 3600 },
   })
   const data = await res.json()
-  return data.response?.[0] ?? null
+  const coaches: Coach[] = data.response ?? []
+
+  // API가 그 팀 역대 감독 여러 명을 배열로 줄 수 있어서, 무조건 첫 번째를 쓰지 않고
+  // "지금 이 팀 소속(퇴임일 없음)"이 확실한 사람만 배열 전체에서 찾음
+  return (
+    coaches.find((c) => c.career?.some((car) => car.team.id === expectedTeamId && car.end === null)) ?? null
+  )
 }
+
+
+
 
 const POSITION_LABEL: Record<string, string> = {
   Goalkeeper: "골키퍼",
@@ -147,11 +156,11 @@ export default async function TeamPage({
   }
 
   const season = getSeasonYear(info.team.country)
-  const [squad, fixtures, injuriesRaw, coachRaw] = await Promise.all([
+  const [squad, fixtures, injuriesRaw, coach] = await Promise.all([
     getTeamSquad(id),
     getTeamFixtures(id, season),
     getInjuries(id, season),
-    getCoach(id),
+    getCoach(id, info.team.id),
   ])
 
   // API가 같은 선수의 부상 기록을 중복으로 줄 때가 있어서, 선수 ID 기준으로 중복 제거
@@ -162,13 +171,6 @@ export default async function TeamPage({
     return true
   })
 
-  // API의 감독 정보가 갱신이 늦어 예전 감독이 남아있는 경우가 있어서,
-  // "현재(퇴임일 없음) 소속팀이 지금 보고 있는 이 팀과 실제로 일치하는지" 검증 후에만 표시
-  const coach =
-    coachRaw &&
-    coachRaw.career?.some((c) => c.end === null && c.team.id === info.team.id)
-      ? coachRaw
-      : null
 
   // API가 가끔 선수 정보가 비어있는 항목을 섞어서 줄 때가 있어서, 그런 항목은 미리 걸러냄
   const validSquad = squad.filter((p) => p?.player?.id != null)
@@ -229,6 +231,31 @@ export default async function TeamPage({
             </div>
           </div>
         )}
+        {/* 감독 */}
+        {coach && (
+          <div className="bg-turf/40 border-l-2 border-score-amber p-5 mt-6">
+            <h2 className="text-sm font-display uppercase tracking-wide text-floodlight/60 mb-3">감독</h2>
+            <div className="flex items-center gap-4">
+              <img
+                src={coach.photo}
+                alt=""
+                className="w-14 h-14 rounded-full bg-turf-line object-cover"
+              />
+              <div>
+                <p className="text-sm font-medium">{coach.name}</p>
+                {(coach.nationality || coach.age) && (
+                  <p className="text-xs text-floodlight/40 mt-0.5">
+                    {coach.nationality}
+                    {coach.age && ` · ${coach.age}세`}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+
+
 
         {/* 최근 경기 */}
         {past.length > 0 && (
