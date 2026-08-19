@@ -45,7 +45,13 @@ async function getFixturesByDate(date: string): Promise<Fixture[]> {
   )
 
   const data = await res.json()
-  return data.response
+
+  // 디버깅용 — Vercel 대시보드의 Logs(또는 Observability)에서 확인
+  console.log(`=== 경기 목록 요청: date=${date} ===`)
+  console.log("errors:", data.errors)
+  console.log("results:", data.results)
+
+  return data.response ?? []
 }
 
 export default async function MatchesPage({
