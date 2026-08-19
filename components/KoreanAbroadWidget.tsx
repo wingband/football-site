@@ -17,7 +17,7 @@ async function getPlayerStat(playerId: number, season: number): Promise<PlayerSt
     `https://v3.football.api-sports.io/players?id=${playerId}&season=${season}`,
     {
       headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      cache: "no-store",
+      next: { revalidate: 3600 },
     }
   )
   const data = await res.json()
