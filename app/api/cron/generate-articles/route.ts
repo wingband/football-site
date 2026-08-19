@@ -24,7 +24,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "인증 실패" }, { status: 401 })
   }
 
-  const today = new Date().toISOString().split("T")[0]
+  // 테스트용: ?date=2026-08-17 처럼 붙이면 그 날짜 기준으로 실행.
+  // 실제 Vercel Cron은 파라미터 없이 호출하므로 평소엔 항상 "오늘"이 사용됨
+  const dateParam = req.nextUrl.searchParams.get("date")
+  const today = dateParam ?? new Date().toISOString().split("T")[0]
 
   let fixtures: typeof MOCK_FIXTURES = []
   if (process.env.USE_MOCK_DATA === "true") {
