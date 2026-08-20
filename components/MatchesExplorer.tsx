@@ -378,6 +378,36 @@ export default function MatchesExplorer({ fixtures }: { fixtures: Fixture[] }) {
       </aside>
 
       <div className="flex-1 min-w-0">
+        {/* 모바일 전용: 가로 스크롤 리그 필터 칩 (사이드바가 md 미만에서 숨겨지므로 대체) */}
+        <div className="flex md:hidden gap-2 overflow-x-auto pb-3 mb-3 -mx-4 px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <button
+            onClick={() => setSelectedLeague("전체")}
+            className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+              selectedLeague === "전체"
+                ? "bg-score-amber text-pitch-night"
+                : "bg-turf/40 border border-turf-line text-floodlight/60"
+            }`}
+          >
+            전체
+          </button>
+          {featured
+            .filter((l) => l.available)
+            .map((l) => (
+              <button
+                key={l.displayName}
+                onClick={() => setSelectedLeague((prev) => (prev === l.apiName ? "전체" : l.apiName))}
+                className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  selectedLeague === l.apiName
+                    ? "bg-score-amber text-pitch-night"
+                    : "bg-turf/40 border border-turf-line text-floodlight/60"
+                }`}
+              >
+                <img src={l.logo} alt="" className="w-3.5 h-3.5" />
+                {l.displayName}
+              </button>
+            ))}
+        </div>
+
         <div className="flex flex-wrap items-center gap-2 mb-6">
           <button
             onClick={() => setLiveOnly((v) => !v)}
