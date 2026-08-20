@@ -1,4 +1,5 @@
 import Link from "next/link"
+import PlayerAvatar from "@/components/PlayerAvatar"
 import { getAllTransfers } from "@/lib/transfers"
 
 function formatDate(dateStr: string) {
@@ -30,10 +31,10 @@ export default async function TransfersPage() {
                 href={`/players/${entry.player.id}`}
                 className="flex items-center gap-3 px-4 py-4 hover:bg-turf-line/40 border-b border-turf-line/40 last:border-b-0"
               >
-                <img
+                <PlayerAvatar
                   src={entry.player.photo}
-                  alt=""
-                  className="w-10 h-10 rounded-full bg-turf-line object-cover shrink-0"
+                  alt={entry.player.name}
+                  className="w-10 h-10 rounded-full bg-turf-line object-cover shrink-0 text-sm"
                 />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{entry.player.name}</p>
