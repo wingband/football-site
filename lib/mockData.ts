@@ -129,7 +129,7 @@ export const MOCK_FIXTURES = [
           away: { id: 42, name: "Arsenal", logo: "https://media.api-sports.io/football/teams/42.png", winner: false },
         },
         goals: { home: 2, away: 1 },
-        league: { name: "Premier League", country: "England", logo: "https://media.api-sports.io/football/leagues/39.png" },
+        league: { id: 39, name: "Premier League", country: "England", logo: "https://media.api-sports.io/football/leagues/39.png", round: "Regular Season - 1" },
       },
     ],
     statistics: [
