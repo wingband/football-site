@@ -85,6 +85,37 @@ export async function getPlayerData(playerId: string, season: number): Promise<P
   return data.response?.[0] ?? null
 }
 
+// 최근 이적 선수처럼 새 시즌 통계가 아직 안 잡힌 경우를 위한 폴백.
+// 여러 시즌을 순서대로 시도하고, 그래도 없으면 통계 없이 기본 프로필만이라도 반환
+export async function getPlayerDataWithFallback(
+  playerId: string,
+  primarySeason: number
+): Promise<PlayerData | null> {
+  if (process.env.USE_MOCK_DATA === "true") return MOCK_PLAYER as unknown as PlayerData
+
+  const candidateSeasons = [
+    primarySeason,
+    new Date().getFullYear(),
+    primarySeason - 1,
+    primarySeason - 2,
+  ]
+
+  for (const season of candidateSeasons) {
+    const data = await getPlayerData(playerId, season)
+    if (data && data.statistics.length > 0) return data
+  }
+
+  // 시즌 통계를 어디서도 못 찾으면 프로필(기본 정보)만이라도 조회
+  const res = await fetch(`https://v3.football.api-sports.io/players/profiles?player=${playerId}`, {
+    headers: HEADERS(),
+    next: { revalidate: 86400 },
+  })
+  const data = await res.json()
+  const profile = data.response?.[0]?.player
+  if (!profile) return null
+  return { player: profile, statistics: [] }
+}
+
 export async function getPlayerTransfers(playerId: string): Promise<TransferEntry[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_PLAYER_TRANSFERS as unknown as TransferEntry[]
 

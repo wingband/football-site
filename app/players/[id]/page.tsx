@@ -4,7 +4,7 @@ import { getSeasonYear } from "@/lib/season"
 import FollowButton from "@/components/FollowButton"
 import PlayerAvatar from "@/components/PlayerAvatar"
 import {
-  getPlayerData,
+  getPlayerDataWithFallback,
   getPlayerTransfers,
   getPlayerCareer,
   getPlayerRecentMatches,
@@ -24,8 +24,7 @@ export async function generateMetadata({
   params: Promise<{ id: string }>
 }): Promise<Metadata> {
   const { id } = await params
-  let data = await getPlayerData(id, getSeasonYear("England"))
-  if (!data) data = await getPlayerData(id, new Date().getFullYear())
+  const data = await getPlayerDataWithFallback(id, getSeasonYear("England"))
 
   if (!data) return { title: "선수 정보를 찾을 수 없습니다" }
 
@@ -52,8 +51,7 @@ export default async function PlayerPage({
   const { id } = await params
 
   const season = getSeasonYear("England")
-  let data = await getPlayerData(id, season)
-  if (!data) data = await getPlayerData(id, new Date().getFullYear())
+  const data = await getPlayerDataWithFallback(id, season)
 
   if (!data) {
     return (

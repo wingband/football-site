@@ -3,7 +3,7 @@ import { MOCK_TRANSFERS } from "@/lib/mockData"
 export type TeamRef = { id: number; name: string; logo: string }
 
 export type TransferEntry = {
-  player: { id: number; name: string; photo: string }
+  player: { id: number; name: string; photo?: string }
   update: string
   transfers: {
     date: string

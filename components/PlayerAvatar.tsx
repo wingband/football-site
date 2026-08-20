@@ -7,7 +7,7 @@ export default function PlayerAvatar({
   alt,
   className,
 }: {
-  src: string
+  src?: string
   alt: string
   className?: string
 }) {
