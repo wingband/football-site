@@ -63,12 +63,13 @@ function EventContent({
   const rowDir = isHome ? "flex-row-reverse" : "flex-row"
 
   if (ev.type === "subst") {
+    // API-Football 교체 이벤트: player = 나가는 선수, assist = 들어오는 선수
     return (
       <div className={`flex ${rowDir} items-center gap-2`}>
         <SubIcon />
         <div className={`flex flex-col ${align} leading-tight`}>
-          <span className="text-sm text-green-400">{ev.player.name}</span>
-          <span className="text-xs text-orange-400/90">{ev.assist.name}</span>
+          <span className="text-sm text-green-400">{ev.assist.name}</span>
+          <span className="text-xs text-orange-400/90">{ev.player.name}</span>
         </div>
       </div>
     )

@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { generateMatchStory } from "@/lib/generateStory"
 import PlayerAvatar from "@/components/PlayerAvatar"
-import PitchFormation from "@/components/PitchFormation"
+import FotmobLineup from "@/components/FotmobLineup"
 import Section from "@/components/Section"
 import FollowButton from "@/components/FollowButton"
 import MatchTabs from "@/components/MatchTabs"
@@ -68,7 +68,7 @@ type MatchEvent = {
 type PlayerStat = {
   team: { name: string; logo: string }
   players: {
-    player: { name: string; photo: string }
+    player: { id?: number; name: string; photo: string }
     statistics: {
       games: { rating: string | null; position: string }
       goals: { total: number | null; assists: number | null }
@@ -80,7 +80,8 @@ type Lineup = {
   team: { name: string; logo: string }
   formation: string
   startXI: { player: { id: number; name: string; number: number; pos: string; grid: string | null } }[]
-  coach: { name: string }
+  substitutes?: { player: { id: number; name: string; number: number; pos: string; grid: string | null } }[]
+  coach: { name: string; photo?: string }
 }
 
 type H2HMatch = {
@@ -440,24 +441,7 @@ export default async function MatchDetailPage({
   const lineupContent =
     lineups.length === 2 ? (
       <Section title="라인업">
-        <div className="grid grid-cols-2 gap-6">
-          <PitchFormation
-            teamName={lineups[0].team.name}
-            teamLogo={lineups[0].team.logo}
-            formation={lineups[0].formation}
-            players={lineups[0].startXI}
-            coach={lineups[0].coach?.name ?? "-"}
-            flip={false}
-          />
-          <PitchFormation
-            teamName={lineups[1].team.name}
-            teamLogo={lineups[1].team.logo}
-            formation={lineups[1].formation}
-            players={lineups[1].startXI}
-            coach={lineups[1].coach?.name ?? "-"}
-            flip={true}
-          />
-        </div>
+        <FotmobLineup lineups={lineups} playerStats={playerStats} events={events} />
       </Section>
     ) : (
       <p className="text-floodlight/40 text-sm py-6 text-center">라인업 정보가 없습니다.</p>
