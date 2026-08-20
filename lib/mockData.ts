@@ -647,3 +647,66 @@ export const MOCK_NEWS = [
     description: "2026-27시즌 프리미어리그가 개막을 앞두고 있는 가운데, 전문가들의 우승 후보 전망이 엇갈리고 있다.",
   },
 ]
+
+// 경기 상세 페이지 "팀 기록"(최근 5경기) 목업 데이터 — 실제로는 팀 id로 요청하지만
+// 목업 모드에서는 어떤 팀이 요청해도 동일한 샘플을 돌려줌
+export const MOCK_TEAM_RECENT_FIXTURES = [
+  {
+    fixture: { id: 900001, date: "2026-08-10T19:00:00+00:00", status: { short: "FT" } },
+    teams: {
+      home: { id: 49, name: "Marseille", logo: "https://media.api-sports.io/football/teams/49.png" },
+      away: { id: 50, name: "Manchester City", logo: "https://media.api-sports.io/football/teams/50.png" },
+    },
+    goals: { home: 1, away: 2 },
+    league: { name: "Champions League", logo: "https://media.api-sports.io/football/leagues/2.png" },
+  },
+  {
+    fixture: { id: 900002, date: "2026-08-12T19:00:00+00:00", status: { short: "FT" } },
+    teams: {
+      home: { id: 50, name: "Manchester City", logo: "https://media.api-sports.io/football/teams/50.png" },
+      away: { id: 42, name: "Arsenal", logo: "https://media.api-sports.io/football/teams/42.png" },
+    },
+    goals: { home: 3, away: 1 },
+    league: { name: "Premier League", logo: "https://media.api-sports.io/football/leagues/39.png" },
+  },
+  {
+    fixture: { id: 900003, date: "2026-08-14T19:00:00+00:00", status: { short: "FT" } },
+    teams: {
+      home: { id: 33, name: "Manchester United", logo: "https://media.api-sports.io/football/teams/33.png" },
+      away: { id: 50, name: "Manchester City", logo: "https://media.api-sports.io/football/teams/50.png" },
+    },
+    goals: { home: 2, away: 1 },
+    league: { name: "Premier League", logo: "https://media.api-sports.io/football/leagues/39.png" },
+  },
+  {
+    fixture: { id: 900004, date: "2026-08-16T19:00:00+00:00", status: { short: "FT" } },
+    teams: {
+      home: { id: 50, name: "Manchester City", logo: "https://media.api-sports.io/football/teams/50.png" },
+      away: { id: 48, name: "Getafe", logo: "https://media.api-sports.io/football/teams/48.png" },
+    },
+    goals: { home: 4, away: 1 },
+    league: { name: "Premier League", logo: "https://media.api-sports.io/football/leagues/39.png" },
+  },
+  {
+    fixture: { id: 900005, date: "2026-08-18T19:00:00+00:00", status: { short: "FT" } },
+    teams: {
+      home: { id: 533, name: "Villarreal", logo: "https://media.api-sports.io/football/teams/533.png" },
+      away: { id: 50, name: "Manchester City", logo: "https://media.api-sports.io/football/teams/50.png" },
+    },
+    goals: { home: 5, away: 1 },
+    league: { name: "Premier League", logo: "https://media.api-sports.io/football/leagues/39.png" },
+  },
+]
+
+// 경기 상세 페이지 "다음 경기" 목업 데이터
+export const MOCK_NEXT_FIXTURE = [
+  {
+    fixture: { id: 900010, date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), status: { short: "NS" } },
+    teams: {
+      home: { id: 50, name: "Manchester City", logo: "https://media.api-sports.io/football/teams/50.png" },
+      away: { id: 533, name: "Villarreal", logo: "https://media.api-sports.io/football/teams/533.png" },
+    },
+    goals: { home: null, away: null },
+    league: { name: "Premier League", logo: "https://media.api-sports.io/football/leagues/39.png" },
+  },
+]
