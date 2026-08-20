@@ -32,6 +32,9 @@ ${input.homeTeam} ${input.homeScore ?? "-"} : ${input.awayScore ?? "-"} ${input.
       max_tokens: 300,
       messages: [{ role: "user", content: prompt }],
     }),
+    // 경기가 끝난 데이터는 절대 바뀌지 않으므로 한 번 생성하면 영구적으로 캐싱해서 재사용.
+    // 이게 없으면 새로고침할 때마다 OpenAI를 다시 호출해서 비용이 계속 나감
+    cache: "force-cache",
   })
 
   const data = await res.json()
