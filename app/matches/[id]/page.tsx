@@ -13,6 +13,7 @@ import MatchEventsTimeline from "@/components/MatchEventsTimeline"
 import TeamRecentForm from "@/components/TeamRecentForm"
 import NextMatchCard from "@/components/NextMatchCard"
 import MatchNewsCard from "@/components/MatchNewsCard"
+import H2HPanel from "@/components/H2HPanel"
 import { getSeasonYear } from "@/lib/season"
 import {
   MOCK_MATCH_DETAIL,
@@ -88,10 +89,11 @@ type Lineup = {
 type H2HMatch = {
   fixture: { id: number; date: string }
   teams: {
-    home: { name: string; winner: boolean | null }
-    away: { name: string; winner: boolean | null }
+    home: { name: string; logo?: string; winner: boolean | null }
+    away: { name: string; logo?: string; winner: boolean | null }
   }
   goals: { home: number | null; away: number | null }
+  league?: { name: string; logo?: string }
 }
 
 type Prediction = {
@@ -272,7 +274,7 @@ export default async function MatchDetailPage({
     apiFetch(`/fixtures/events?fixture=${id}`) as Promise<MatchEvent[]>,
     apiFetch(`/fixtures/players?fixture=${id}`) as Promise<PlayerStat[]>,
     apiFetch(`/fixtures/lineups?fixture=${id}`) as Promise<Lineup[]>,
-    apiFetch(`/fixtures/headtohead?h2h=${match.teams.home.id}-${match.teams.away.id}&last=5`) as Promise<H2HMatch[]>,
+    apiFetch(`/fixtures/headtohead?h2h=${match.teams.home.id}-${match.teams.away.id}&last=20`) as Promise<H2HMatch[]>,
     apiFetch(`/predictions?fixture=${id}`) as Promise<Prediction[]>,
     getStandings(match.league.id, season),
     apiFetch(`/fixtures?team=${match.teams.home.id}&last=6`) as Promise<TeamFixture[]>,
@@ -468,19 +470,15 @@ export default async function MatchDetailPage({
 
   const h2hContent =
     h2h.length > 0 ? (
-      <Section title="역대 상대전적">
-        <div className="space-y-3">
-          {h2h.map((m) => (
-            <div key={m.fixture.id} className="flex items-center justify-between text-sm text-floodlight/70">
-              <span className="text-xs text-floodlight/40 w-24 font-data">
-                {new Date(m.fixture.date).toLocaleDateString("ko-KR")}
-              </span>
-              <span className="flex-1 text-center font-data">
-                {m.teams.home.name} {m.goals.home} : {m.goals.away} {m.teams.away.name}
-              </span>
-            </div>
-          ))}
-        </div>
+      <Section title="역대 전적">
+        <H2HPanel
+          matches={h2h}
+          currentFixtureId={match.fixture.id}
+          homeTeamName={match.teams.home.name}
+          awayTeamName={match.teams.away.name}
+          homeTeamLogo={match.teams.home.logo}
+          awayTeamLogo={match.teams.away.logo}
+        />
       </Section>
     ) : (
       <p className="text-floodlight/40 text-sm py-6 text-center">상대전적 정보가 없습니다.</p>
