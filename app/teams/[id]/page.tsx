@@ -1,132 +1,20 @@
 import Link from "next/link"
 import type { Metadata } from "next"
-import { getSeasonYear } from "@/lib/season"
+import TeamHeader from "@/components/TeamHeader"
+import PlayerAvatar from "@/components/PlayerAvatar"
+import StandingsWithFilter from "@/components/StandingsWithFilter"
 import {
-  MOCK_TEAM_INFO,
-  MOCK_TEAM_SQUAD,
-  MOCK_TEAM_FIXTURES,
-  MOCK_INJURIES,
-  MOCK_COACH,
-} from "@/lib/mockData"
+  getTeamInfo,
+  getTeamSeasonFixtures,
+  getTeamInjuries,
+  getTeamCoach,
+  getTeamCurrentLeague,
+  getTeamNews,
+  type TeamFixture,
+} from "@/lib/teamData"
+import { getLeagueStandings, getLeagueFixturesByMode, buildNextOpponentMap } from "@/lib/leagueData"
 
-type TeamInfo = {
-  team: { id: number; name: string; country: string; founded: number; logo: string }
-  venue: { name: string; city: string; capacity: number }
-}
-
-type SquadPlayer = {
-  player: { id: number; name: string; age: number; photo: string }
-  position: string
-}
-
-type TeamFixture = {
-  fixture: { id: number; date: string; status: { long: string; short: string } }
-  teams: {
-    home: { name: string; logo: string }
-    away: { name: string; logo: string }
-  }
-  goals: { home: number | null; away: number | null }
-}
-
-type Injury = {
-  player: { id: number; name: string; photo: string }
-  type: string
-  reason: string
-}
-
-type Coach = {
-  id: number
-  name: string
-  age: number | null
-  nationality: string
-  photo: string
-  career: { team: { id: number; name: string; logo: string }; start: string; end: string | null }[]
-}
-
-async function getTeamInfo(teamId: string): Promise<TeamInfo | null> {
-  if (process.env.USE_MOCK_DATA === "true") return MOCK_TEAM_INFO
-
-  const res = await fetch(`https://v3.football.api-sports.io/teams?id=${teamId}`, {
-    headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-    next: { revalidate: 3600 },
-  })
-  const data = await res.json()
-  return data.response?.[0] ?? null
-}
-
-async function getTeamSquad(teamId: string): Promise<SquadPlayer[]> {
-  if (process.env.USE_MOCK_DATA === "true") return MOCK_TEAM_SQUAD
-
-  const res = await fetch(`https://v3.football.api-sports.io/players/squads?team=${teamId}`, {
-    headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-    next: { revalidate: 3600 },
-  })
-  const data = await res.json()
-  return data.response?.[0]?.players ?? []
-}
-
-async function getTeamFixtures(teamId: string, season: number): Promise<TeamFixture[]> {
-  if (process.env.USE_MOCK_DATA === "true") return MOCK_TEAM_FIXTURES
-
-  const res = await fetch(
-    `https://v3.football.api-sports.io/fixtures?team=${teamId}&season=${season}`,
-    {
-      headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      next: { revalidate: 3600 },
-    }
-  )
-  const data = await res.json()
-  return data.response ?? []
-}
-
-async function getInjuries(teamId: string, season: number): Promise<Injury[]> {
-  if (process.env.USE_MOCK_DATA === "true") return MOCK_INJURIES
-
-  const res = await fetch(
-    `https://v3.football.api-sports.io/injuries?team=${teamId}&season=${season}`,
-    {
-      headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      next: { revalidate: 3600 },
-    }
-  )
-  const data = await res.json()
-  return data.response ?? []
-}
-
-async function getCoach(teamId: string, expectedTeamId: number): Promise<Coach | null> {
-  if (process.env.USE_MOCK_DATA === "true") return MOCK_COACH
-
-  const res = await fetch(`https://v3.football.api-sports.io/coachs?team=${teamId}`, {
-    headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-    next: { revalidate: 3600 },
-  })
-  const data = await res.json()
-  const coaches: Coach[] = data.response ?? []
-
-  // API의 "퇴임일" 필드는 감독이 실제로 떠난 뒤에도 갱신 안 될 때가 많아서 신뢰도가 낮음.
-  // 대신 "이 팀 소속으로 가장 최근에 부임한 사람"을 찾는 게 실제 현재 감독일 확률이 훨씬 높음
-  let best: { coach: Coach; start: string } | null = null
-  for (const c of coaches) {
-    for (const car of c.career ?? []) {
-      if (car.team.id !== expectedTeamId) continue
-      if (!best || car.start > best.start) {
-        best = { coach: c, start: car.start }
-      }
-    }
-  }
-  return best?.coach ?? null
-}
-
-
-
-
-const POSITION_LABEL: Record<string, string> = {
-  Goalkeeper: "골키퍼",
-  Defender: "수비수",
-  Midfielder: "미드필더",
-  Attacker: "공격수",
-}
-const POSITION_ORDER = ["Goalkeeper", "Defender", "Midfielder", "Attacker"]
+const FINISHED_CODES = ["FT", "AET", "PEN"]
 
 export async function generateMetadata({
   params,
@@ -135,18 +23,55 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { id } = await params
   const info = await getTeamInfo(id)
-
-  if (!info) {
-    return { title: "팀 정보를 찾을 수 없습니다" }
-  }
-
+  if (!info) return { title: "팀 정보를 찾을 수 없습니다" }
   return {
-    title: `${info.team.name} 선수단 및 일정`,
-    description: `${info.team.name}(${info.team.country})의 최근 경기, 다음 경기 일정, 선수단 명단을 확인하세요.`,
+    title: `${info.team.name} 팀 개요`,
+    description: `${info.team.name}의 최근 경기, 다음 경기, 리그 순위, 감독, 부상 명단, 뉴스를 확인하세요.`,
   }
 }
 
-export default async function TeamPage({
+// 팀 기록: 최근 5경기 결과 배지 (FotMob 스타일)
+function RecentFormBadges({ fixtures, teamId }: { fixtures: TeamFixture[]; teamId: number }) {
+  const finished = fixtures
+    .filter((f) => FINISHED_CODES.includes(f.fixture.status.short))
+    .sort((a, b) => new Date(b.fixture.date).getTime() - new Date(a.fixture.date).getTime())
+    .slice(0, 5)
+    .reverse()
+
+  if (finished.length === 0) {
+    return <p className="text-floodlight/40 text-xs">최근 경기 기록이 없습니다.</p>
+  }
+
+  return (
+    <div className="flex gap-3">
+      {finished.map((fx) => {
+        const isHome = fx.teams.home.id === teamId
+        const own = isHome ? fx.goals.home : fx.goals.away
+        const opp = isHome ? fx.goals.away : fx.goals.home
+        const opponent = isHome ? fx.teams.away : fx.teams.home
+        const color =
+          own === null || opp === null
+            ? "bg-floodlight/15"
+            : own > opp
+              ? "bg-green-600 text-white"
+              : own < opp
+                ? "bg-red-500/80 text-white"
+                : "bg-floodlight/30 text-floodlight"
+
+        return (
+          <Link key={fx.fixture.id} href={`/matches/${fx.fixture.id}`} className="flex flex-col items-center gap-2">
+            <span className={`px-2.5 py-1 rounded font-data text-sm font-bold ${color}`}>
+              {fx.goals.home ?? "-"} - {fx.goals.away ?? "-"}
+            </span>
+            <img src={opponent.logo} alt="" className="w-6 h-6" />
+          </Link>
+        )
+      })}
+    </div>
+  )
+}
+
+export default async function TeamOverviewPage({
   params,
 }: {
   params: Promise<{ id: string }>
@@ -162,214 +87,181 @@ export default async function TeamPage({
     )
   }
 
-  const season = getSeasonYear(info.team.country)
-  const [squad, fixtures, injuriesRaw, coach] = await Promise.all([
-    getTeamSquad(id),
-    getTeamFixtures(id, season),
-    getInjuries(id, season),
-    getCoach(id, info.team.id),
+  const teamLeague = await getTeamCurrentLeague(id)
+  const season = teamLeague?.season ?? new Date().getFullYear()
+
+  const [fixtures, injuries, coach, news, standingsData, leagueUpcoming] = await Promise.all([
+    getTeamSeasonFixtures(id, season),
+    getTeamInjuries(id, season),
+    getTeamCoach(id, info.team.id),
+    getTeamNews(info.team.name),
+    teamLeague ? getLeagueStandings(String(teamLeague.id), season) : Promise.resolve(null),
+    teamLeague ? getLeagueFixturesByMode(String(teamLeague.id), season, "next", 10) : Promise.resolve([]),
   ])
 
-  // API가 같은 선수의 부상 기록을 중복으로 줄 때가 있어서, 선수 ID 기준으로 중복 제거
-  const seenInjuryPlayer = new Set<number>()
-  const injuries = injuriesRaw.filter((inj) => {
-    if (!inj?.player?.id || seenInjuryPlayer.has(inj.player.id)) return false
-    seenInjuryPlayer.add(inj.player.id)
-    return true
-  })
+  const nextOpponent = buildNextOpponentMap(leagueUpcoming)
 
-
-  // API가 가끔 선수 정보가 비어있는 항목을 섞어서 줄 때가 있어서, 그런 항목은 미리 걸러냄
-  const validSquad = squad.filter((p) => p?.player?.id != null)
-
-  const squadByPosition = POSITION_ORDER.map((pos) => ({
-    position: pos,
-    players: validSquad.filter((p) => p.position === pos),
-  })).filter((g) => g.players.length > 0)
-
-  const now = Date.now()
-  const past = fixtures
-    .filter((f) => new Date(f.fixture.date).getTime() <= now)
-    .sort((a, b) => new Date(b.fixture.date).getTime() - new Date(a.fixture.date).getTime())
-    .slice(0, 5)
   const upcoming = fixtures
-    .filter((f) => new Date(f.fixture.date).getTime() > now)
+    .filter((f) => !FINISHED_CODES.includes(f.fixture.status.short))
     .sort((a, b) => new Date(a.fixture.date).getTime() - new Date(b.fixture.date).getTime())
-    .slice(0, 5)
+  const nextFixture = upcoming[0] ?? null
+
+  // 부상 명단 중복 제거 (같은 선수가 여러 건으로 잡히는 경우)
+  const uniqueInjuries = [...new Map(injuries.map((i) => [i.player.id, i])).values()]
 
   return (
-    <main className="min-h-screen bg-pitch-night text-floodlight p-8 font-sans">
-      <div className="max-w-2xl mx-auto">
-        {/* 팀 헤더 */}
-        <div className="flex items-center gap-4 bg-turf/40 border-l-2 border-score-amber p-6">
-          <img src={info.team.logo} alt="" className="w-16 h-16" />
-          <div>
-            <h1 className="font-display uppercase text-xl">{info.team.name}</h1>
-            <p className="text-xs text-floodlight/40 mt-1">
-              {info.team.country} · 창단 {info.team.founded}년
-            </p>
-            {info.venue && (
-              <p className="text-xs text-floodlight/40">
-                홈구장: {info.venue.name} ({info.venue.city})
-              </p>
-            )}
+    <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
+      <div className="max-w-5xl mx-auto pb-16 px-4">
+        <TeamHeader teamId={id} name={info.team.name} country={info.team.country} logo={info.team.logo} active="overview" />
+
+        {/* 상단: 팀 기록 + 다음 경기 */}
+        <div className="grid sm:grid-cols-2 gap-4 mb-6">
+          <div className="bg-turf/40 border border-turf-line/40 rounded-md p-4">
+            <p className="text-sm font-medium mb-3">팀 기록</p>
+            <RecentFormBadges fixtures={fixtures} teamId={info.team.id} />
           </div>
-        </div>
-        {/* 감독 */}
-        {coach && (
-          <div className="bg-turf/40 border-l-2 border-score-amber p-5 mt-6">
-            <h2 className="text-sm font-display uppercase tracking-wide text-floodlight/60 mb-3">감독</h2>
-            <div className="flex items-center gap-4">
-              <img
-                src={coach.photo}
-                alt=""
-                className="w-14 h-14 rounded-full bg-turf-line object-cover"
-              />
-              <div>
-                <p className="text-sm font-medium">{coach.name}</p>
-                {(coach.nationality || coach.age) && (
-                  <p className="text-xs text-floodlight/40 mt-0.5">
-                    {coach.nationality}
-                    {coach.age && ` · ${coach.age}세`}
-                  </p>
+
+          {nextFixture && (
+            <Link
+              href={`/matches/${nextFixture.fixture.id}`}
+              className="bg-turf/40 border border-turf-line/40 rounded-md p-4 hover:bg-turf-line/20 transition-colors"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-medium">다음 경기</p>
+                {nextFixture.league?.name && (
+                  <span className="text-xs text-floodlight/40">{nextFixture.league.name}</span>
                 )}
               </div>
-            </div>
-          </div>
-        )}
-
-
-
-
-        {/* 최근 경기 */}
-        {past.length > 0 && (
-          <div className="bg-turf/40 border-l-2 border-score-amber mt-6">
-            <div className="px-4 py-3 border-b border-turf-line/60">
-              <h2 className="text-sm font-display uppercase tracking-wide text-floodlight/60">
-                최근 경기
-              </h2>
-            </div>
-            <div>
-              {past.map((f) => (
-                <Link
-                  key={f.fixture.id}
-                  href={`/matches/${f.fixture.id}`}
-                  className="flex items-center gap-3 px-4 py-3 hover:bg-turf-line/40 transition-colors border-b border-turf-line/40 last:border-b-0"
-                >
-                  <span className="text-xs text-floodlight/40 w-14 shrink-0 font-data">
-                    {new Date(f.fixture.date).toLocaleDateString("ko-KR", {
-                      month: "numeric",
-                      day: "numeric",
-                    })}
+              <div className="flex items-center justify-around">
+                <div className="flex flex-col items-center gap-1.5 min-w-0">
+                  <img src={nextFixture.teams.home.logo} alt="" className="w-9 h-9" />
+                  <span className="text-xs truncate">{nextFixture.teams.home.name}</span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="font-data text-score-amber">
+                    {new Date(nextFixture.fixture.date).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
                   </span>
-                  <div className="flex-1 flex items-center justify-center gap-2 text-sm">
-                    <img src={f.teams.home.logo} alt="" className="w-5 h-5" />
-                    <span className="text-floodlight/80">{f.teams.home.name}</span>
-                    <span className="text-score-amber font-data font-semibold mx-1">
-                      {f.goals.home ?? "-"} : {f.goals.away ?? "-"}
-                    </span>
-                    <span className="text-floodlight/80">{f.teams.away.name}</span>
-                    <img src={f.teams.away.logo} alt="" className="w-5 h-5" />
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* 다음 경기 */}
-        {upcoming.length > 0 && (
-          <div className="bg-turf/40 border-l-2 border-score-amber mt-6">
-            <div className="px-4 py-3 border-b border-turf-line/60">
-              <h2 className="text-sm font-display uppercase tracking-wide text-floodlight/60">
-                다음 경기
-              </h2>
-            </div>
-            <div>
-              {upcoming.map((f) => (
-                <Link
-                  key={f.fixture.id}
-                  href={`/matches/${f.fixture.id}`}
-                  className="flex items-center gap-3 px-4 py-3 hover:bg-turf-line/40 transition-colors border-b border-turf-line/40 last:border-b-0"
-                >
-                  <span className="text-xs text-floodlight/40 w-14 shrink-0 font-data">
-                    {new Date(f.fixture.date).toLocaleDateString("ko-KR", {
-                      month: "numeric",
-                      day: "numeric",
-                    })}
+                  <span className="text-[11px] text-floodlight/40">
+                    {new Date(nextFixture.fixture.date).toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "short" })}
                   </span>
-                  <div className="flex-1 flex items-center justify-center gap-2 text-sm">
-                    <img src={f.teams.home.logo} alt="" className="w-5 h-5" />
-                    <span className="text-floodlight/80">{f.teams.home.name}</span>
-                    <span className="text-floodlight/30 mx-1 font-data">vs</span>
-                    <span className="text-floodlight/80">{f.teams.away.name}</span>
-                    <img src={f.teams.away.logo} alt="" className="w-5 h-5" />
-                  </div>
-                  <span className="text-xs text-floodlight/40 font-data shrink-0">
-                    {new Date(f.fixture.date).toLocaleTimeString("ko-KR", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
+                </div>
+                <div className="flex flex-col items-center gap-1.5 min-w-0">
+                  <img src={nextFixture.teams.away.logo} alt="" className="w-9 h-9" />
+                  <span className="text-xs truncate">{nextFixture.teams.away.name}</span>
+                </div>
+              </div>
+            </Link>
+          )}
+        </div>
 
-        {/* 부상자/결장 명단 */}
-        {injuries.length > 0 && (
-          <div className="bg-turf/40 border-l-2 border-live-red p-4 mt-6">
-            <h2 className="text-sm font-display uppercase tracking-wide text-floodlight/60 mb-3">
-              부상/결장 명단
-            </h2>
-            <div className="space-y-3">
-              {injuries.map((inj, i) => (
-                <Link
-                  key={i}
-                  href={`/players/${inj.player.id}`}
-                  className="flex items-center gap-3 text-xs hover:opacity-80"
-                >
-                  <img
-                    src={inj.player.photo}
-                    alt=""
-                    className="w-8 h-8 rounded-full bg-turf-line object-cover"
+        <div className="grid lg:grid-cols-[1fr_320px] gap-6 items-start">
+          {/* 리그 순위표 */}
+          <div>
+            {standingsData && standingsData.league.standings.length > 0 ? (
+              <div className="bg-turf/40 border border-turf-line/40 rounded-md p-4">
+                <p className="text-sm font-medium mb-3 flex items-center gap-2">
+                  {teamLeague?.name}
+                </p>
+                <StandingsWithFilter
+                  standings={standingsData.league.standings}
+                  highlightTeamIds={[info.team.id]}
+                  nextOpponent={nextOpponent}
+                  showFilter={false}
+                />
+              </div>
+            ) : (
+              <p className="text-floodlight/40 text-sm">순위표 정보가 없습니다.</p>
+            )}
+          </div>
+
+          {/* 우측: 감독 / 부상 / 경기장 */}
+          <div className="space-y-4">
+            {coach && (
+              <div className="bg-turf/40 border border-turf-line/40 rounded-md p-4">
+                <p className="text-sm font-medium mb-3">감독</p>
+                <div className="flex items-center gap-3">
+                  <PlayerAvatar
+                    src={coach.photo}
+                    alt={coach.name}
+                    className="w-11 h-11 rounded-full object-cover bg-turf-line text-sm shrink-0"
                   />
-                  <span className="flex-1 truncate">{inj.player.name}</span>
-                  <span className="text-live-red/80">{inj.reason || inj.type}</span>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
+                  <div>
+                    <p className="text-sm">{coach.name}</p>
+                    <p className="text-xs text-floodlight/40">{coach.nationality}</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
-        {/* 스쿼드 */}
-        <div className="mt-6 space-y-4">
-          {squadByPosition.map((group) => (
-            <div key={group.position} className="bg-turf/40 border-l-2 border-score-amber p-4">
-              <h2 className="text-sm font-display uppercase tracking-wide text-floodlight/60 mb-3">
-                {POSITION_LABEL[group.position] ?? group.position}
-              </h2>
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
-                {group.players.map((p) => (
-                  <Link
-                    key={p.player.id}
-                    href={`/players/${p.player.id}`}
-                    className="flex flex-col items-center text-center hover:opacity-80"
-                  >
-                    <img
-                      src={p.player.photo}
-                      alt=""
-                      className="w-12 h-12 rounded-full bg-turf-line object-cover mb-1"
-                    />
-                    <span className="text-xs text-floodlight/90 truncate w-full">{p.player.name}</span>
-                    <span className="text-[10px] text-floodlight/30">{p.player.age}세</span>
-                  </Link>
-                ))}
+            {uniqueInjuries.length > 0 && (
+              <div className="bg-turf/40 border border-turf-line/40 rounded-md p-4">
+                <p className="text-sm font-medium mb-3">부상/결장 명단</p>
+                <div className="space-y-3">
+                  {uniqueInjuries.slice(0, 8).map((inj) => (
+                    <div key={inj.player.id} className="flex items-center gap-3">
+                      <PlayerAvatar
+                        src={inj.player.photo}
+                        alt={inj.player.name}
+                        className="w-8 h-8 rounded-full object-cover bg-turf-line text-xs shrink-0"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-sm truncate">{inj.player.name}</p>
+                        <p className="text-[11px] text-floodlight/40">{inj.reason}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="bg-turf/40 border border-turf-line/40 rounded-md p-4">
+              <p className="text-sm font-medium mb-3">경기장</p>
+              <p className="text-sm">{info.venue?.name}</p>
+              <p className="text-xs text-floodlight/40 mt-0.5">{info.venue?.city}</p>
+              <div className="flex justify-between text-xs mt-3">
+                <span className="text-floodlight/50">수용 능력</span>
+                <span className="font-data">{info.venue?.capacity?.toLocaleString?.() ?? "-"}</span>
+              </div>
+              <div className="flex justify-between text-xs mt-1.5">
+                <span className="text-floodlight/50">창단</span>
+                <span className="font-data">{info.team.founded}년</span>
               </div>
             </div>
-          ))}
+          </div>
         </div>
+
+        {/* 뉴스 */}
+        {news.length > 0 && (
+          <section className="mt-8">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-display uppercase tracking-wide text-sm text-floodlight/70">뉴스</h2>
+              <Link href={`/teams/${id}/news`} className="text-xs text-floodlight/40 hover:text-score-amber">
+                전체 보기 →
+              </Link>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-x-8 gap-y-4">
+              {news.slice(0, 4).map((a, i) => (
+                <a
+                  key={i}
+                  href={a.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex gap-3 items-start hover:bg-turf-line/20 transition-colors p-1 -m-1"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm text-floodlight/90 leading-snug line-clamp-2">{a.title}</p>
+                    <p className="text-xs text-floodlight/40 mt-1">
+                      {a.source_name} · {new Date(a.pubDate).toLocaleDateString("ko-KR")}
+                    </p>
+                  </div>
+                  {a.image_url && (
+                    <img src={a.image_url} alt="" className="w-24 h-16 object-cover shrink-0 rounded" />
+                  )}
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </main>
   )
