@@ -1,4 +1,5 @@
 import Link from "next/link"
+import PlayerAvatar from "@/components/PlayerAvatar"
 import { KOREAN_PLAYERS_ABROAD } from "@/lib/koreanPlayersAbroad"
 import { MOCK_KOREAN_ABROAD } from "@/lib/mockData"
 
@@ -12,19 +13,26 @@ type PlayerStat = {
   }[]
 }
 
-async function getPlayerStat(playerId: number, season: number): Promise<PlayerStat | null> {
-  const res = await fetch(
-    `https://v3.football.api-sports.io/players?id=${playerId}&season=${season}`,
-    {
-      headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      next: { revalidate: 3600 },
-    }
-  )
-  const data = await res.json()
+async function fetchPlayerStat(playerId: number, season: number, useCache: boolean) {
+  const url = `https://v3.football.api-sports.io/players?id=${playerId}&season=${season}`
+  const res = await fetch(url, {
+    headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
+    ...(useCache ? { next: { revalidate: 300 } } : { cache: "no-store" as const }),
+  })
+  return res.json()
+}
 
-  // 디버깅용 — Vercel 대시보드의 Logs에서 확인
+async function getPlayerStat(playerId: number, season: number): Promise<PlayerStat | null> {
+  let data = await fetchPlayerStat(playerId, season, true)
+
+  // 1차 실패 -> 캐시 없이 즉시 1회 재시도 (일시적 실패가 1시간 캐싱되는 것 방지)
   if (!data.response?.[0]) {
-    console.log(`=== 한국인 해외파 선수 조회 실패: id=${playerId}, season=${season} ===`)
+    console.log(`=== 1차 조회 실패, no-store로 재시도: id=${playerId} ===`)
+    data = await fetchPlayerStat(playerId, season, false)
+  }
+
+  if (!data.response?.[0]) {
+    console.log(`=== 한국인 해외파 선수 조회 최종 실패: id=${playerId}, season=${season} ===`)
     console.log("errors:", data.errors)
     console.log("results:", data.results)
   }
@@ -66,10 +74,10 @@ export default async function KoreanAbroadWidget() {
               href={`/players/${p.player.id}`}
               className="shrink-0 w-40 bg-turf/40 border-l-2 border-score-amber p-4 hover:bg-turf-line/30 transition-colors"
             >
-              <img
+              <PlayerAvatar
                 src={p.player.photo}
-                alt=""
-                className="w-12 h-12 rounded-full bg-turf-line object-cover mb-2"
+                alt={p.player.name}
+                className="w-12 h-12 rounded-full bg-turf-line object-cover mb-2 text-sm"
               />
               <p className="text-sm font-medium text-floodlight truncate">{p.player.name}</p>
               <div className="flex items-center gap-1.5 mt-1">
