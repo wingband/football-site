@@ -1,72 +1,21 @@
 import type { Metadata } from "next"
+import Link from "next/link"
 import { getSeasonYear } from "@/lib/season"
-import { MOCK_PLAYER, MOCK_TROPHIES } from "@/lib/mockData"
+import FollowButton from "@/components/FollowButton"
+import PlayerAvatar from "@/components/PlayerAvatar"
+import {
+  getPlayerData,
+  getPlayerTransfers,
+  getPlayerCareer,
+  getPlayerRecentMatches,
+  getTrophies,
+} from "@/lib/playerData"
 
-type PlayerData = {
-  player: {
-    id: number
-    name: string
-    age: number
-    nationality: string
-    height: string
-    weight: string
-    photo: string
-  }
-  statistics: {
-    team: { name: string; logo: string }
-    league: { name: string; logo: string }
-    games: { appearences: number | null; minutes: number | null; position: string; rating: string | null }
-    goals: { total: number | null; assists: number | null }
-    shots: { total: number | null; on: number | null }
-    passes: { total: number | null; accuracy: number | null }
-    dribbles: { attempts: number | null; success: number | null }
-    duels: { total: number | null; won: number | null }
-    cards: { yellow: number | null; red: number | null }
-  }[]
-}
-
-type Trophy = {
-  league: string
-  country: string
-  season: string
-  place: string
-}
-
-async function getPlayer(playerId: string, season: number): Promise<PlayerData | null> {
-  if (process.env.USE_MOCK_DATA === "true") return MOCK_PLAYER
-
-  const res = await fetch(
-    `https://v3.football.api-sports.io/players?id=${playerId}&season=${season}`,
-    {
-      headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      next: { revalidate: 3600 },
-    }
-  )
-  const data = await res.json()
-  return data.response?.[0] ?? null
-}
-
-async function getTrophies(playerId: string): Promise<Trophy[]> {
-  if (process.env.USE_MOCK_DATA === "true") return MOCK_TROPHIES
-
-  const res = await fetch(
-    `https://v3.football.api-sports.io/trophies?player=${playerId}`,
-    {
-      headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      next: { revalidate: 3600 },
-    }
-  )
-  const data = await res.json()
-  return data.response ?? []
-}
-
-function StatBox({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="bg-turf/40 border-l-2 border-score-amber p-4 text-center">
-      <p className="font-display text-2xl text-score-amber">{value}</p>
-      <p className="text-xs text-floodlight/40 mt-1">{label}</p>
-    </div>
-  )
+const POSITION_KR: Record<string, string> = {
+  Goalkeeper: "골키퍼",
+  Defender: "수비수",
+  Midfielder: "미드필더",
+  Attacker: "공격수",
 }
 
 export async function generateMetadata({
@@ -75,19 +24,24 @@ export async function generateMetadata({
   params: Promise<{ id: string }>
 }): Promise<Metadata> {
   const { id } = await params
-  let data = await getPlayer(id, getSeasonYear("England"))
-  if (!data) {
-    data = await getPlayer(id, new Date().getFullYear())
-  }
+  let data = await getPlayerData(id, getSeasonYear("England"))
+  if (!data) data = await getPlayerData(id, new Date().getFullYear())
 
-  if (!data) {
-    return { title: "선수 정보를 찾을 수 없습니다" }
-  }
+  if (!data) return { title: "선수 정보를 찾을 수 없습니다" }
 
   return {
     title: `${data.player.name} 선수 정보 및 통계`,
     description: `${data.player.name}(${data.player.nationality})의 출전 기록, 골, 도움, 평점 등 시즌 통계를 확인하세요.`,
   }
+}
+
+function StatRow({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="flex items-center justify-between py-2 border-b border-turf-line/20 last:border-b-0 text-sm">
+      <span className="text-floodlight/50">{label}</span>
+      <span className="font-data font-medium">{value}</span>
+    </div>
+  )
 }
 
 export default async function PlayerPage({
@@ -97,10 +51,9 @@ export default async function PlayerPage({
 }) {
   const { id } = await params
 
-  let data = await getPlayer(id, getSeasonYear("England"))
-  if (!data) {
-    data = await getPlayer(id, new Date().getFullYear())
-  }
+  const season = getSeasonYear("England")
+  let data = await getPlayerData(id, season)
+  if (!data) data = await getPlayerData(id, new Date().getFullYear())
 
   if (!data) {
     return (
@@ -115,95 +68,277 @@ export default async function PlayerPage({
     (a, b) => (b.games.appearences ?? 0) - (a.games.appearences ?? 0)
   )[0]
 
-  const trophies = await getTrophies(id)
+  const [transfers, career, recentMatches, trophies] = await Promise.all([
+    getPlayerTransfers(id),
+    stat ? getPlayerCareer(id, season) : Promise.resolve([]),
+    stat ? getPlayerRecentMatches(id, stat.team.id, season, 8) : Promise.resolve([]),
+    getTrophies(id),
+  ])
+
+  const latestTransfer = [...transfers]
+    .flatMap((t) => t.transfers.map((tr) => ({ ...tr, update: t.update })))
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]
+
+  // 국가대표 이력(팀명이 국적과 같은 항목)과 클럽 경력을 분리
+  const nationalCareer = career.filter((c) => c.teamName === player.nationality)
+  const clubCareer = career.filter((c) => c.teamName !== player.nationality)
+
   const winnerTrophies = trophies.filter((t) => t.place.toLowerCase().includes("winner"))
-  const otherTrophies = trophies.filter((t) => !t.place.toLowerCase().includes("winner"))
+
+  const ageText = player.birth?.date
+    ? `${player.age}세 (${new Date(player.birth.date).toLocaleDateString("ko-KR")})`
+    : `${player.age}세`
+
+  const aboutText = stat
+    ? `${player.name}은(는) ${player.nationality} 국적의 ${player.age}세 선수로, 현재 ${stat.team.name} 소속 ${POSITION_KR[stat.games.position] ?? stat.games.position}입니다. ${stat.league.name} ${season} 시즌 ${stat.games.appearences ?? 0}경기에 출전해 ${stat.goals.total ?? 0}골 ${stat.goals.assists ?? 0}도움을 기록했고, 평균 평점은 ${stat.games.rating ?? "-"}입니다.`
+    : `${player.name}은(는) ${player.nationality} 국적의 ${player.age}세 선수입니다.`
 
   return (
-    <main className="min-h-screen bg-pitch-night text-floodlight p-8 font-sans">
-      <div className="max-w-2xl mx-auto">
-        <div className="flex items-center gap-5 bg-turf/40 border-l-2 border-score-amber p-6">
-          <img
-            src={player.photo}
-            alt=""
-            className="w-24 h-24 rounded-full bg-turf-line object-cover border-2 border-score-amber"
-          />
-          <div>
-            <h1 className="font-display uppercase text-xl">{player.name}</h1>
-            <p className="text-xs text-floodlight/40 mt-1">
-              {player.nationality} · {player.age}세
+    <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
+      <div className="max-w-3xl mx-auto pb-16 px-4">
+        {/* 헤더 */}
+        <div className="flex items-center justify-between gap-3 pt-8 pb-6 border-b border-turf-line/40">
+          <div className="flex items-center gap-4 min-w-0">
+            <PlayerAvatar
+              src={player.photo}
+              alt={player.name}
+              className="w-16 h-16 rounded-full object-cover bg-turf-line text-lg shrink-0"
+            />
+            <div className="min-w-0">
+              <h1 className="font-display uppercase text-xl truncate">{player.name}</h1>
+              {stat && (
+                <Link
+                  href={`/teams/${stat.team.id}`}
+                  className="flex items-center gap-2 mt-1 hover:text-score-amber"
+                >
+                  <img src={stat.team.logo} alt="" className="w-4 h-4" />
+                  <span className="text-sm text-floodlight/70">{stat.team.name}</span>
+                </Link>
+              )}
+            </div>
+          </div>
+          <FollowButton />
+        </div>
+
+        {/* 최신 이적 배너 */}
+        {latestTransfer && (
+          <div className="flex items-center gap-2 text-xs text-floodlight/50 py-3 border-b border-turf-line/30">
+            <img src={latestTransfer.teams.out.logo} alt="" className="w-4 h-4" />
+            <span>{latestTransfer.teams.out.name}에서 이적</span>
+            {latestTransfer.type && <span className="text-score-amber">({latestTransfer.type})</span>}
+            <span className="ml-auto">
+              {new Date(latestTransfer.date).toLocaleDateString("ko-KR")}
+            </span>
+          </div>
+        )}
+
+        {/* 기본 정보 */}
+        <div className="grid sm:grid-cols-2 gap-4 py-6 border-b border-turf-line/30">
+          <div className="space-y-2 text-sm">
+            {player.height && (
+              <div className="flex justify-between">
+                <span className="text-floodlight/40">키</span>
+                <span className="font-data">{player.height}</span>
+              </div>
+            )}
+            {player.weight && (
+              <div className="flex justify-between">
+                <span className="text-floodlight/40">몸무게</span>
+                <span className="font-data">{player.weight}</span>
+              </div>
+            )}
+            <div className="flex justify-between">
+              <span className="text-floodlight/40">나이</span>
+              <span className="font-data">{ageText}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-floodlight/40">국적</span>
+              <span>{player.nationality}</span>
+            </div>
+          </div>
+          {stat && (
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-floodlight/40">포지션</span>
+                <span>{POSITION_KR[stat.games.position] ?? stat.games.position}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-floodlight/40">등번호</span>
+                <span className="font-data">{stat.games.number ?? "-"}</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 시즌 성적 요약 */}
+        {stat && (
+          <div className="py-6 border-b border-turf-line/30">
+            <p className="text-sm font-medium mb-4">
+              {stat.league.name} {season}/{season + 1} 시즌
             </p>
-            {stat && (
-              <div className="flex items-center gap-2 mt-2">
-                <img src={stat.team.logo} alt="" className="w-4 h-4" />
-                <span className="text-sm text-floodlight/80">{stat.team.name}</span>
-                <span className="text-xs text-floodlight/30">· {stat.games.position}</span>
+            <div className="grid grid-cols-4 gap-3 text-center">
+              <div>
+                <p className="font-display text-xl text-score-amber">{stat.goals.total ?? 0}</p>
+                <p className="text-[11px] text-floodlight/40 mt-1">득점</p>
+              </div>
+              <div>
+                <p className="font-display text-xl text-score-amber">{stat.goals.assists ?? 0}</p>
+                <p className="text-[11px] text-floodlight/40 mt-1">어시스트</p>
+              </div>
+              <div>
+                <p className="font-display text-xl">{stat.games.lineups ?? "-"}</p>
+                <p className="text-[11px] text-floodlight/40 mt-1">선발</p>
+              </div>
+              <div>
+                <p className="font-display text-xl">{stat.games.appearences ?? "-"}</p>
+                <p className="text-[11px] text-floodlight/40 mt-1">경기</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-4 gap-3 text-center mt-4">
+              <div>
+                <p className="font-display text-xl">{stat.games.minutes ?? "-"}</p>
+                <p className="text-[11px] text-floodlight/40 mt-1">출전 시간</p>
+              </div>
+              <div>
+                <p className="font-display text-xl bg-green-600/20 text-green-400 rounded inline-block px-2">
+                  {stat.games.rating ?? "-"}
+                </p>
+                <p className="text-[11px] text-floodlight/40 mt-1">평점</p>
+              </div>
+              <div>
+                <p className="font-display text-xl">🟨 {stat.cards.yellow ?? 0}</p>
+                <p className="text-[11px] text-floodlight/40 mt-1">경고</p>
+              </div>
+              <div>
+                <p className="font-display text-xl">🟥 {stat.cards.red ?? 0}</p>
+                <p className="text-[11px] text-floodlight/40 mt-1">퇴장</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 최근 경기 */}
+        {recentMatches.length > 0 && (
+          <div className="py-6 border-b border-turf-line/30">
+            <p className="text-sm font-medium mb-3">최근 경기</p>
+            <div className="divide-y divide-turf-line/20">
+              {recentMatches.map((m) => (
+                <Link
+                  key={m.fixture.id}
+                  href={`/matches/${m.fixture.id}`}
+                  className="flex items-center gap-3 py-2.5 hover:bg-turf-line/20 transition-colors -mx-1 px-1"
+                >
+                  <span className="text-[11px] text-floodlight/40 w-16 shrink-0">
+                    {new Date(m.fixture.date).toLocaleDateString("ko-KR", { month: "numeric", day: "numeric" })}
+                  </span>
+                  <img src={m.teams.home.logo} alt="" className="w-4 h-4 shrink-0" />
+                  <span className="text-xs flex-1 truncate">
+                    {m.teams.home.name} {m.goals.home}-{m.goals.away} {m.teams.away.name}
+                  </span>
+                  <img src={m.teams.away.logo} alt="" className="w-4 h-4 shrink-0" />
+                  <span className="text-[11px] text-floodlight/40 w-10 text-right shrink-0">
+                    {m.stat.games.minutes ?? "-"}&apos;
+                  </span>
+                  {(m.stat.goals.total ?? 0) > 0 && <span className="shrink-0">⚽{m.stat.goals.total}</span>}
+                  {(m.stat.goals.assists ?? 0) > 0 && <span className="shrink-0">🅰️{m.stat.goals.assists}</span>}
+                  {m.stat.games.rating && (
+                    <span className="text-xs font-data font-bold bg-green-600/20 text-green-400 px-1.5 py-0.5 rounded shrink-0">
+                      {m.stat.games.rating}
+                    </span>
+                  )}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 경력 */}
+        {(clubCareer.length > 0 || nationalCareer.length > 0) && (
+          <div className="py-6 border-b border-turf-line/30">
+            <p className="text-sm font-medium mb-3">경력</p>
+            {clubCareer.length > 0 && (
+              <div className="mb-4">
+                <p className="text-xs text-floodlight/40 mb-2">클럽</p>
+                <div className="divide-y divide-turf-line/20">
+                  {clubCareer.map((c) => (
+                    <Link
+                      key={c.teamId}
+                      href={`/teams/${c.teamId}`}
+                      className="flex items-center gap-3 py-2 hover:bg-turf-line/20 transition-colors -mx-1 px-1"
+                    >
+                      <img src={c.teamLogo} alt="" className="w-6 h-6 shrink-0" />
+                      <span className="text-sm flex-1 truncate">{c.teamName}</span>
+                      <span className="text-xs text-floodlight/40 font-data shrink-0">
+                        {Math.min(...c.seasons)}-{Math.max(...c.seasons) + 1}
+                      </span>
+                      <span className="text-xs text-floodlight/30 font-data w-16 text-right shrink-0">
+                        {c.apps}경기 {c.goals}골
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+            {nationalCareer.length > 0 && (
+              <div>
+                <p className="text-xs text-floodlight/40 mb-2">국가대표</p>
+                <div className="divide-y divide-turf-line/20">
+                  {nationalCareer.map((c) => (
+                    <div key={c.teamId} className="flex items-center gap-3 py-2">
+                      <img src={c.teamLogo} alt="" className="w-6 h-6 shrink-0" />
+                      <span className="text-sm flex-1 truncate">{c.teamName}</span>
+                      <span className="text-xs text-floodlight/30 font-data w-16 text-right shrink-0">
+                        {c.apps}경기 {c.goals}골
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
-        </div>
-
-        {stat && (
-          <>
-            <div className="grid grid-cols-4 gap-3 mt-6">
-              <StatBox label="출전" value={stat.games.appearences ?? "-"} />
-              <StatBox label="골" value={stat.goals.total ?? 0} />
-              <StatBox label="도움" value={stat.goals.assists ?? 0} />
-              <StatBox label="평점" value={stat.games.rating ?? "-"} />
-            </div>
-
-            <div className="bg-turf/40 border-l-2 border-score-amber p-5 mt-4">
-              <h2 className="text-sm font-display uppercase tracking-wide text-floodlight/60 mb-4">
-                {stat.league.name} 시즌 세부 기록
-              </h2>
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-floodlight/40">출전 시간</span>
-                  <span className="text-floodlight/90 font-data">{stat.games.minutes ?? "-"}분</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-floodlight/40">슈팅 (유효)</span>
-                  <span className="text-floodlight/90 font-data">
-                    {stat.shots.total ?? "-"} ({stat.shots.on ?? "-"})
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-floodlight/40">패스 (성공률)</span>
-                  <span className="text-floodlight/90 font-data">
-                    {stat.passes.total ?? "-"} ({stat.passes.accuracy ?? "-"}%)
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-floodlight/40">드리블 시도 (성공)</span>
-                  <span className="text-floodlight/90 font-data">
-                    {stat.dribbles.attempts ?? "-"} ({stat.dribbles.success ?? "-"})
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-floodlight/40">듀얼 시도 (승리)</span>
-                  <span className="text-floodlight/90 font-data">
-                    {stat.duels.total ?? "-"} ({stat.duels.won ?? "-"})
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-floodlight/40">경고 / 퇴장</span>
-                  <span className="text-floodlight/90 font-data">
-                    🟨 {stat.cards.yellow ?? 0} · 🟥 {stat.cards.red ?? 0}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </>
         )}
 
-        {trophies.length > 0 && (
-          <div className="bg-turf/40 border-l-2 border-score-amber p-5 mt-4">
-            <h2 className="text-sm font-display uppercase tracking-wide text-floodlight/60 mb-4">
-              트로피
-            </h2>
+        {/* 상세 시즌 통계 */}
+        {stat && (
+          <div className="py-6 border-b border-turf-line/30">
+            <p className="text-sm font-medium mb-4">시즌 상세 통계</p>
+            <div className="grid sm:grid-cols-2 gap-x-8">
+              <div>
+                <p className="text-xs text-floodlight/40 mb-1">슈팅</p>
+                <StatRow label="슈팅" value={stat.shots.total ?? "-"} />
+                <StatRow label="유효 슈팅" value={stat.shots.on ?? "-"} />
+              </div>
+              <div>
+                <p className="text-xs text-floodlight/40 mb-1 mt-4 sm:mt-0">패스</p>
+                <StatRow label="패스" value={stat.passes.total ?? "-"} />
+                <StatRow label="키패스" value={stat.passes.key ?? "-"} />
+                <StatRow label="패스 성공률" value={stat.passes.accuracy ? `${stat.passes.accuracy}%` : "-"} />
+              </div>
+              <div>
+                <p className="text-xs text-floodlight/40 mb-1 mt-4">점유</p>
+                <StatRow label="듀얼 시도" value={stat.duels.total ?? "-"} />
+                <StatRow label="듀얼 승리" value={stat.duels.won ?? "-"} />
+                <StatRow label="드리블 시도" value={stat.dribbles.attempts ?? "-"} />
+                <StatRow label="드리블 성공" value={stat.dribbles.success ?? "-"} />
+              </div>
+              <div>
+                <p className="text-xs text-floodlight/40 mb-1 mt-4">수비/반칙</p>
+                <StatRow label="태클" value={stat.tackles.total ?? "-"} />
+                <StatRow label="인터셉트" value={stat.tackles.interceptions ?? "-"} />
+                <StatRow label="파울 유도" value={stat.fouls.drawn ?? "-"} />
+                <StatRow label="파울" value={stat.fouls.committed ?? "-"} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 트로피 */}
+        {winnerTrophies.length > 0 && (
+          <div className="py-6 border-b border-turf-line/30">
+            <p className="text-sm font-medium mb-3">트로피</p>
             <div className="space-y-2">
-              {winnerTrophies.map((t, i) => (
-                <div key={`w-${i}`} className="flex items-center gap-2 text-sm">
+              {winnerTrophies.slice(0, 8).map((t, i) => (
+                <div key={i} className="flex items-center gap-2 text-sm">
                   <span className="text-score-amber">🏆</span>
                   <span className="flex-1 text-floodlight/90">
                     {t.league} ({t.country})
@@ -211,18 +346,15 @@ export default async function PlayerPage({
                   <span className="text-xs text-floodlight/40 font-data">{t.season}</span>
                 </div>
               ))}
-              {otherTrophies.slice(0, 5).map((t, i) => (
-                <div key={`o-${i}`} className="flex items-center gap-2 text-sm text-floodlight/50">
-                  <span>🥈</span>
-                  <span className="flex-1">
-                    {t.league} ({t.country}) · {t.place}
-                  </span>
-                  <span className="text-xs text-floodlight/30 font-data">{t.season}</span>
-                </div>
-              ))}
             </div>
           </div>
         )}
+
+        {/* About */}
+        <div className="py-6">
+          <p className="text-sm font-medium mb-3">소개</p>
+          <p className="text-sm text-floodlight/60 leading-relaxed">{aboutText}</p>
+        </div>
       </div>
     </main>
   )

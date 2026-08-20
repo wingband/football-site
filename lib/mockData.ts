@@ -429,6 +429,7 @@ export const MOCK_PLAYER = {
     firstname: "Erling",
     lastname: "Haaland",
     age: 25,
+    birth: { date: "2000-07-21", country: "Norway" },
     nationality: "Norway",
     height: "195 cm",
     weight: "88 kg",
@@ -436,18 +437,57 @@ export const MOCK_PLAYER = {
   },
   statistics: [
     {
-      team: { name: "Manchester City", logo: "https://media.api-sports.io/football/teams/50.png" },
-      league: { name: "Premier League", logo: "https://media.api-sports.io/football/leagues/39.png" },
-      games: { appearences: 8, minutes: 690, position: "Attacker", rating: "8.1" },
+      team: { id: 50, name: "Manchester City", logo: "https://media.api-sports.io/football/teams/50.png" },
+      league: { id: 39, name: "Premier League", logo: "https://media.api-sports.io/football/leagues/39.png", country: "England" },
+      games: { appearences: 8, lineups: 8, minutes: 690, position: "Attacker", rating: "8.1", captain: false },
+      substitutes: { in: 0, out: 2, bench: 0 },
       goals: { total: 11, assists: 3, conceded: 0, saves: null },
       shots: { total: 32, on: 19 },
-      passes: { total: 120, accuracy: 78 },
-      dribbles: { attempts: 14, success: 9 },
+      passes: { total: 120, key: 8, accuracy: 78 },
+      tackles: { total: 6, blocks: 1, interceptions: 2 },
       duels: { total: 60, won: 34 },
-      cards: { yellow: 1, red: 0 },
+      dribbles: { attempts: 14, success: 9, past: null },
+      fouls: { drawn: 12, committed: 5 },
+      cards: { yellow: 1, yellowred: 0, red: 0 },
+      penalty: { won: 1, committed: null, scored: 1, missed: 0, saved: null },
     },
   ],
 }
+
+// 선수 이적 이력 목업
+export const MOCK_PLAYER_TRANSFERS = [
+  {
+    player: { id: 1100, name: "Erling Haaland" },
+    update: "2022-07-01",
+    transfers: [
+      {
+        date: "2022-07-01",
+        type: "€60M",
+        teams: {
+          in: { id: 50, name: "Manchester City", logo: "https://media.api-sports.io/football/teams/50.png" },
+          out: { id: 165, name: "Borussia Dortmund", logo: "https://media.api-sports.io/football/teams/165.png" },
+        },
+      },
+    ],
+  },
+]
+
+// 선수 최근 경기 목업 (팀 최근 경기 + 이 선수의 개인 기록을 합쳐놓은 형태)
+export const MOCK_PLAYER_RECENT_MATCHES = [
+  {
+    fixture: { id: 1570334, date: new Date().toISOString() },
+    teams: {
+      home: { name: "Manchester City", logo: "https://media.api-sports.io/football/teams/50.png" },
+      away: { name: "Arsenal", logo: "https://media.api-sports.io/football/teams/42.png" },
+    },
+    goals: { home: 2, away: 1 },
+    stat: {
+      games: { minutes: 90, rating: "8.1" },
+      goals: { total: 1, assists: 0 },
+      cards: { yellow: 0, red: 0 },
+    },
+  },
+]
 
 // 검색 결과용 목업 데이터
 export const MOCK_SEARCH_RESULTS = {
