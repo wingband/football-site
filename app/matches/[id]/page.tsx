@@ -14,6 +14,7 @@ import TeamRecentForm from "@/components/TeamRecentForm"
 import NextMatchCard from "@/components/NextMatchCard"
 import MatchNewsCard from "@/components/MatchNewsCard"
 import H2HPanel from "@/components/H2HPanel"
+import MatchSidebar from "@/components/MatchSidebar"
 import { getSeasonYear } from "@/lib/season"
 import {
   MOCK_MATCH_DETAIL,
@@ -30,7 +31,7 @@ type FixtureDetail = {
     id: number
     date: string
     status: { long: string; short?: string; elapsed?: number | null }
-    venue: { name: string; city: string }
+    venue: { id?: number | null; name: string; city: string }
     referee: string | null
   }
   teams: {
@@ -195,6 +196,117 @@ async function getMatchNews(homeTeam: string, awayTeam: string): Promise<NewsArt
   return data.results ?? []
 }
 
+type VenueInfo = {
+  name: string
+  city: string | null
+  capacity: number | null
+  surface: string | null
+  image: string | null
+} | null
+
+// 경기장 상세 정보 (수용 능력, 표면 등)
+async function getVenueInfo(venueId: number | null | undefined, fallbackName: string, fallbackCity: string): Promise<VenueInfo> {
+  if (!venueId || process.env.USE_MOCK_DATA === "true") {
+    return { name: fallbackName, city: fallbackCity, capacity: null, surface: null, image: null }
+  }
+
+  const res = await fetch(`https://v3.football.api-sports.io/venues?id=${venueId}`, {
+    headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
+    next: { revalidate: 86400 },
+  })
+  const data = await res.json()
+  const v = data.response?.[0]
+  if (!v) return { name: fallbackName, city: fallbackCity, capacity: null, surface: null, image: null }
+  return {
+    name: v.name ?? fallbackName,
+    city: v.city ?? fallbackCity,
+    capacity: v.capacity ?? null,
+    surface: v.surface ?? null,
+    image: v.image ?? null,
+  }
+}
+
+// 같은 라운드의 다른 경기들 (사이드바 위젯용)
+async function getRoundFixtures(leagueId: number, season: number, round: string): Promise<TeamFixture[]> {
+  if (process.env.USE_MOCK_DATA === "true") return MOCK_TEAM_RECENT_FIXTURES
+
+  const res = await fetch(
+    `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${season}&round=${encodeURIComponent(round)}`,
+    {
+      headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
+      next: { revalidate: 3600 },
+    }
+  )
+  const data = await res.json()
+  return data.response ?? []
+}
+
+// 이미 가져온 상대전적/최근 폼 데이터로 인사이트 문장 생성 (실데이터 기반, AI 아님)
+function buildInsights(
+  h2h: H2HMatch[],
+  homeName: string,
+  awayName: string,
+  homeId: number,
+  awayId: number,
+  homeRecent: TeamFixture[],
+  awayRecent: TeamFixture[],
+  currentFixtureId: number
+): { side: "home" | "away"; text: string }[] {
+  const insights: { side: "home" | "away"; text: string }[] = []
+
+  // 상대전적 요약 (홈팀 관점)
+  let hWins = 0, aWins = 0, draws = 0
+  for (const m of h2h) {
+    if (m.fixture.id === currentFixtureId) continue
+    if (m.goals.home === null || m.goals.away === null) continue
+    if (m.goals.home === m.goals.away) { draws++; continue }
+    const winner = m.goals.home > m.goals.away ? m.teams.home.name : m.teams.away.name
+    if (winner === homeName) hWins++
+    else if (winner === awayName) aWins++
+  }
+  const h2hTotal = hWins + aWins + draws
+  if (h2hTotal > 0) {
+    insights.push({
+      side: "home",
+      text: `${homeName}은(는) ${awayName}과(와)의 최근 상대전적 ${h2hTotal}경기에서 ${hWins}승 ${draws}무 ${aWins}패를 기록 중입니다.`,
+    })
+  }
+
+  // 팀별 최근 폼 (현재 경기 제외 최근 5경기)
+  const formOf = (teamId: number, fixtures: TeamFixture[]) => {
+    const rows = fixtures.filter((f) => f.fixture.id !== currentFixtureId).slice(0, 5)
+    let w = 0, d = 0, l = 0, goals = 0
+    for (const f of rows) {
+      if (f.goals.home === null || f.goals.away === null) continue
+      const isHome = f.teams.home.id === teamId
+      const own = isHome ? f.goals.home : f.goals.away
+      const opp = isHome ? f.goals.away : f.goals.home
+      goals += own
+      if (own > opp) w++
+      else if (own < opp) l++
+      else d++
+    }
+    return { n: rows.length, w, d, l, goals }
+  }
+
+  const hf = formOf(homeId, homeRecent)
+  if (hf.n > 0) {
+    insights.push({
+      side: "home",
+      text: `${homeName}은(는) 최근 ${hf.n}경기에서 ${hf.w}승 ${hf.d}무 ${hf.l}패, ${hf.goals}골을 기록했습니다.`,
+    })
+  }
+  const af = formOf(awayId, awayRecent)
+  if (af.n > 0) {
+    insights.push({
+      side: "away",
+      text: `${awayName}은(는) 최근 ${af.n}경기에서 ${af.w}승 ${af.d}무 ${af.l}패, ${af.goals}골을 기록했습니다.`,
+    })
+  }
+
+  return insights
+}
+
 function getTopRatedPlayers(playerStats: PlayerStat[], count: number) {
   const all = playerStats.flatMap((team) =>
     team.players.map((p) => ({
@@ -270,6 +382,8 @@ export default async function MatchDetailPage({
     homeNextFixtureArr,
     awayNextFixtureArr,
     newsArticles,
+    venueInfo,
+    roundFixtures,
   ] = await Promise.all([
     apiFetch(`/fixtures/statistics?fixture=${id}`) as Promise<Statistic[]>,
     apiFetch(`/fixtures/events?fixture=${id}`) as Promise<MatchEvent[]>,
@@ -283,6 +397,10 @@ export default async function MatchDetailPage({
     apiFetch(`/fixtures?team=${match.teams.home.id}&next=1`) as Promise<TeamFixture[]>,
     apiFetch(`/fixtures?team=${match.teams.away.id}&next=1`) as Promise<TeamFixture[]>,
     getMatchNews(match.teams.home.name, match.teams.away.name),
+    getVenueInfo(match.fixture.venue?.id, match.fixture.venue?.name ?? "", match.fixture.venue?.city ?? ""),
+    match.league.round
+      ? getRoundFixtures(match.league.id, season, match.league.round)
+      : Promise.resolve([] as TeamFixture[]),
   ])
 
   const statsSummary = stats.length === 2
@@ -309,6 +427,17 @@ export default async function MatchDetailPage({
   const topPlayers = getTopRatedPlayers(playerStats, 3)
   const prediction = predictions?.[0]?.predictions
   const isLive = LIVE_CODES.includes(match.fixture.status.short ?? "")
+
+  const insights = buildInsights(
+    h2h,
+    match.teams.home.name,
+    match.teams.away.name,
+    match.teams.home.id,
+    match.teams.away.id,
+    homeRecentFixtures,
+    awayRecentFixtures,
+    match.fixture.id
+  )
 
   const dateText = new Date(match.fixture.date).toLocaleString("ko-KR", {
     month: "long",
@@ -487,7 +616,8 @@ export default async function MatchDetailPage({
 
   return (
     <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
-      <div className="max-w-2xl mx-auto pb-16">
+      <div className="max-w-5xl mx-auto pb-16 lg:grid lg:grid-cols-[1fr_320px] lg:gap-6 lg:items-start lg:px-4">
+      <div className="max-w-2xl mx-auto lg:mx-0 lg:max-w-none">
         {/* 상단 바: 뒤로가기 / 리그명+라운드 / 팔로우 */}
         <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-turf-line/60">
           <Link href="/matches" className="flex items-center gap-1.5 text-floodlight/70 hover:text-floodlight shrink-0">
@@ -566,6 +696,33 @@ export default async function MatchDetailPage({
           stats={statsContent}
           h2h={h2hContent}
         />
+      </div>
+
+      {/* 우측 사이드바 (모바일에서는 본문 아래로) */}
+      <aside className="max-w-2xl mx-auto lg:mx-0 lg:max-w-none px-4 lg:px-0 mt-6 lg:mt-8">
+        <MatchSidebar
+          homeTeamName={match.teams.home.name}
+          awayTeamName={match.teams.away.name}
+          homeTeamLogo={match.teams.home.logo}
+          awayTeamLogo={match.teams.away.logo}
+          venue={venueInfo}
+          leagueName={match.league.name}
+          leagueLogo={match.league.logo}
+          round={match.league.round}
+          roundFixtures={roundFixtures}
+          currentFixtureId={match.fixture.id}
+          insights={insights}
+          prediction={
+            prediction
+              ? {
+                  home: prediction.percent.home,
+                  draw: prediction.percent.draw,
+                  away: prediction.percent.away,
+                }
+              : null
+          }
+        />
+      </aside>
       </div>
     </main>
   )
