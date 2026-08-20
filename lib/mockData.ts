@@ -710,3 +710,74 @@ export const MOCK_NEXT_FIXTURE = [
     league: { name: "Premier League", logo: "https://media.api-sports.io/football/leagues/39.png" },
   },
 ]
+
+
+// 팀 이적 기록 목업 데이터 (/transfers?team= 응답 구조)
+export const MOCK_TEAM_TRANSFERS = [
+  {
+    player: { id: 5001, name: "Cristian Romero" },
+    update: "2026-08-15",
+    transfers: [
+      {
+        date: "2026-08-15",
+        type: "€ 40M",
+        teams: {
+          in: { id: 530, name: "Atletico Madrid", logo: "https://media.api-sports.io/football/teams/530.png" },
+          out: { id: 47, name: "Tottenham", logo: "https://media.api-sports.io/football/teams/47.png" },
+        },
+      },
+    ],
+  },
+  {
+    player: { id: 5002, name: "Nahuel Molina" },
+    update: "2026-08-12",
+    transfers: [
+      {
+        date: "2026-08-12",
+        type: "€ 18M",
+        teams: {
+          in: { id: 497, name: "Roma", logo: "https://media.api-sports.io/football/teams/497.png" },
+          out: { id: 530, name: "Atletico Madrid", logo: "https://media.api-sports.io/football/teams/530.png" },
+        },
+      },
+    ],
+  },
+]
+
+// 팀이 속한 리그 정보 목업 (/leagues?team=&current=true)
+export const MOCK_TEAM_LEAGUE = { league: { id: 39, name: "Premier League", season: 2026 } }
+
+
+// 팀 페이지 "플레이어 통계" 탭 목업 데이터
+export const MOCK_TEAM_PLAYER_STATS = [
+  {
+    player: { id: 1338192, name: "Pablo Barrios", photo: "https://media.api-sports.io/football/players/1338192.png" },
+    statistics: [
+      { games: { appearences: 1, minutes: 90, rating: "6.80" }, goals: { total: 0, assists: 0 } },
+    ],
+  },
+  {
+    player: { id: 727897, name: "Dávid Hancko", photo: "https://media.api-sports.io/football/players/727897.png" },
+    statistics: [
+      { games: { appearences: 1, minutes: 90, rating: "8.66" }, goals: { total: 0, assists: 1 } },
+    ],
+  },
+  {
+    player: { id: 927, name: "Kang-In Lee", photo: "https://media.api-sports.io/football/players/927.png" },
+    statistics: [
+      { games: { appearences: 1, minutes: 33, rating: "7.87" }, goals: { total: 1, assists: 0 } },
+    ],
+  },
+  {
+    player: { id: 942372, name: "Álex Baena", photo: "https://media.api-sports.io/football/players/942372.png" },
+    statistics: [
+      { games: { appearences: 1, minutes: 33, rating: "7.50" }, goals: { total: 1, assists: 0 } },
+    ],
+  },
+  {
+    player: { id: 690516, name: "Ademola Lookman", photo: "https://media.api-sports.io/football/players/690516.png" },
+    statistics: [
+      { games: { appearences: 1, minutes: 90, rating: "6.80" }, goals: { total: 0, assists: 0 } },
+    ],
+  },
+]
