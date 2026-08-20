@@ -8,6 +8,7 @@ import MatchTabs from "@/components/MatchTabs"
 import StandingsTable from "@/components/StandingsTable"
 import MatchReviewCard from "@/components/MatchReviewCard"
 import KeyStatsPanel from "@/components/KeyStatsPanel"
+import MatchStatsPanel from "@/components/MatchStatsPanel"
 import MatchEventsTimeline from "@/components/MatchEventsTimeline"
 import TeamRecentForm from "@/components/TeamRecentForm"
 import NextMatchCard from "@/components/NextMatchCard"
@@ -458,35 +459,8 @@ export default async function MatchDetailPage({
 
   const statsContent =
     stats.length === 2 ? (
-      <Section title="주요 통계">
-        <div className="space-y-5">
-          {stats[0].statistics.map((stat, i) => {
-            const homeVal = Number(stat.value) || 0
-            const awayVal = Number(stats[1].statistics[i]?.value) || 0
-            const total = homeVal + awayVal || 1
-            const homePct = (homeVal / total) * 100
-
-            return (
-              <div key={stat.type}>
-                <div className="flex justify-between text-sm mb-1.5 font-data">
-                  <span className="font-medium">{stat.value ?? 0}</span>
-                  <span className="text-floodlight/40 font-sans">{stat.type}</span>
-                  <span className="font-medium">{stats[1].statistics[i]?.value ?? 0}</span>
-                </div>
-                <div className="w-full bg-floodlight/10 h-1.5 flex overflow-hidden">
-                  <div
-                    className="bg-score-amber h-1.5 transition-all duration-1000"
-                    style={{ width: `${homePct}%` }}
-                  />
-                  <div
-                    className="bg-floodlight/25 h-1.5 transition-all duration-1000"
-                    style={{ width: `${100 - homePct}%` }}
-                  />
-                </div>
-              </div>
-            )
-          })}
-        </div>
+      <Section title="통계">
+        <MatchStatsPanel stats={stats} />
       </Section>
     ) : (
       <p className="text-floodlight/40 text-sm py-6 text-center">통계 정보가 없습니다.</p>
