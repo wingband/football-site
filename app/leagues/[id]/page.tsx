@@ -1,110 +1,17 @@
 import Link from "next/link"
 import type { Metadata } from "next"
 import { getSeasonYear } from "@/lib/season"
-import FollowButton from "@/components/FollowButton"
-import StandingsTable from "@/components/StandingsTable"
-import PlayerAvatar from "@/components/PlayerAvatar"
-import { MOCK_STANDINGS, MOCK_SEASON_FIXTURES, MOCK_TOP_SCORERS } from "@/lib/mockData"
-
-type StandingRow = {
-  rank: number
-  team: { id: number; name: string; logo: string }
-  points: number
-  goalsDiff: number
-  group: string
-  form: string | null
-  description?: string | null
-  all: {
-    played: number
-    win: number
-    draw: number
-    lose: number
-    goals: { for: number; against: number }
-  }
-}
-
-type LeagueResponse = {
-  league: {
-    id: number
-    name: string
-    country: string
-    logo: string
-    season: number
-    standings: StandingRow[][]
-  }
-}
-
-type LeagueFixture = {
-  fixture: { id: number; date: string; status: { long?: string; short: string } }
-  teams: {
-    home: { name: string; logo: string }
-    away: { name: string; logo: string }
-  }
-  goals: { home: number | null; away: number | null }
-}
-
-type ScorerEntry = {
-  player: { id: number; name: string; photo: string }
-  statistics: {
-    team: { name: string; logo: string }
-    goals: { total: number | null; assists: number | null }
-    games: { appearences: number | null }
-  }[]
-}
+import LeagueHeader from "@/components/LeagueHeader"
+import StandingsWithFilter from "@/components/StandingsWithFilter"
+import {
+  getLeagueStandings,
+  getLeagueFixturesByMode,
+  getLeagueNews,
+  buildNextOpponentMap,
+  type LeagueFixture,
+} from "@/lib/leagueData"
 
 const FINISHED_CODES = ["FT", "AET", "PEN"]
-
-async function getStandings(leagueId: string, season: number): Promise<LeagueResponse | null> {
-  if (process.env.USE_MOCK_DATA === "true") {
-    return MOCK_STANDINGS
-  }
-
-  const res = await fetch(
-    `https://v3.football.api-sports.io/standings?league=${leagueId}&season=${season}`,
-    {
-      headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      next: { revalidate: 3600 },
-    }
-  )
-  const data = await res.json()
-  return data.response?.[0] ?? null
-}
-
-// 리그의 최근/예정 경기 (개요 상단 가로 스크롤 카드용)
-async function getLeagueFixtures(
-  leagueId: string,
-  season: number,
-  mode: "last" | "next",
-  count: number
-): Promise<LeagueFixture[]> {
-  if (process.env.USE_MOCK_DATA === "true") {
-    return MOCK_SEASON_FIXTURES.slice(0, count) as unknown as LeagueFixture[]
-  }
-
-  const res = await fetch(
-    `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${season}&${mode}=${count}`,
-    {
-      headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      next: { revalidate: 3600 },
-    }
-  )
-  const data = await res.json()
-  return data.response ?? []
-}
-
-async function getTopScorers(leagueId: string, season: number): Promise<ScorerEntry[]> {
-  if (process.env.USE_MOCK_DATA === "true") return MOCK_TOP_SCORERS
-
-  const res = await fetch(
-    `https://v3.football.api-sports.io/players/topscorers?league=${leagueId}&season=${season}`,
-    {
-      headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      next: { revalidate: 3600 },
-    }
-  )
-  const data = await res.json()
-  return data.response ?? []
-}
 
 export async function generateMetadata({
   params,
@@ -113,62 +20,70 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { id } = await params
   const euroSeason = getSeasonYear("England")
-  let data = await getStandings(id, euroSeason)
-  if (!data) {
-    data = await getStandings(id, new Date().getFullYear())
-  }
+  let data = await getLeagueStandings(id, euroSeason)
+  if (!data) data = await getLeagueStandings(id, new Date().getFullYear())
 
-  if (!data) {
-    return { title: "리그 정보를 찾을 수 없습니다" }
-  }
+  if (!data) return { title: "리그 정보를 찾을 수 없습니다" }
 
   return {
-    title: `${data.league.name} 개요`,
-    description: `${data.league.name}(${data.league.country}) ${data.league.season} 시즌 순위표, 최신 결과, 예정 경기, 득점왕을 확인하세요.`,
+    title: `${data.league.name} 팀 개요`,
+    description: `${data.league.name}(${data.league.country}) ${data.league.season} 시즌 순위표, 예정 경기, 리그 뉴스를 확인하세요.`,
   }
 }
 
-// 개요 상단의 경기 카드 하나
-function FixtureCard({ fx }: { fx: LeagueFixture }) {
-  const finished = FINISHED_CODES.includes(fx.fixture.status.short)
-  const dateText = new Date(fx.fixture.date).toLocaleDateString("ko-KR", {
-    month: "numeric",
-    day: "numeric",
-    weekday: "short",
-  })
-  const timeText = new Date(fx.fixture.date).toLocaleTimeString("ko-KR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  })
+// 날짜별로 경기를 묶어서 표시하는 경기 위젯 (개요 우측)
+function RoundFixturesWidget({ fixtures }: { fixtures: LeagueFixture[] }) {
+  const groups = new Map<string, LeagueFixture[]>()
+  const sorted = [...fixtures].sort(
+    (a, b) => new Date(a.fixture.date).getTime() - new Date(b.fixture.date).getTime()
+  )
+  for (const fx of sorted) {
+    const key = new Date(fx.fixture.date).toLocaleDateString("ko-KR", {
+      month: "long",
+      day: "numeric",
+      weekday: "long",
+    })
+    if (!groups.has(key)) groups.set(key, [])
+    groups.get(key)!.push(fx)
+  }
 
   return (
-    <Link
-      href={`/matches/${fx.fixture.id}`}
-      className="shrink-0 w-44 bg-turf/40 border border-turf-line/40 rounded-md p-3 hover:bg-turf-line/30 transition-colors"
-    >
-      <p className="text-[10px] text-floodlight/40 mb-2">
-        {dateText} {!finished && timeText}
+    <div className="bg-turf/40 border border-turf-line/40 rounded-md overflow-hidden">
+      <p className="text-center text-sm font-medium py-3 border-b border-turf-line/40">
+        {sorted[0]?.league?.round ?? "다가오는 경기"}
       </p>
-      <div className="space-y-1.5">
-        <div className="flex items-center gap-2">
-          <img src={fx.teams.home.logo} alt="" className="w-4 h-4 shrink-0" />
-          <span className="text-xs truncate flex-1">{fx.teams.home.name}</span>
-          <span className="font-data text-xs font-bold">{finished ? fx.goals.home : ""}</span>
+      {[...groups.entries()].map(([date, list]) => (
+        <div key={date}>
+          <p className="px-4 py-2 bg-turf-line/30 text-xs text-floodlight/60">{date}</p>
+          {list.map((fx) => {
+            const finished = FINISHED_CODES.includes(fx.fixture.status.short)
+            const timeText = new Date(fx.fixture.date).toLocaleTimeString("ko-KR", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+            return (
+              <Link
+                key={fx.fixture.id}
+                href={`/matches/${fx.fixture.id}`}
+                className="flex items-center justify-center gap-2 px-4 py-3 text-xs hover:bg-turf-line/20 border-b border-turf-line/20 last:border-b-0"
+              >
+                <span className="flex-1 text-right truncate">{fx.teams.home.name}</span>
+                <img src={fx.teams.home.logo} alt="" className="w-4 h-4 shrink-0" />
+                <span className="font-data text-score-amber w-14 text-center shrink-0">
+                  {finished ? `${fx.goals.home} - ${fx.goals.away}` : timeText}
+                </span>
+                <img src={fx.teams.away.logo} alt="" className="w-4 h-4 shrink-0" />
+                <span className="flex-1 truncate">{fx.teams.away.name}</span>
+              </Link>
+            )
+          })}
         </div>
-        <div className="flex items-center gap-2">
-          <img src={fx.teams.away.logo} alt="" className="w-4 h-4 shrink-0" />
-          <span className="text-xs truncate flex-1">{fx.teams.away.name}</span>
-          <span className="font-data text-xs font-bold">{finished ? fx.goals.away : ""}</span>
-        </div>
-      </div>
-      <p className="text-[10px] text-floodlight/30 mt-2">
-        {finished ? "경기 종료" : "경기 예정"}
-      </p>
-    </Link>
+      ))}
+    </div>
   )
 }
 
-export default async function LeaguePage({
+export default async function LeagueOverviewPage({
   params,
 }: {
   params: Promise<{ id: string }>
@@ -176,11 +91,8 @@ export default async function LeaguePage({
   const { id } = await params
 
   const euroSeason = getSeasonYear("England")
-  let data = await getStandings(id, euroSeason)
-  if (!data) {
-    const calendarSeason = new Date().getFullYear()
-    data = await getStandings(id, calendarSeason)
-  }
+  let data = await getLeagueStandings(id, euroSeason)
+  if (!data) data = await getLeagueStandings(id, new Date().getFullYear())
 
   if (!data || data.league.standings.length === 0) {
     return (
@@ -193,135 +105,71 @@ export default async function LeaguePage({
   const { league } = data
   const season = league.season
 
-  const [recentFixtures, upcomingFixtures, topScorers] = await Promise.all([
-    getLeagueFixtures(id, season, "last", 5),
-    getLeagueFixtures(id, season, "next", 5),
-    getTopScorers(id, season),
+  const [upcoming, news] = await Promise.all([
+    getLeagueFixturesByMode(id, season, "next", 10),
+    getLeagueNews(league.name),
   ])
 
-  // 최근 경기(과거순 정렬) + 예정 경기를 이어서 하나의 스트립으로
-  const fixtureStrip = [
-    ...[...recentFixtures].sort(
-      (a, b) => new Date(a.fixture.date).getTime() - new Date(b.fixture.date).getTime()
-    ),
-    ...upcomingFixtures,
-  ]
-
-  const scorers = topScorers.slice(0, 5)
+  const nextOpponent = buildNextOpponentMap(upcoming)
 
   return (
     <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
-      <div className="max-w-3xl mx-auto pb-16 px-4">
-        {/* 리그 헤더 */}
-        <div className="flex items-center justify-between gap-3 pt-8 pb-4">
-          <div className="flex items-center gap-3 min-w-0">
-            <img src={league.logo} alt="" className="w-12 h-12 shrink-0" />
-            <div className="min-w-0">
-              <h1 className="font-display uppercase text-xl text-floodlight truncate">
-                {league.name}
-              </h1>
-              <p className="text-xs text-floodlight/40">
-                {league.country} · {season} 시즌
-              </p>
-            </div>
+      <div className="max-w-5xl mx-auto pb-16 px-4">
+        <LeagueHeader
+          leagueId={id}
+          name={league.name}
+          country={league.country}
+          logo={league.logo}
+          season={season}
+          active="overview"
+        />
+
+        <div className="grid lg:grid-cols-[1fr_340px] gap-6 items-start">
+          {/* 순위표 (다음 상대 컬럼 포함) */}
+          <div>
+            <StandingsWithFilter
+              standings={league.standings}
+              nextOpponent={nextOpponent}
+              showFilter={false}
+            />
           </div>
-          <FollowButton />
+
+          {/* 다가오는 경기 위젯 */}
+          {upcoming.length > 0 && <RoundFixturesWidget fixtures={upcoming} />}
         </div>
 
-        {/* 탭 바 */}
-        <div className="flex gap-1 border-b border-turf-line/60 mb-6 text-sm overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <span className="shrink-0 px-4 py-3 border-b-2 border-score-amber text-score-amber font-medium">
-            개요
-          </span>
-          <Link
-            href={`/leagues/${id}/fixtures`}
-            className="shrink-0 px-4 py-3 text-floodlight/40 hover:text-floodlight/70"
-          >
-            경기
-          </Link>
-          <Link
-            href={`/leagues/${id}/topscorers`}
-            className="shrink-0 px-4 py-3 text-floodlight/40 hover:text-floodlight/70"
-          >
-            득점 순위
-          </Link>
-        </div>
-
-        {/* 경기 스트립 (최근 결과 + 예정 경기) */}
-        {fixtureStrip.length > 0 && (
-          <section className="mb-8">
-            <h2 className="font-display uppercase tracking-wide text-sm text-floodlight/70 mb-3">
-              경기
-            </h2>
-            <div className="flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {fixtureStrip.map((fx) => (
-                <FixtureCard key={fx.fixture.id} fx={fx} />
+        {/* 뉴스 */}
+        {news.length > 0 && (
+          <section className="mt-8">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-display uppercase tracking-wide text-sm text-floodlight/70">뉴스</h2>
+              <Link href={`/leagues/${id}/news`} className="text-xs text-floodlight/40 hover:text-score-amber">
+                전체 보기 →
+              </Link>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-x-8 gap-y-4">
+              {news.slice(0, 4).map((a, i) => (
+                <a
+                  key={i}
+                  href={a.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex gap-3 items-start hover:bg-turf-line/20 transition-colors p-1 -m-1"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm text-floodlight/90 leading-snug line-clamp-2">{a.title}</p>
+                    <p className="text-xs text-floodlight/40 mt-1">
+                      {a.source_name} · {new Date(a.pubDate).toLocaleDateString("ko-KR")}
+                    </p>
+                  </div>
+                  {a.image_url && (
+                    <img src={a.image_url} alt="" className="w-24 h-16 object-cover shrink-0 rounded" />
+                  )}
+                </a>
               ))}
             </div>
           </section>
         )}
-
-        {/* 순위표 */}
-        <section className="mb-8">
-          <h2 className="font-display uppercase tracking-wide text-sm text-floodlight/70 mb-3">
-            순위
-          </h2>
-          <StandingsTable standings={league.standings} />
-        </section>
-
-        {/* 득점왕 */}
-        {scorers.length > 0 && (
-          <section className="mb-8">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-display uppercase tracking-wide text-sm text-floodlight/70">
-                최다 득점
-              </h2>
-              <Link
-                href={`/leagues/${id}/topscorers`}
-                className="text-xs text-floodlight/40 hover:text-score-amber"
-              >
-                전체 보기 →
-              </Link>
-            </div>
-            <div className="divide-y divide-turf-line/30">
-              {scorers.map((s, i) => {
-                const stat = s.statistics[0]
-                return (
-                  <Link
-                    key={s.player.id}
-                    href={`/players/${s.player.id}`}
-                    className="flex items-center gap-3 py-2.5 hover:bg-turf-line/20 transition-colors"
-                  >
-                    <span className="font-data text-sm text-floodlight/40 w-5 text-center shrink-0">
-                      {i + 1}
-                    </span>
-                    <PlayerAvatar
-                      src={s.player.photo}
-                      alt={s.player.name}
-                      className="w-9 h-9 rounded-full object-cover bg-turf-line text-xs shrink-0"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm truncate">{s.player.name}</p>
-                      <p className="text-[11px] text-floodlight/40 flex items-center gap-1">
-                        {stat?.team.logo && (
-                          <img src={stat.team.logo} alt="" className="w-3 h-3" />
-                        )}
-                        {stat?.team.name}
-                      </p>
-                    </div>
-                    <span className="font-data font-bold text-score-amber shrink-0">
-                      {stat?.goals.total ?? 0}골
-                    </span>
-                  </Link>
-                )
-              })}
-            </div>
-          </section>
-        )}
-
-        <Link href="/matches" className="text-sm text-floodlight/40 hover:text-score-amber">
-          ← 경기 목록으로
-        </Link>
       </div>
     </main>
   )

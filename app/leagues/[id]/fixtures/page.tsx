@@ -1,36 +1,27 @@
 import Link from "next/link"
+import type { Metadata } from "next"
 import { getSeasonYear } from "@/lib/season"
-import { MOCK_SEASON_FIXTURES } from "@/lib/mockData"
+import LeagueHeader from "@/components/LeagueHeader"
+import { getLeagueStandings, getSeasonFixtures, type LeagueFixture } from "@/lib/leagueData"
 
-type SeasonFixture = {
-  fixture: { id: number; date: string; status: { long: string; short: string } }
-  league: { round: string }
-  teams: {
-    home: { name: string; logo: string }
-    away: { name: string; logo: string }
+const FINISHED_CODES = ["FT", "AET", "PEN"]
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}): Promise<Metadata> {
+  const { id } = await params
+  const euroSeason = getSeasonYear("England")
+  let data = await getLeagueStandings(id, euroSeason)
+  if (!data) data = await getLeagueStandings(id, new Date().getFullYear())
+
+  if (!data) return { title: "경기 일정" }
+
+  return {
+    title: `${data.league.name} 경기 일정`,
+    description: `${data.league.name} ${data.league.season} 시즌 전체 경기 일정과 결과를 날짜별로 확인하세요.`,
   }
-  goals: { home: number | null; away: number | null }
-}
-
-async function getSeasonFixtures(leagueId: string, season: number): Promise<SeasonFixture[]> {
-  if (process.env.USE_MOCK_DATA === "true") {
-    return MOCK_SEASON_FIXTURES
-  }
-
-  const res = await fetch(
-    `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${season}`,
-    {
-      headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      next: { revalidate: 3600 },
-    }
-  )
-  const data = await res.json()
-  return data.response ?? []
-}
-
-function extractRoundNumber(round: string): number {
-  const match = round.match(/(\d+)\s*$/)
-  return match ? parseInt(match[1], 10) : 0
 }
 
 export default async function LeagueFixturesPage({
@@ -41,76 +32,81 @@ export default async function LeagueFixturesPage({
   const { id } = await params
 
   const euroSeason = getSeasonYear("England")
-  let fixtures = await getSeasonFixtures(id, euroSeason)
-  if (fixtures.length === 0) {
-    fixtures = await getSeasonFixtures(id, new Date().getFullYear())
-  }
+  let data = await getLeagueStandings(id, euroSeason)
+  if (!data) data = await getLeagueStandings(id, new Date().getFullYear())
 
-  const roundMap = new Map<string, SeasonFixture[]>()
-  for (const f of fixtures) {
-    const round = f.league.round
-    if (!roundMap.has(round)) roundMap.set(round, [])
-    roundMap.get(round)!.push(f)
-  }
-  const rounds = Array.from(roundMap.entries()).sort(
-    (a, b) => extractRoundNumber(a[0]) - extractRoundNumber(b[0])
-  )
-
-  if (rounds.length === 0) {
+  if (!data) {
     return (
       <main className="min-h-screen bg-pitch-night text-floodlight p-8 font-sans">
-        <p className="text-floodlight/40">일정을 찾을 수 없습니다.</p>
+        <p className="text-floodlight/40">리그 정보를 찾을 수 없습니다.</p>
       </main>
     )
   }
 
-  return (
-    <main className="min-h-screen bg-pitch-night text-floodlight p-8 font-sans">
-      <div className="max-w-2xl mx-auto">
-        <div className="flex gap-4 border-b border-turf-line/60 mb-6 text-sm">
-          <Link href={`/leagues/${id}`} className="pb-2 text-floodlight/50 hover:text-score-amber">
-            순위
-          </Link>
-          <span className="pb-2 border-b-2 border-score-amber text-score-amber font-medium">일정</span>
-          <Link href={`/leagues/${id}/topscorers`} className="pb-2 text-floodlight/50 hover:text-score-amber">
-            득점 순위
-          </Link>
-        </div>
+  const { league } = data
+  const fixtures = await getSeasonFixtures(id, league.season)
 
-        <div className="space-y-6">
-          {rounds.map(([round, matches]) => (
-            <section key={round}>
-              <h2 className="text-sm font-display uppercase tracking-wide text-floodlight/50 mb-2">
-                {round}
-              </h2>
-              <div className="bg-turf/40 border-l-2 border-score-amber overflow-hidden">
-                {matches.map((match) => (
-                  <Link
-                    key={match.fixture.id}
-                    href={`/matches/${match.fixture.id}`}
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-turf-line/40 transition-colors border-b border-turf-line/40 last:border-b-0"
-                  >
-                    <span className="text-xs text-floodlight/40 w-14 shrink-0 font-data">
-                      {new Date(match.fixture.date).toLocaleDateString("ko-KR", {
-                        month: "numeric",
-                        day: "numeric",
-                      })}
-                    </span>
-                    <div className="flex-1 flex items-center justify-center gap-2 text-sm">
-                      <img src={match.teams.home.logo} alt="" className="w-4 h-4" />
-                      <span className="text-floodlight/80">{match.teams.home.name}</span>
-                      <span className="text-floodlight/40 mx-1 font-data">
-                        {match.goals.home ?? "-"} : {match.goals.away ?? "-"}
-                      </span>
-                      <span className="text-floodlight/80">{match.teams.away.name}</span>
-                      <img src={match.teams.away.logo} alt="" className="w-4 h-4" />
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
+  // 날짜별 그룹핑 (FotMob '날짜별' 방식)
+  const sorted = [...fixtures].sort(
+    (a, b) => new Date(a.fixture.date).getTime() - new Date(b.fixture.date).getTime()
+  )
+  const groups = new Map<string, LeagueFixture[]>()
+  for (const fx of sorted) {
+    const key = new Date(fx.fixture.date).toLocaleDateString("ko-KR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      weekday: "long",
+    })
+    if (!groups.has(key)) groups.set(key, [])
+    groups.get(key)!.push(fx)
+  }
+
+  return (
+    <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
+      <div className="max-w-3xl mx-auto pb-16 px-4">
+        <LeagueHeader
+          leagueId={id}
+          name={league.name}
+          country={league.country}
+          logo={league.logo}
+          season={league.season}
+          active="fixtures"
+        />
+
+        {sorted.length === 0 && (
+          <p className="text-floodlight/40 text-sm py-6">경기 일정 정보가 없습니다.</p>
+        )}
+
+        {[...groups.entries()].map(([date, list]) => (
+          <div key={date} className="mb-2">
+            <p className="px-4 py-2.5 bg-turf-line/30 rounded text-sm text-floodlight/70 font-medium">
+              {date}
+            </p>
+            {list.map((fx) => {
+              const finished = FINISHED_CODES.includes(fx.fixture.status.short)
+              const timeText = new Date(fx.fixture.date).toLocaleTimeString("ko-KR", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })
+              return (
+                <Link
+                  key={fx.fixture.id}
+                  href={`/matches/${fx.fixture.id}`}
+                  className="flex items-center justify-center gap-3 px-4 py-4 text-sm hover:bg-turf-line/20 border-b border-turf-line/20 last:border-b-0"
+                >
+                  <span className="flex-1 text-right truncate">{fx.teams.home.name}</span>
+                  <img src={fx.teams.home.logo} alt="" className="w-5 h-5 shrink-0" />
+                  <span className="font-data text-score-amber w-16 text-center shrink-0">
+                    {finished ? `${fx.goals.home} - ${fx.goals.away}` : timeText}
+                  </span>
+                  <img src={fx.teams.away.logo} alt="" className="w-5 h-5 shrink-0" />
+                  <span className="flex-1 truncate">{fx.teams.away.name}</span>
+                </Link>
+              )
+            })}
+          </div>
+        ))}
       </div>
     </main>
   )
