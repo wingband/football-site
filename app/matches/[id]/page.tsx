@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { generateMatchStory } from "@/lib/generateStory"
-import GoalCelebration from "@/components/GoalCelebration"
+import PlayerAvatar from "@/components/PlayerAvatar"
 import PitchFormation from "@/components/PitchFormation"
 import Section from "@/components/Section"
 import FollowButton from "@/components/FollowButton"
@@ -402,11 +402,11 @@ export default async function MatchDetailPage({
           <div className="grid grid-cols-3 gap-4">
             {topPlayers.map((p) => (
               <div key={p.name} className="flex flex-col items-center text-center">
-                {p.goals > 0 ? (
-                  <GoalCelebration />
-                ) : (
-                  <img src={p.photo} alt="" className="w-16 h-16 rounded-full mb-0" />
-                )}
+                <PlayerAvatar
+                  src={p.photo}
+                  alt={p.name}
+                  className="w-16 h-16 rounded-full object-cover text-lg"
+                />
                 <span className="text-sm font-medium mt-1">{p.name}</span>
                 <span className="text-xs text-floodlight/40">{p.position}</span>
                 <span className="mt-1 font-display text-score-amber font-bold">{p.rating}</span>
