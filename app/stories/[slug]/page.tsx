@@ -3,6 +3,9 @@ import Link from "next/link"
 import type { Metadata } from "next"
 import { getArticleBySlug } from "@/lib/articles"
 
+// 목록 페이지와 같은 이유로 정적 프리렌더링 금지 (빌드 중 DB 연결 실패 방지)
+export const dynamic = "force-dynamic"
+
 export async function generateMetadata({
   params,
 }: {

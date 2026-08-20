@@ -2,6 +2,10 @@ import Link from "next/link"
 import type { Metadata } from "next"
 import { getAllArticles } from "@/lib/articles"
 
+// 이 페이지는 매일 자동으로 쌓이는 기사 목록이라, 빌드 시점에 정적으로 굳히면 안 됨.
+// 빌드 중 Neon DB 연결 시도로 배포가 실패하던 문제도 이걸로 같이 해결됨
+export const dynamic = "force-dynamic"
+
 export const metadata: Metadata = {
   title: "경기 리뷰 아카이브",
   description: "매일 자동으로 쌓이는 주요 경기 리뷰와 분석 기사 모음.",
