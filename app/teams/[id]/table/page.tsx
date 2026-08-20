@@ -1,5 +1,4 @@
 import type { Metadata } from "next"
-import TeamHeader from "@/components/TeamHeader"
 import StandingsWithFilter from "@/components/StandingsWithFilter"
 import { getTeamInfo, getTeamCurrentLeague } from "@/lib/teamData"
 import { getLeagueStandings, getLeagueFixturesByMode, buildNextOpponentMap } from "@/lib/leagueData"
@@ -15,11 +14,7 @@ export default async function TeamTablePage({ params }: { params: Promise<{ id: 
   const { id } = await params
   const info = await getTeamInfo(id)
   if (!info) {
-    return (
-      <main className="min-h-screen bg-pitch-night text-floodlight p-8 font-sans">
-        <p className="text-floodlight/40">팀 정보를 찾을 수 없습니다.</p>
-      </main>
-    )
+    return <p className="text-floodlight/40 pt-4">팀 정보를 찾을 수 없습니다.</p>
   }
 
   const teamLeague = await getTeamCurrentLeague(id)
@@ -28,10 +23,8 @@ export default async function TeamTablePage({ params }: { params: Promise<{ id: 
   const nextOpponent = buildNextOpponentMap(upcoming)
 
   return (
-    <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
-      <div className="max-w-4xl mx-auto pb-16 px-4">
-        <TeamHeader teamId={id} name={info.team.name} country={info.team.country} logo={info.team.logo} active="table" />
-        {standingsData && standingsData.league.standings.length > 0 ? (
+    <>
+{standingsData && standingsData.league.standings.length > 0 ? (
           <StandingsWithFilter
             standings={standingsData.league.standings}
             highlightTeamIds={[info.team.id]}
@@ -40,7 +33,6 @@ export default async function TeamTablePage({ params }: { params: Promise<{ id: 
         ) : (
           <p className="text-floodlight/40 text-sm">순위표 정보가 없습니다.</p>
         )}
-      </div>
-    </main>
+    </>
   )
 }

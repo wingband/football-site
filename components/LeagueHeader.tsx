@@ -1,4 +1,7 @@
+"use client"
+
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import FollowButton from "@/components/FollowButton"
 
 const TABS = [
@@ -9,23 +12,24 @@ const TABS = [
   { key: "news", label: "뉴스", path: "/news" },
 ] as const
 
-export type LeagueTabKey = (typeof TABS)[number]["key"]
-
 export default function LeagueHeader({
   leagueId,
   name,
   country,
   logo,
   season,
-  active,
 }: {
   leagueId: string
   name: string
   country: string
   logo: string
   season: number
-  active: LeagueTabKey
 }) {
+  const pathname = usePathname()
+  const base = `/leagues/${leagueId}`
+  const rest = pathname.startsWith(base) ? pathname.slice(base.length) : ""
+  const active = TABS.find((t) => t.path === rest)?.key ?? "overview"
+
   return (
     <div>
       <div className="flex items-center justify-between gap-3 pt-8 pb-4">
@@ -53,7 +57,7 @@ export default function LeagueHeader({
           ) : (
             <Link
               key={tab.key}
-              href={`/leagues/${leagueId}${tab.path}`}
+              href={`${base}${tab.path}`}
               className="shrink-0 px-4 py-3 text-floodlight/40 hover:text-floodlight/70"
             >
               {tab.label}

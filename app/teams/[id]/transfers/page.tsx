@@ -1,5 +1,4 @@
 import type { Metadata } from "next"
-import TeamHeader from "@/components/TeamHeader"
 import { getTeamInfo, getTeamTransfers } from "@/lib/teamData"
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -21,11 +20,7 @@ export default async function TeamTransfersPage({ params }: { params: Promise<{ 
   const { id } = await params
   const info = await getTeamInfo(id)
   if (!info) {
-    return (
-      <main className="min-h-screen bg-pitch-night text-floodlight p-8 font-sans">
-        <p className="text-floodlight/40">팀 정보를 찾을 수 없습니다.</p>
-      </main>
-    )
+    return <p className="text-floodlight/40 pt-4">팀 정보를 찾을 수 없습니다.</p>
   }
 
   const entries = await getTeamTransfers(id)
@@ -46,11 +41,8 @@ export default async function TeamTransfersPage({ params }: { params: Promise<{ 
     .slice(0, 40)
 
   return (
-    <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
-      <div className="max-w-4xl mx-auto pb-16 px-4">
-        <TeamHeader teamId={id} name={info.team.name} country={info.team.country} logo={info.team.logo} active="transfers" />
-
-        {rows.length === 0 && <p className="text-floodlight/40 text-sm">이적 기록이 없습니다.</p>}
+    <>
+{rows.length === 0 && <p className="text-floodlight/40 text-sm">이적 기록이 없습니다.</p>}
 
         <div className="divide-y divide-turf-line/30">
           {rows.map((row, i) => {
@@ -78,7 +70,6 @@ export default async function TeamTransfersPage({ params }: { params: Promise<{ 
             )
           })}
         </div>
-      </div>
-    </main>
+    </>
   )
 }

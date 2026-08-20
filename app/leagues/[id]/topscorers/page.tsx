@@ -1,4 +1,5 @@
 import Link from "next/link"
+import PlayerAvatar from "@/components/PlayerAvatar"
 import { getSeasonYear } from "@/lib/season"
 import { MOCK_TOP_SCORERS } from "@/lib/mockData"
 
@@ -38,24 +39,12 @@ export default async function TopScorersPage({
   }
 
   return (
-    <main className="min-h-screen bg-pitch-night text-floodlight p-8 font-sans">
-      <div className="max-w-2xl mx-auto">
-        <div className="flex gap-4 border-b border-turf-line/60 mb-6 text-sm">
-          <Link href={`/leagues/${id}`} className="pb-2 text-floodlight/50 hover:text-score-amber">
-            순위
-          </Link>
-          <Link href={`/leagues/${id}/fixtures`} className="pb-2 text-floodlight/50 hover:text-score-amber">
-            일정
-          </Link>
-          <span className="pb-2 border-b-2 border-score-amber text-score-amber font-medium">
-            득점 순위
-          </span>
-        </div>
+    <>
+      {scorers.length === 0 && (
+        <p className="text-floodlight/40 text-sm py-6">득점 순위 데이터를 찾을 수 없습니다.</p>
+      )}
 
-        {scorers.length === 0 && (
-          <p className="text-floodlight/40 text-sm">득점 순위 데이터를 찾을 수 없습니다.</p>
-        )}
-
+      {scorers.length > 0 && (
         <div className="bg-turf/40 border-l-2 border-score-amber">
           {scorers.map((s, i) => {
             const stat = s.statistics[0]
@@ -69,10 +58,10 @@ export default async function TopScorersPage({
                 <span className="w-5 text-xs text-floodlight/40 font-data text-center shrink-0">
                   {i + 1}
                 </span>
-                <img
+                <PlayerAvatar
                   src={s.player.photo}
-                  alt=""
-                  className="w-9 h-9 rounded-full bg-turf-line object-cover shrink-0"
+                  alt={s.player.name}
+                  className="w-9 h-9 rounded-full bg-turf-line object-cover shrink-0 text-xs"
                 />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{s.player.name}</p>
@@ -89,7 +78,7 @@ export default async function TopScorersPage({
             )
           })}
         </div>
-      </div>
-    </main>
+      )}
+    </>
   )
 }

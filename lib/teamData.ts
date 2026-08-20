@@ -89,7 +89,20 @@ export async function getTeamSquad(teamId: string): Promise<SquadPlayer[]> {
     next: { revalidate: 3600 },
   })
   const data = await res.json()
-  return data.response?.[0]?.players ?? []
+  const rawPlayers: {
+    id: number
+    name: string
+    age: number
+    number: number | null
+    position: string
+    photo: string
+  }[] = data.response?.[0]?.players ?? []
+
+  // API가 선수 정보를 평평한 구조로 주기 때문에({id, name, ...}), 우리 타입({player: {...}})에 맞게 변환
+  return rawPlayers.map((p) => ({
+    player: { id: p.id, name: p.name, age: p.age, number: p.number, photo: p.photo },
+    position: p.position,
+  }))
 }
 
 export async function getTeamSeasonFixtures(teamId: string, season: number): Promise<TeamFixture[]> {

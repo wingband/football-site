@@ -1,6 +1,5 @@
 import type { Metadata } from "next"
 import { getSeasonYear } from "@/lib/season"
-import LeagueHeader from "@/components/LeagueHeader"
 import { getLeagueStandings, getLeagueNews } from "@/lib/leagueData"
 
 export async function generateMetadata({
@@ -33,11 +32,7 @@ export default async function LeagueNewsPage({
   if (!data) data = await getLeagueStandings(id, new Date().getFullYear())
 
   if (!data) {
-    return (
-      <main className="min-h-screen bg-pitch-night text-floodlight p-8 font-sans">
-        <p className="text-floodlight/40">리그 정보를 찾을 수 없습니다.</p>
-      </main>
-    )
+    return <p className="text-floodlight/40 pt-4">리그 정보를 찾을 수 없습니다.</p>
   }
 
   const { league } = data
@@ -45,18 +40,8 @@ export default async function LeagueNewsPage({
   const [hero, ...rest] = news
 
   return (
-    <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
-      <div className="max-w-5xl mx-auto pb-16 px-4">
-        <LeagueHeader
-          leagueId={id}
-          name={league.name}
-          country={league.country}
-          logo={league.logo}
-          season={league.season}
-          active="news"
-        />
-
-        {news.length === 0 && (
+    <>
+{news.length === 0 && (
           <p className="text-floodlight/40 text-sm py-6">관련 뉴스가 없습니다.</p>
         )}
 
@@ -129,7 +114,6 @@ export default async function LeagueNewsPage({
             ))}
           </div>
         )}
-      </div>
-    </main>
+    </>
   )
 }

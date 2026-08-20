@@ -1,6 +1,5 @@
 import type { Metadata } from "next"
 import { getSeasonYear } from "@/lib/season"
-import LeagueHeader from "@/components/LeagueHeader"
 import StandingsWithFilter from "@/components/StandingsWithFilter"
 import { getLeagueStandings, getLeagueFixturesByMode, buildNextOpponentMap } from "@/lib/leagueData"
 
@@ -34,11 +33,7 @@ export default async function LeagueTablePage({
   if (!data) data = await getLeagueStandings(id, new Date().getFullYear())
 
   if (!data || data.league.standings.length === 0) {
-    return (
-      <main className="min-h-screen bg-pitch-night text-floodlight p-8 font-sans">
-        <p className="text-floodlight/40">순위표를 찾을 수 없습니다.</p>
-      </main>
-    )
+    return <p className="text-floodlight/40 pt-4">순위표를 찾을 수 없습니다.</p>
   }
 
   const { league } = data
@@ -46,18 +41,8 @@ export default async function LeagueTablePage({
   const nextOpponent = buildNextOpponentMap(upcoming)
 
   return (
-    <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
-      <div className="max-w-4xl mx-auto pb-16 px-4">
-        <LeagueHeader
-          leagueId={id}
-          name={league.name}
-          country={league.country}
-          logo={league.logo}
-          season={league.season}
-          active="table"
-        />
-        <StandingsWithFilter standings={league.standings} nextOpponent={nextOpponent} />
-      </div>
-    </main>
+    <>
+<StandingsWithFilter standings={league.standings} nextOpponent={nextOpponent} />
+    </>
   )
 }

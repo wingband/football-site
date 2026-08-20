@@ -1,6 +1,5 @@
 import Link from "next/link"
 import type { Metadata } from "next"
-import TeamHeader from "@/components/TeamHeader"
 import PlayerAvatar from "@/components/PlayerAvatar"
 import { getTeamInfo, getTeamCurrentLeague, getTeamPlayerStats, type TeamPlayerSeasonStat } from "@/lib/teamData"
 
@@ -73,11 +72,7 @@ export default async function TeamPlayerStatsPage({
   const info = await getTeamInfo(id)
 
   if (!info) {
-    return (
-      <main className="min-h-screen bg-pitch-night text-floodlight p-8 font-sans">
-        <p className="text-floodlight/40">팀 정보를 찾을 수 없습니다.</p>
-      </main>
-    )
+    return <p className="text-floodlight/40 pt-4">팀 정보를 찾을 수 없습니다.</p>
   }
 
   const league = await getTeamCurrentLeague(id)
@@ -89,11 +84,8 @@ export default async function TeamPlayerStatsPage({
   const minutes = toRows(players, (p) => p.statistics[0]?.games?.minutes ?? null)
 
   return (
-    <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
-      <div className="max-w-4xl mx-auto pb-16 px-4">
-        <TeamHeader teamId={id} name={info.team.name} country={info.team.country} logo={info.team.logo} active="playerstats" />
-
-        {league && (
+    <>
+{league && (
           <p className="text-xs text-floodlight/40 mb-4">
             {league.name} {league.season} 시즌
           </p>
@@ -115,7 +107,6 @@ export default async function TeamPlayerStatsPage({
         <p className="text-[11px] text-floodlight/30 mt-6">
           xG, 태클, 가로채기 등 세부 지표는 API 데이터 한계로 제공하지 않습니다.
         </p>
-      </div>
-    </main>
+    </>
   )
 }

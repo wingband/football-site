@@ -1,4 +1,7 @@
+"use client"
+
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import FollowButton from "@/components/FollowButton"
 
 const TABS = [
@@ -13,21 +16,23 @@ const TABS = [
   { key: "news", label: "뉴스", path: "/news" },
 ] as const
 
-export type TeamTabKey = (typeof TABS)[number]["key"]
-
 export default function TeamHeader({
   teamId,
   name,
   country,
   logo,
-  active,
 }: {
   teamId: string
   name: string
   country: string
   logo: string
-  active: TeamTabKey
 }) {
+  const pathname = usePathname()
+  const base = `/teams/${teamId}`
+  // URL의 나머지 부분(base 이후)으로 현재 탭을 자동 판별 — 페이지마다 active를 직접 넘길 필요 없음
+  const rest = pathname.startsWith(base) ? pathname.slice(base.length) : ""
+  const active = TABS.find((t) => t.path === rest)?.key ?? "overview"
+
   return (
     <div>
       <div className="flex items-center justify-between gap-3 pt-8 pb-4">
@@ -53,7 +58,7 @@ export default function TeamHeader({
           ) : (
             <Link
               key={tab.key}
-              href={`/teams/${teamId}${tab.path}`}
+              href={`${base}${tab.path}`}
               className="shrink-0 px-4 py-3 text-floodlight/40 hover:text-floodlight/70"
             >
               {tab.label}

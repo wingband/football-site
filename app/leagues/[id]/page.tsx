@@ -1,7 +1,6 @@
 import Link from "next/link"
 import type { Metadata } from "next"
 import { getSeasonYear } from "@/lib/season"
-import LeagueHeader from "@/components/LeagueHeader"
 import StandingsWithFilter from "@/components/StandingsWithFilter"
 import {
   getLeagueStandings,
@@ -95,11 +94,7 @@ export default async function LeagueOverviewPage({
   if (!data) data = await getLeagueStandings(id, new Date().getFullYear())
 
   if (!data || data.league.standings.length === 0) {
-    return (
-      <main className="min-h-screen bg-pitch-night text-floodlight p-8 font-sans">
-        <p className="text-floodlight/40">리그 정보를 찾을 수 없습니다.</p>
-      </main>
-    )
+    return <p className="text-floodlight/40 pt-4">리그 정보를 찾을 수 없습니다.</p>
   }
 
   const { league } = data
@@ -113,18 +108,8 @@ export default async function LeagueOverviewPage({
   const nextOpponent = buildNextOpponentMap(upcoming)
 
   return (
-    <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
-      <div className="max-w-5xl mx-auto pb-16 px-4">
-        <LeagueHeader
-          leagueId={id}
-          name={league.name}
-          country={league.country}
-          logo={league.logo}
-          season={season}
-          active="overview"
-        />
-
-        <div className="grid lg:grid-cols-[1fr_340px] gap-6 items-start">
+    <>
+<div className="grid lg:grid-cols-[1fr_340px] gap-6 items-start">
           {/* 순위표 (다음 상대 컬럼 포함) */}
           <div>
             <StandingsWithFilter
@@ -170,7 +155,6 @@ export default async function LeagueOverviewPage({
             </div>
           </section>
         )}
-      </div>
-    </main>
+    </>
   )
 }

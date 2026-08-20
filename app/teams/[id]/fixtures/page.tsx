@@ -1,6 +1,5 @@
 import Link from "next/link"
 import type { Metadata } from "next"
-import TeamHeader from "@/components/TeamHeader"
 import { getTeamInfo, getTeamCurrentLeague, getTeamSeasonFixtures, type TeamFixture } from "@/lib/teamData"
 
 const FINISHED_CODES = ["FT", "AET", "PEN"]
@@ -16,11 +15,7 @@ export default async function TeamFixturesPage({ params }: { params: Promise<{ i
   const { id } = await params
   const info = await getTeamInfo(id)
   if (!info) {
-    return (
-      <main className="min-h-screen bg-pitch-night text-floodlight p-8 font-sans">
-        <p className="text-floodlight/40">팀 정보를 찾을 수 없습니다.</p>
-      </main>
-    )
+    return <p className="text-floodlight/40 pt-4">팀 정보를 찾을 수 없습니다.</p>
   }
 
   const teamLeague = await getTeamCurrentLeague(id)
@@ -43,11 +38,8 @@ export default async function TeamFixturesPage({ params }: { params: Promise<{ i
   }
 
   return (
-    <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
-      <div className="max-w-3xl mx-auto pb-16 px-4">
-        <TeamHeader teamId={id} name={info.team.name} country={info.team.country} logo={info.team.logo} active="fixtures" />
-
-        {sorted.length === 0 && <p className="text-floodlight/40 text-sm py-6">경기 일정 정보가 없습니다.</p>}
+    <>
+{sorted.length === 0 && <p className="text-floodlight/40 text-sm py-6">경기 일정 정보가 없습니다.</p>}
 
         {[...groups.entries()].map(([date, list]) => (
           <div key={date} className="mb-2">
@@ -90,7 +82,6 @@ export default async function TeamFixturesPage({ params }: { params: Promise<{ i
             })}
           </div>
         ))}
-      </div>
-    </main>
+    </>
   )
 }

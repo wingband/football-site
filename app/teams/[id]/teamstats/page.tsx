@@ -1,6 +1,5 @@
 import Link from "next/link"
 import type { Metadata } from "next"
-import TeamHeader from "@/components/TeamHeader"
 import { getTeamInfo, getTeamCurrentLeague } from "@/lib/teamData"
 import { getLeagueStandings } from "@/lib/leagueData"
 
@@ -56,11 +55,7 @@ export default async function TeamStatsPage({
   const info = await getTeamInfo(id)
 
   if (!info) {
-    return (
-      <main className="min-h-screen bg-pitch-night text-floodlight p-8 font-sans">
-        <p className="text-floodlight/40">팀 정보를 찾을 수 없습니다.</p>
-      </main>
-    )
+    return <p className="text-floodlight/40 pt-4">팀 정보를 찾을 수 없습니다.</p>
   }
 
   const league = await getTeamCurrentLeague(id)
@@ -92,11 +87,8 @@ export default async function TeamStatsPage({
   const teamId = Number(id)
 
   return (
-    <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
-      <div className="max-w-4xl mx-auto pb-16 px-4">
-        <TeamHeader teamId={id} name={info.team.name} country={info.team.country} logo={info.team.logo} active="teamstats" />
-
-        {league && (
+    <>
+{league && (
           <p className="text-xs text-floodlight/40 mb-4">
             {league.name} {league.season} 시즌 · 리그 전체 팀 비교
           </p>
@@ -114,7 +106,6 @@ export default async function TeamStatsPage({
         <p className="text-[11px] text-floodlight/30 mt-6">
           FotMob 평점, 평균 점유율, 클린시트, 관중 수, xG 등은 API 데이터에 없어 제공하지 않습니다.
         </p>
-      </div>
-    </main>
+    </>
   )
 }

@@ -1,5 +1,4 @@
 import type { Metadata } from "next"
-import TeamHeader from "@/components/TeamHeader"
 import { getTeamInfo, getTeamNews } from "@/lib/teamData"
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -13,22 +12,15 @@ export default async function TeamNewsPage({ params }: { params: Promise<{ id: s
   const { id } = await params
   const info = await getTeamInfo(id)
   if (!info) {
-    return (
-      <main className="min-h-screen bg-pitch-night text-floodlight p-8 font-sans">
-        <p className="text-floodlight/40">팀 정보를 찾을 수 없습니다.</p>
-      </main>
-    )
+    return <p className="text-floodlight/40 pt-4">팀 정보를 찾을 수 없습니다.</p>
   }
 
   const news = await getTeamNews(info.team.name)
   const [hero, ...rest] = news
 
   return (
-    <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
-      <div className="max-w-5xl mx-auto pb-16 px-4">
-        <TeamHeader teamId={id} name={info.team.name} country={info.team.country} logo={info.team.logo} active="news" />
-
-        {news.length === 0 && <p className="text-floodlight/40 text-sm py-6">관련 뉴스가 없습니다.</p>}
+    <>
+{news.length === 0 && <p className="text-floodlight/40 text-sm py-6">관련 뉴스가 없습니다.</p>}
 
         {hero && (
           <div className="grid lg:grid-cols-2 gap-6 mb-8">
@@ -90,7 +82,6 @@ export default async function TeamNewsPage({ params }: { params: Promise<{ id: s
             ))}
           </div>
         )}
-      </div>
-    </main>
+    </>
   )
 }

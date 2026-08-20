@@ -1,6 +1,5 @@
 import Link from "next/link"
 import type { Metadata } from "next"
-import TeamHeader from "@/components/TeamHeader"
 import PlayerAvatar from "@/components/PlayerAvatar"
 import StandingsWithFilter from "@/components/StandingsWithFilter"
 import {
@@ -80,11 +79,7 @@ export default async function TeamOverviewPage({
   const info = await getTeamInfo(id)
 
   if (!info) {
-    return (
-      <main className="min-h-screen bg-pitch-night text-floodlight p-8 font-sans">
-        <p className="text-floodlight/40">팀 정보를 찾을 수 없습니다.</p>
-      </main>
-    )
+    return <p className="text-floodlight/40 pt-4">팀 정보를 찾을 수 없습니다.</p>
   }
 
   const teamLeague = await getTeamCurrentLeague(id)
@@ -110,10 +105,7 @@ export default async function TeamOverviewPage({
   const uniqueInjuries = [...new Map(injuries.map((i) => [i.player.id, i])).values()]
 
   return (
-    <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
-      <div className="max-w-5xl mx-auto pb-16 px-4">
-        <TeamHeader teamId={id} name={info.team.name} country={info.team.country} logo={info.team.logo} active="overview" />
-
+    <>
         {/* 상단: 팀 기록 + 다음 경기 */}
         <div className="grid sm:grid-cols-2 gap-4 mb-6">
           <div className="bg-turf/40 border border-turf-line/40 rounded-md p-4">
@@ -262,7 +254,6 @@ export default async function TeamOverviewPage({
             </div>
           </section>
         )}
-      </div>
-    </main>
+    </>
   )
 }

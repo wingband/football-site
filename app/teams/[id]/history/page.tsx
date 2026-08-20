@@ -1,5 +1,4 @@
 import type { Metadata } from "next"
-import TeamHeader from "@/components/TeamHeader"
 import PlayerAvatar from "@/components/PlayerAvatar"
 import { getTeamInfo, getTeamCurrentLeague, getTeamCoach, getHistoricalRank } from "@/lib/teamData"
 
@@ -28,11 +27,7 @@ export default async function TeamHistoryPage({
   const info = await getTeamInfo(id)
 
   if (!info) {
-    return (
-      <main className="min-h-screen bg-pitch-night text-floodlight p-8 font-sans">
-        <p className="text-floodlight/40">팀 정보를 찾을 수 없습니다.</p>
-      </main>
-    )
+    return <p className="text-floodlight/40 pt-4">팀 정보를 찾을 수 없습니다.</p>
   }
 
   const league = await getTeamCurrentLeague(id)
@@ -50,11 +45,8 @@ export default async function TeamHistoryPage({
   const maxRank = validRanks.length > 0 ? Math.max(...validRanks) : 1
 
   return (
-    <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
-      <div className="max-w-4xl mx-auto pb-16 px-4">
-        <TeamHeader teamId={id} name={info.team.name} country={info.team.country} logo={info.team.logo} active="history" />
-
-        {coach && (
+    <>
+{coach && (
           <section className="bg-turf/40 border border-turf-line/40 rounded-md p-4 mb-6">
             <p className="text-sm font-medium mb-3">감독</p>
             <div className="flex items-center gap-3">
@@ -105,7 +97,6 @@ export default async function TeamHistoryPage({
         <p className="text-[11px] text-floodlight/30 mt-6">
           트로피 수, 감독별 시즌 승률은 API 데이터에 없어 제공하지 않습니다.
         </p>
-      </div>
-    </main>
+    </>
   )
 }

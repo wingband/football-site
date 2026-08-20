@@ -1,7 +1,6 @@
 import Link from "next/link"
 import type { Metadata } from "next"
 import { getSeasonYear } from "@/lib/season"
-import LeagueHeader from "@/components/LeagueHeader"
 import { getLeagueStandings, getSeasonFixtures, type LeagueFixture } from "@/lib/leagueData"
 
 const FINISHED_CODES = ["FT", "AET", "PEN"]
@@ -36,11 +35,7 @@ export default async function LeagueFixturesPage({
   if (!data) data = await getLeagueStandings(id, new Date().getFullYear())
 
   if (!data) {
-    return (
-      <main className="min-h-screen bg-pitch-night text-floodlight p-8 font-sans">
-        <p className="text-floodlight/40">리그 정보를 찾을 수 없습니다.</p>
-      </main>
-    )
+    return <p className="text-floodlight/40 pt-4">리그 정보를 찾을 수 없습니다.</p>
   }
 
   const { league } = data
@@ -63,18 +58,8 @@ export default async function LeagueFixturesPage({
   }
 
   return (
-    <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
-      <div className="max-w-3xl mx-auto pb-16 px-4">
-        <LeagueHeader
-          leagueId={id}
-          name={league.name}
-          country={league.country}
-          logo={league.logo}
-          season={league.season}
-          active="fixtures"
-        />
-
-        {sorted.length === 0 && (
+    <>
+{sorted.length === 0 && (
           <p className="text-floodlight/40 text-sm py-6">경기 일정 정보가 없습니다.</p>
         )}
 
@@ -107,7 +92,6 @@ export default async function LeagueFixturesPage({
             })}
           </div>
         ))}
-      </div>
-    </main>
+    </>
   )
 }

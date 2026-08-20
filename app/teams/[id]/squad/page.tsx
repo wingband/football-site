@@ -1,6 +1,5 @@
 import Link from "next/link"
 import type { Metadata } from "next"
-import TeamHeader from "@/components/TeamHeader"
 import PlayerAvatar from "@/components/PlayerAvatar"
 import { getTeamInfo, getTeamSquad, getTeamCoach, type SquadPlayer } from "@/lib/teamData"
 
@@ -43,11 +42,7 @@ export default async function TeamSquadPage({ params }: { params: Promise<{ id: 
   const { id } = await params
   const info = await getTeamInfo(id)
   if (!info) {
-    return (
-      <main className="min-h-screen bg-pitch-night text-floodlight p-8 font-sans">
-        <p className="text-floodlight/40">팀 정보를 찾을 수 없습니다.</p>
-      </main>
-    )
+    return <p className="text-floodlight/40 pt-4">팀 정보를 찾을 수 없습니다.</p>
   }
 
   const [squad, coach] = await Promise.all([getTeamSquad(id), getTeamCoach(id, info.team.id)])
@@ -59,11 +54,8 @@ export default async function TeamSquadPage({ params }: { params: Promise<{ id: 
   }
 
   return (
-    <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
-      <div className="max-w-3xl mx-auto pb-16 px-4">
-        <TeamHeader teamId={id} name={info.team.name} country={info.team.country} logo={info.team.logo} active="squad" />
-
-        {coach && (
+    <>
+{coach && (
           <div className="mb-6">
             <p className="text-sm font-medium text-floodlight/70 mb-2">감독</p>
             <div className="flex items-center gap-3 py-2.5">
@@ -88,7 +80,6 @@ export default async function TeamSquadPage({ params }: { params: Promise<{ id: 
             ))}
           </div>
         ))}
-      </div>
-    </main>
+    </>
   )
 }
