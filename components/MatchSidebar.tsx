@@ -1,4 +1,5 @@
 import Link from "next/link"
+import AdSlot from "@/components/AdSlot"
 
 type SidebarFixture = {
   fixture: { id: number; date: string; status: { short: string } }
@@ -241,6 +242,7 @@ export default function MatchSidebar({
   return (
     <div className="space-y-4">
       <HighlightCard homeTeam={homeTeamName} awayTeam={awayTeamName} />
+      <AdSlot label="사이드바 광고 (예: 300x250)" className="w-full h-64" />
       <VenueCard venue={venue} />
       <RoundFixturesCard
         leagueName={leagueName}

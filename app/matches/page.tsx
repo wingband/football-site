@@ -66,8 +66,7 @@ export default async function MatchesPage({
   return (
     <main className="min-h-screen bg-pitch-night p-4 sm:p-8 font-sans">
       <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8">
-        {/* 상단 배너 광고 자리 (모바일에서는 숨김 — 공간 부족) */}
-        <AdSlot label="상단 배너 광고 (예: 728x90)" className="w-full h-16 hidden sm:flex" />
+        {/* 사이트 공통 상단 배너는 layout.tsx에서 이미 렌더링됨 */}
 
         {/* 사이트 차별화 포인트: 한국인 해외파 선수 트래커 */}
         <KoreanAbroadWidget />

@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Oswald, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import AdSlot from "@/components/AdSlot";
 import { GoogleTagManager } from '@next/third-parties/google';
 
 const geistSans = Geist({
@@ -54,6 +55,10 @@ export default function RootLayout({
       <GoogleTagManager gtmId="GTM-MXDTC98T" />
       <body className="min-h-full flex flex-col bg-pitch-night">
         <Header />
+        {/* 전 페이지 공통 상단 배너 광고 자리 */}
+        <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 pt-3">
+          <AdSlot label="상단 배너 광고 (예: 728x90)" className="w-full h-16 sm:h-20" />
+        </div>
         <div className="flex-1">{children}</div>
         <Footer />
       </body>

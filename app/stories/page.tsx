@@ -1,4 +1,5 @@
 import Link from "next/link"
+import AdSlot from "@/components/AdSlot"
 import type { Metadata } from "next"
 import { getAllArticles } from "@/lib/articles"
 
@@ -21,6 +22,8 @@ export default async function StoriesPage() {
         <p className="text-xs text-floodlight/40 mb-8">
           매일 자동으로 작성되는 주요 경기 분석 기사 ({articles.length}개)
         </p>
+
+        <AdSlot label="리뷰 페이지 배너 광고 (예: 728x90)" className="w-full h-16 mb-8" />
 
         {articles.length === 0 && (
           <p className="text-floodlight/40 text-sm">

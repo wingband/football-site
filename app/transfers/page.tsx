@@ -1,4 +1,5 @@
 import Link from "next/link"
+import AdSlot from "@/components/AdSlot"
 import PlayerAvatar from "@/components/PlayerAvatar"
 import { getAllTransfers } from "@/lib/transfers"
 
@@ -17,6 +18,8 @@ export default async function TransfersPage() {
         <p className="text-xs text-floodlight/40 mb-6">
           주요 클럽 기준 최근 이적 소식
         </p>
+
+        <AdSlot label="이적 센터 배너 광고 (예: 728x90)" className="w-full h-16 mb-6" />
 
         {sorted.length === 0 && (
           <p className="text-floodlight/40 text-sm">최근 이적 정보가 없습니다.</p>

@@ -15,6 +15,7 @@ import NextMatchCard from "@/components/NextMatchCard"
 import MatchNewsCard from "@/components/MatchNewsCard"
 import H2HPanel from "@/components/H2HPanel"
 import MatchSidebar from "@/components/MatchSidebar"
+import AdSlot from "@/components/AdSlot"
 import { getSeasonYear } from "@/lib/season"
 import {
   MOCK_MATCH_DETAIL,
@@ -685,6 +686,10 @@ export default async function MatchDetailPage({
               </span>
             </div>
           </div>
+        </div>
+
+        <div className="px-4">
+          <AdSlot label="경기 상세 배너 광고 (예: 728x90)" className="w-full h-16 mb-2" />
         </div>
 
         {/* 탭: 팩트 / 티커 / 라인업 / 순위 / 통계 / 역대전적 */}

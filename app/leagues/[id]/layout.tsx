@@ -1,4 +1,5 @@
 import LeagueHeader from "@/components/LeagueHeader"
+import AdSlot from "@/components/AdSlot"
 import { getSeasonYear } from "@/lib/season"
 import { getLeagueStandings } from "@/lib/leagueData"
 
@@ -31,6 +32,7 @@ export default async function LeagueLayout({
         ) : (
           <p className="text-floodlight/40 pt-8">리그 정보를 찾을 수 없습니다.</p>
         )}
+        <AdSlot label="리그 페이지 배너 광고 (예: 728x90)" className="w-full h-16 mb-6" />
         {children}
       </div>
     </main>

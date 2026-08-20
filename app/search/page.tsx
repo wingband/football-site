@@ -1,4 +1,5 @@
 import Link from "next/link"
+import AdSlot from "@/components/AdSlot"
 import { MOCK_SEARCH_RESULTS } from "@/lib/mockData"
 
 type TeamResult = { team: { id: number; name: string; logo: string; country: string } }
@@ -69,6 +70,8 @@ export default async function SearchPage({
         <p className="text-xs text-floodlight/40 mb-6">
           &apos;{q}&apos; 검색 결과 {totalResults}건
         </p>
+
+        <AdSlot label="검색 결과 배너 광고 (예: 728x90)" className="w-full h-16 mb-6" />
 
         {leagues.length > 0 && (
           <section className="mb-6">

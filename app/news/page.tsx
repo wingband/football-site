@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import AdSlot from "@/components/AdSlot"
 import { MOCK_NEWS } from "@/lib/mockData"
 
 type NewsArticle = {
@@ -41,6 +42,8 @@ export default async function NewsPage() {
       <div className="max-w-3xl mx-auto">
         <h1 className="font-display uppercase text-xl text-score-amber mb-1">축구 뉴스</h1>
         <p className="text-xs text-floodlight/40 mb-8">전 세계 축구 관련 최신 소식</p>
+
+        <AdSlot label="뉴스 페이지 배너 광고 (예: 728x90)" className="w-full h-16 mb-8" />
 
         {articles.length === 0 && (
           <p className="text-floodlight/40 text-sm">뉴스를 불러올 수 없습니다.</p>

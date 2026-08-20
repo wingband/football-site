@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { getSeasonYear } from "@/lib/season"
 import FollowButton from "@/components/FollowButton"
+import AdSlot from "@/components/AdSlot"
 import PlayerAvatar from "@/components/PlayerAvatar"
 import {
   getPlayerDataWithFallback,
@@ -117,6 +118,8 @@ export default async function PlayerPage({
           </div>
           <FollowButton />
         </div>
+
+        <AdSlot label="선수 페이지 배너 광고 (예: 728x90)" className="w-full h-16 my-4" />
 
         {/* 최신 이적 배너 */}
         {latestTransfer && (

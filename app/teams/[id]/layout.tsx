@@ -1,4 +1,5 @@
 import TeamHeader from "@/components/TeamHeader"
+import AdSlot from "@/components/AdSlot"
 import { getTeamInfo } from "@/lib/teamData"
 
 // 팀 페이지 전체(개요/순위/경기/스쿼드/...)가 공유하는 레이아웃.
@@ -21,6 +22,7 @@ export default async function TeamLayout({
         ) : (
           <p className="text-floodlight/40 pt-8">팀 정보를 찾을 수 없습니다.</p>
         )}
+        <AdSlot label="팀 페이지 배너 광고 (예: 728x90)" className="w-full h-16 mb-6" />
         {children}
       </div>
     </main>
