@@ -40,7 +40,7 @@ async function getStandings(leagueId: string, season: number): Promise<LeagueRes
     `https://v3.football.api-sports.io/standings?league=${leagueId}&season=${season}`,
     {
       headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      cache: "no-store",
+      next: { revalidate: 3600 },
     }
   )
   const data = await res.json()

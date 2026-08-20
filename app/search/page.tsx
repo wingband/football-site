@@ -9,7 +9,7 @@ async function searchTeams(q: string): Promise<TeamResult[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_SEARCH_RESULTS.teams
   const res = await fetch(`https://v3.football.api-sports.io/teams?search=${encodeURIComponent(q)}`, {
     headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-    cache: "no-store",
+    next: { revalidate: 3600 },
   })
   const data = await res.json()
   return data.response ?? []
@@ -19,7 +19,7 @@ async function searchLeagues(q: string): Promise<LeagueResult[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_SEARCH_RESULTS.leagues
   const res = await fetch(`https://v3.football.api-sports.io/leagues?search=${encodeURIComponent(q)}`, {
     headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-    cache: "no-store",
+    next: { revalidate: 3600 },
   })
   const data = await res.json()
   return data.response ?? []
@@ -32,7 +32,7 @@ async function searchPlayers(q: string, season: number): Promise<PlayerResult[]>
     `https://v3.football.api-sports.io/players?search=${encodeURIComponent(q)}&season=${season}`,
     {
       headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      cache: "no-store",
+      next: { revalidate: 3600 },
     }
   )
   const data = await res.json()

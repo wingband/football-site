@@ -17,10 +17,18 @@ async function getPlayerStat(playerId: number, season: number): Promise<PlayerSt
     `https://v3.football.api-sports.io/players?id=${playerId}&season=${season}`,
     {
       headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      cache: "no-store",
+      next: { revalidate: 3600 },
     }
   )
   const data = await res.json()
+
+  // 디버깅용 — Vercel 대시보드의 Logs에서 확인
+  if (!data.response?.[0]) {
+    console.log(`=== 한국인 해외파 선수 조회 실패: id=${playerId}, season=${season} ===`)
+    console.log("errors:", data.errors)
+    console.log("results:", data.results)
+  }
+
   return data.response?.[0] ?? null
 }
 
@@ -35,12 +43,12 @@ async function getAllKoreanAbroad(): Promise<PlayerStat[]> {
 }
 
 export default async function KoreanAbroadWidget() {
-    const players = await getAllKoreanAbroad()
-  
-    if (players.length === 0) return null
-  
-    return (
-      <div>
+  const players = await getAllKoreanAbroad()
+
+  if (players.length === 0) return null
+
+  return (
+    <div>
       <div className="flex items-center gap-2 mb-3">
         <span className="text-lg">🇰🇷</span>
         <h2 className="font-display uppercase text-sm text-score-amber tracking-wide">

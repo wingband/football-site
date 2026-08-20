@@ -17,7 +17,7 @@ const FEATURED_CLUB_IDS = [50, 42, 541, 529, 157, 165, 40, 85]
 async function getTeamTransfers(teamId: number): Promise<TransferEntry[]> {
   const res = await fetch(`https://v3.football.api-sports.io/transfers?team=${teamId}`, {
     headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-    cache: "no-store",
+    next: { revalidate: 3600 },
   })
   const data = await res.json()
   return data.response ?? []
