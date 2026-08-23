@@ -14,6 +14,7 @@ import TeamRecentForm from "@/components/TeamRecentForm"
 import NextMatchCard from "@/components/NextMatchCard"
 import MatchNewsCard from "@/components/MatchNewsCard"
 import MatchVote from "@/components/MatchVote"
+import MatchComments from "@/components/MatchComments"
 import H2HPanel from "@/components/H2HPanel"
 import MatchSidebar from "@/components/MatchSidebar"
 import AdSlot from "@/components/AdSlot"
@@ -544,6 +545,13 @@ export default async function MatchDetailPage({
       {isFinished && (
         <MatchVote matchId={parseInt(id)} />
       )}
+
+      {/* 경기 댓글 — 종료 여부 관계없이 항상 표시 */}
+      <MatchComments
+        matchId={parseInt(id)}
+        homeTeam={match.teams.home.name}
+        awayTeam={match.teams.away.name}
+      />
 
       {/* 팩트 탭에도 라인업 미리보기 (FotMob 스타일) */}
       {lineups.length === 2 && (
