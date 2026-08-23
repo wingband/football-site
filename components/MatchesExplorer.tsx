@@ -42,18 +42,20 @@ const FEATURED_LEAGUES = [
   { id: 45,  country: "England",      name: "FA Cup",               displayName: "FA Cup" },
 ]
 
-// 가운데 경기 목록 정렬 우선순위 (낮을수록 먼저)
+// 가운데 경기 목록 정렬 우선순위 (숫자가 낮을수록 먼저)
+// PL=1 고정, 유저 국가 리그=2, 이후 CL/LaLiga/Bundesliga/SerieA/Ligue1 순
 const LEAGUE_SORT_ORDER: Record<number, number> = {
-  39:  1,  // Premier League
-  2:   2,  // Champions League
-  140: 3,  // La Liga
-  78:  4,  // Bundesliga
-  135: 5,  // Serie A
-  61:  6,  // Ligue 1
-  3:   7,  // Europa League
-  292: 8,  // K League 1
-  98:  9,  // J1 League
-  45:  10, // FA Cup
+  39:  1,  // Premier League — 항상 최우선
+  // 2번은 유저 국가 리그 (동적)
+  2:   3,  // Champions League
+  140: 4,  // La Liga
+  78:  5,  // Bundesliga
+  135: 6,  // Serie A
+  61:  7,  // Ligue 1
+  3:   8,  // Europa League
+  292: 9,  // K League 1
+  98:  10, // J1 League
+  45:  11, // FA Cup
 }
 
 function isFeatured(country: string, name: string) {
@@ -159,7 +161,7 @@ function LeagueLink({
   const content = (
     <>
       {logo ? (
-        <img src={logo} alt="" className="w-4 h-4 shrink-0 brightness-110" />
+        <img src={logo} alt="" className="w-4 h-4 shrink-0 brightness-150 saturate-150" />
       ) : (
         <span className="w-4 h-4 shrink-0 rounded-full bg-turf-line" />
       )}
@@ -300,14 +302,14 @@ export default function MatchesExplorer({ fixtures, userCountry }: { fixtures: F
     const userLeagueId = userCountry ? (countryLeagueMap[userCountry] ?? null) : null
 
     function getLeaguePriority(leagueId: number): number {
-      // Premier League는 항상 1순위
-      if (leagueId === 39) return 0
-      // 유저 국가 리그는 2순위 (단, Premier League 제외)
-      if (userLeagueId && leagueId === userLeagueId && leagueId !== 39) return 1
-      // 나머지 주요 리그는 LEAGUE_SORT_ORDER 기준
+      // 1) Premier League 무조건 최우선
+      if (leagueId === 39) return 1
+      // 2) 유저 국가 리그 2순위 (PL 제외)
+      if (userLeagueId && leagueId === userLeagueId) return 2
+      // 3) LEAGUE_SORT_ORDER에 있는 주요 리그
       const order = LEAGUE_SORT_ORDER[leagueId]
-      if (order !== undefined) return order + 1
-      // 그 외 리그
+      if (order !== undefined) return order
+      // 4) 그 외 리그
       return 999
     }
 

@@ -27,9 +27,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { id } = await params
   const data = await getPlayerDataWithFallback(id, getSeasonYear("England"))
-
   if (!data) return { title: "선수 정보를 찾을 수 없습니다" }
-
   return {
     title: `${data.player.name} 선수 정보 및 통계`,
     description: `${data.player.name}(${data.player.nationality})의 출전 기록, 골, 도움, 평점 등 시즌 통계를 확인하세요.`,
@@ -47,12 +45,17 @@ function StatRow({ label, value }: { label: string; value: string | number }) {
 
 export default async function PlayerPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ season?: string }>
 }) {
   const { id } = await params
+  const sp = await searchParams
 
-  const season = getSeasonYear("England")
+  const defaultSeason = getSeasonYear("England")
+  const season = sp.season ? parseInt(sp.season) : defaultSeason
+
   const data = await getPlayerDataWithFallback(id, season)
 
   if (!data) {
@@ -64,64 +67,76 @@ export default async function PlayerPage({
   }
 
   const { player } = data
-  const stat = data.statistics.sort(
+
+  // 클럽 스탯 우선 (국가대표 리그 제외)
+  const clubStats = data.statistics.filter(
+    (s) =>
+      !s.league.name.includes("World Cup") &&
+      !s.league.name.includes("AFC") &&
+      !s.league.name.includes("Asian") &&
+      !s.league.name.includes("Olympic")
+  )
+  const stat = (clubStats.length > 0 ? clubStats : data.statistics).sort(
     (a, b) => (b.games.appearences ?? 0) - (a.games.appearences ?? 0)
   )[0]
 
   const [transfers, career, recentMatches, trophies, sidelined] = await Promise.all([
     getPlayerTransfers(id),
-    stat ? getPlayerCareer(id, season) : Promise.resolve([]),
+    getPlayerCareer(id, season),
     stat ? getPlayerRecentMatches(id, stat.team.id, season, 8) : Promise.resolve([]),
     getTrophies(id),
     getSidelined(id),
   ])
 
-  // 현재 소속팀으로의 이적만 배너로 표시 (이전 이적 기록이 뜨지 않도록)
+  // 현재 팀으로의 이적만 배너 표시
   const currentTeamName = stat?.team?.name ?? ""
   const latestTransfer = [...transfers]
     .flatMap((t) => t.transfers.map((tr) => ({ ...tr, update: t.update })))
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .find((tr) =>
-      tr.teams.in?.name &&
-      currentTeamName &&
-      tr.teams.in.name.toLowerCase().replace(/\s/g, "") ===
-        currentTeamName.toLowerCase().replace(/\s/g, "")
+    .find(
+      (tr) =>
+        tr.teams.in?.name &&
+        currentTeamName &&
+        tr.teams.in.name.toLowerCase().replace(/\s/g, "") ===
+          currentTeamName.toLowerCase().replace(/\s/g, "")
     ) ?? null
 
-  // 국가대표 이력(팀명이 국적과 같은 항목)과 클럽 경력을 분리
   const nationalCareer = career.filter((c) => c.teamName === player.nationality)
   const clubCareer = career.filter((c) => c.teamName !== player.nationality)
-
   const winnerTrophies = trophies.filter((t) => t.place.toLowerCase().includes("winner"))
 
   const ageText = player.birth?.date
     ? `${player.age}세 (${new Date(player.birth.date).toLocaleDateString("ko-KR")})`
     : `${player.age}세`
 
-  const aboutText = stat
-    ? `${player.name}은(는) ${player.nationality} 국적의 ${player.age}세 선수로, 현재 ${stat.team.name} 소속 ${POSITION_KR[stat.games.position] ?? stat.games.position}입니다. ${stat.league.name} ${season} 시즌 ${stat.games.appearences ?? 0}경기에 출전해 ${stat.goals.total ?? 0}골 ${stat.goals.assists ?? 0}도움을 기록했고, 평균 평점은 ${stat.games.rating ?? "-"}입니다.`
-    : `${player.name}은(는) ${player.nationality} 국적의 ${player.age}세 선수입니다.`
+  // 시즌 선택 드롭다운용 (최근 5시즌)
+  const availableSeasons = Array.from({ length: 5 }, (_, i) => defaultSeason - i)
 
   return (
     <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
       <div className="max-w-3xl mx-auto pb-16 px-4">
-        {/* 헤더 */}
-        <div className="flex items-center justify-between gap-3 pt-8 pb-6 border-b border-turf-line/40">
-          <div className="flex items-center gap-4 min-w-0">
+
+        {/* ── 헤더: 사진 + 이름 + 현재 소속팀 ── */}
+        <div className="flex items-start justify-between gap-3 pt-8 pb-6 border-b border-turf-line/40">
+          <div className="flex items-start gap-4 min-w-0">
             <PlayerAvatar
               src={player.photo}
               alt={player.name}
-              className="w-16 h-16 rounded-full object-cover bg-turf-line text-lg shrink-0"
+              className="w-20 h-20 rounded-full object-cover bg-turf-line text-xl shrink-0"
             />
             <div className="min-w-0">
-              <h1 className="font-display uppercase text-xl truncate">{player.name}</h1>
+              <h1 className="font-display uppercase text-2xl truncate">{player.name}</h1>
+              {/* 국적 */}
+              <p className="text-sm text-floodlight/50 mt-0.5">{player.nationality}</p>
+              {/* 현재 소속팀 — 눈에 띄게 */}
               {stat && (
                 <Link
                   href={`/teams/${stat.team.id}`}
-                  className="flex items-center gap-2 mt-1 hover:text-score-amber"
+                  className="flex items-center gap-2 mt-2 w-fit bg-turf-line/30 hover:bg-turf-line/50 px-3 py-1.5 rounded-full transition-colors"
                 >
-                  <img src={stat.team.logo} alt="" className="w-4 h-4" />
-                  <span className="text-sm text-floodlight/70">{stat.team.name}</span>
+                  <img src={stat.team.logo} alt="" className="w-5 h-5" />
+                  <span className="text-sm font-semibold text-score-amber">{stat.team.name}</span>
+                  <span className="text-xs text-floodlight/40">{stat.league.name}</span>
                 </Link>
               )}
             </div>
@@ -143,7 +158,7 @@ export default async function PlayerPage({
           </div>
         )}
 
-        {/* 기본 정보 */}
+        {/* ── 기본 정보 ── */}
         <div className="grid sm:grid-cols-2 gap-4 py-6 border-b border-turf-line/30">
           <div className="space-y-2 text-sm">
             {player.height && (
@@ -181,12 +196,32 @@ export default async function PlayerPage({
           )}
         </div>
 
-        {/* 시즌 성적 요약 */}
+        {/* ── 시즌 성적 요약 + 시즌 선택 ── */}
         {stat && (
           <div className="py-6 border-b border-turf-line/30">
-            <p className="text-sm font-medium mb-4">
-              {stat.league.name} {season}/{season + 1} 시즌
-            </p>
+            {/* 헤더: 리그명 + 시즌 선택 */}
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <p className="text-sm font-semibold">{stat.league.name}</p>
+                <p className="text-xs text-floodlight/40">{season}/{season + 1} 시즌</p>
+              </div>
+              <div className="flex gap-1">
+                {availableSeasons.map((s) => (
+                  <Link
+                    key={s}
+                    href={`/players/${id}?season=${s}`}
+                    className={`text-[10px] px-2 py-1 rounded font-data transition-colors ${
+                      s === season
+                        ? "bg-score-amber text-pitch-night font-bold"
+                        : "bg-turf-line/30 text-floodlight/50 hover:bg-turf-line/60"
+                    }`}
+                  >
+                    {s}/{String(s + 1).slice(2)}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
             <div className="grid grid-cols-4 gap-3 text-center">
               <div>
                 <p className="font-display text-xl text-score-amber">{stat.goals.total ?? 0}</p>
@@ -228,91 +263,13 @@ export default async function PlayerPage({
           </div>
         )}
 
-        {/* 최근 경기 */}
-        {recentMatches.length > 0 && (
-          <div className="py-6 border-b border-turf-line/30">
-            <p className="text-sm font-medium mb-3">최근 경기</p>
-            <div className="divide-y divide-turf-line/20">
-              {recentMatches.map((m) => (
-                <Link
-                  key={m.fixture.id}
-                  href={`/matches/${m.fixture.id}`}
-                  className="flex items-center gap-3 py-2.5 hover:bg-turf-line/20 transition-colors -mx-1 px-1"
-                >
-                  <span className="text-[11px] text-floodlight/40 w-16 shrink-0">
-                    {new Date(m.fixture.date).toLocaleDateString("ko-KR", { month: "numeric", day: "numeric" })}
-                  </span>
-                  <img src={m.teams.home.logo} alt="" className="w-4 h-4 shrink-0" />
-                  <span className="text-xs flex-1 truncate">
-                    {m.teams.home.name} {m.goals.home}-{m.goals.away} {m.teams.away.name}
-                  </span>
-                  <img src={m.teams.away.logo} alt="" className="w-4 h-4 shrink-0" />
-                  <span className="text-[11px] text-floodlight/40 w-10 text-right shrink-0">
-                    {m.stat.games.minutes ?? "-"}&apos;
-                  </span>
-                  {(m.stat.goals.total ?? 0) > 0 && <span className="shrink-0">⚽{m.stat.goals.total}</span>}
-                  {(m.stat.goals.assists ?? 0) > 0 && <span className="shrink-0">🅰️{m.stat.goals.assists}</span>}
-                  {m.stat.games.rating && (
-                    <span className="text-xs font-data font-bold bg-green-600/20 text-green-400 px-1.5 py-0.5 rounded shrink-0">
-                      {m.stat.games.rating}
-                    </span>
-                  )}
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* 경력 */}
-        {(clubCareer.length > 0 || nationalCareer.length > 0) && (
-          <div className="py-6 border-b border-turf-line/30">
-            <p className="text-sm font-medium mb-3">경력</p>
-            {clubCareer.length > 0 && (
-              <div className="mb-4">
-                <p className="text-xs text-floodlight/40 mb-2">클럽</p>
-                <div className="divide-y divide-turf-line/20">
-                  {clubCareer.map((c) => (
-                    <Link
-                      key={c.teamId}
-                      href={`/teams/${c.teamId}`}
-                      className="flex items-center gap-3 py-2 hover:bg-turf-line/20 transition-colors -mx-1 px-1"
-                    >
-                      <img src={c.teamLogo} alt="" className="w-6 h-6 shrink-0" />
-                      <span className="text-sm flex-1 truncate">{c.teamName}</span>
-                      <span className="text-xs text-floodlight/40 font-data shrink-0">
-                        {Math.min(...c.seasons)}-{Math.max(...c.seasons) + 1}
-                      </span>
-                      <span className="text-xs text-floodlight/30 font-data w-16 text-right shrink-0">
-                        {c.apps}경기 {c.goals}골
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-            {nationalCareer.length > 0 && (
-              <div>
-                <p className="text-xs text-floodlight/40 mb-2">국가대표</p>
-                <div className="divide-y divide-turf-line/20">
-                  {nationalCareer.map((c) => (
-                    <div key={c.teamId} className="flex items-center gap-3 py-2">
-                      <img src={c.teamLogo} alt="" className="w-6 h-6 shrink-0" />
-                      <span className="text-sm flex-1 truncate">{c.teamName}</span>
-                      <span className="text-xs text-floodlight/30 font-data w-16 text-right shrink-0">
-                        {c.apps}경기 {c.goals}골
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* 상세 시즌 통계 */}
+        {/* ── 시즌 상세 통계 ── */}
         {stat && (
           <div className="py-6 border-b border-turf-line/30">
-            <p className="text-sm font-medium mb-4">시즌 상세 통계</p>
+            <p className="text-sm font-medium mb-4">
+              시즌 상세 통계
+              <span className="text-xs text-floodlight/40 ml-2">{stat.league.name} {season}/{season + 1}</span>
+            </p>
             <div className="grid sm:grid-cols-2 gap-x-8">
               <div>
                 <p className="text-xs text-floodlight/40 mb-1">슈팅</p>
@@ -343,7 +300,90 @@ export default async function PlayerPage({
           </div>
         )}
 
-        {/* 트로피 */}
+        {/* ── 최근 경기 ── */}
+        {recentMatches.length > 0 && (
+          <div className="py-6 border-b border-turf-line/30">
+            <p className="text-sm font-medium mb-3">최근 경기</p>
+            <div className="divide-y divide-turf-line/20">
+              {recentMatches.map((m) => (
+                <Link
+                  key={m.fixture.id}
+                  href={`/matches/${m.fixture.id}`}
+                  className="flex items-center gap-3 py-2.5 hover:bg-turf-line/20 transition-colors -mx-1 px-1"
+                >
+                  <span className="text-[11px] text-floodlight/40 w-14 shrink-0">
+                    {new Date(m.fixture.date).toLocaleDateString("ko-KR", { month: "numeric", day: "numeric" })}
+                  </span>
+                  <img src={m.teams.home.logo} alt="" className="w-4 h-4 shrink-0" />
+                  <span className="text-xs flex-1 truncate">
+                    {m.teams.home.name} {m.goals.home}-{m.goals.away} {m.teams.away.name}
+                  </span>
+                  <img src={m.teams.away.logo} alt="" className="w-4 h-4 shrink-0" />
+                  <span className="text-[11px] text-floodlight/40 w-8 text-right shrink-0">
+                    {m.stat.games.minutes ?? "-"}&apos;
+                  </span>
+                  {(m.stat.goals.total ?? 0) > 0 && <span className="shrink-0 text-xs">⚽{m.stat.goals.total}</span>}
+                  {(m.stat.goals.assists ?? 0) > 0 && <span className="shrink-0 text-xs">🅰️{m.stat.goals.assists}</span>}
+                  {m.stat.games.rating && (
+                    <span className="text-xs font-data font-bold bg-green-600/20 text-green-400 px-1.5 py-0.5 rounded shrink-0">
+                      {m.stat.games.rating}
+                    </span>
+                  )}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── 경력 ── */}
+        {(clubCareer.length > 0 || nationalCareer.length > 0) && (
+          <div className="py-6 border-b border-turf-line/30">
+            <p className="text-sm font-medium mb-3">경력</p>
+            {clubCareer.length > 0 && (
+              <div className="mb-4">
+                <p className="text-xs text-floodlight/40 mb-2">클럽</p>
+                <div className="divide-y divide-turf-line/20">
+                  {clubCareer.map((c) => (
+                    <Link
+                      key={c.teamId}
+                      href={`/teams/${c.teamId}`}
+                      className="flex items-center gap-3 py-2 hover:bg-turf-line/20 transition-colors -mx-1 px-1"
+                    >
+                      <img src={c.teamLogo} alt="" className="w-6 h-6 shrink-0" />
+                      <span className="text-sm flex-1 truncate">{c.teamName}</span>
+                      {/* 시즌 범위 */}
+                      <span className="text-xs text-floodlight/40 font-data shrink-0 w-20 text-right">
+                        {Math.min(...c.seasons)}/{String(Math.max(...c.seasons) + 1).slice(2)}
+                      </span>
+                      {/* 경기 + 골 — 같은 줄, 고정폭 */}
+                      <span className="text-xs text-floodlight/30 font-data shrink-0 w-24 text-right">
+                        {c.apps}경기 {c.goals}골
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+            {nationalCareer.length > 0 && (
+              <div>
+                <p className="text-xs text-floodlight/40 mb-2">국가대표</p>
+                <div className="divide-y divide-turf-line/20">
+                  {nationalCareer.map((c) => (
+                    <div key={c.teamId} className="flex items-center gap-3 py-2">
+                      <img src={c.teamLogo} alt="" className="w-6 h-6 shrink-0" />
+                      <span className="text-sm flex-1 truncate">{c.teamName}</span>
+                      <span className="text-xs text-floodlight/30 font-data shrink-0 w-24 text-right">
+                        {c.apps}경기 {c.goals}골
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── 트로피 ── */}
         {winnerTrophies.length > 0 && (
           <div className="py-6 border-b border-turf-line/30">
             <p className="text-sm font-medium mb-3">트로피</p>
@@ -351,17 +391,15 @@ export default async function PlayerPage({
               {winnerTrophies.slice(0, 8).map((t, i) => (
                 <div key={i} className="flex items-center gap-2 text-sm">
                   <span className="text-score-amber">🏆</span>
-                  <span className="flex-1 text-floodlight/90">
-                    {t.league} ({t.country})
-                  </span>
-                  <span className="text-xs text-floodlight/40 font-data">{t.season}</span>
+                  <span className="flex-1 text-floodlight/90">{t.league} ({t.country})</span>
+                  <span className="text-xs text-floodlight/40 font-data shrink-0">{t.season}</span>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* 부상 이력 */}
+        {/* ── 부상 이력 ── */}
         {sidelined.length > 0 && (
           <div className="py-6 border-b border-turf-line/30">
             <p className="text-sm font-medium mb-3">⚕️ 부상 이력</p>
@@ -380,11 +418,16 @@ export default async function PlayerPage({
           </div>
         )}
 
-        {/* About */}
-        <div className="py-6">
-          <p className="text-sm font-medium mb-3">소개</p>
-          <p className="text-sm text-floodlight/60 leading-relaxed">{aboutText}</p>
-        </div>
+        {/* ── 소개 ── */}
+        {stat && (
+          <div className="py-6">
+            <p className="text-sm font-medium mb-3">소개</p>
+            <p className="text-sm text-floodlight/60 leading-relaxed">
+              {player.name}은(는) {player.nationality} 국적의 {player.age}세 선수로, 현재 {stat.team.name} 소속 {POSITION_KR[stat.games.position] ?? stat.games.position}입니다.{" "}
+              {stat.league.name} {season}/{season + 1} 시즌 {stat.games.appearences ?? 0}경기에 출전해 {stat.goals.total ?? 0}골 {stat.goals.assists ?? 0}도움을 기록했고, 평균 평점은 {stat.games.rating ?? "-"}입니다.
+            </p>
+          </div>
+        )}
       </div>
     </main>
   )

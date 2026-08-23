@@ -74,28 +74,6 @@ export type Trophy = { league: string; country: string; season: string; place: s
 
 const HEADERS = () => ({ "x-apisports-key": process.env.API_FOOTBALL_KEY! })
 
-export type SidelinedEntry = {
-  player: { id: number; name: string }
-  fixture: { id: number } | null
-  type: string
-  start: string | null
-  end: string | null
-}
-
-export async function getSidelined(playerId: string): Promise<SidelinedEntry[]> {
-  if (process.env.USE_MOCK_DATA === "true") return []
-  try {
-    const res = await fetch(
-      `https://v3.football.api-sports.io/sidelined?player=${playerId}`,
-      { headers: HEADERS(), next: { revalidate: 3600 } }
-    )
-    const data = await res.json()
-    return data.response ?? []
-  } catch {
-    return []
-  }
-}
-
 export async function getPlayerData(playerId: string, season: number): Promise<PlayerData | null> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_PLAYER as unknown as PlayerData
 
@@ -258,4 +236,28 @@ export async function getPlayerRecentMatches(
   )
 
   return withStats.filter((m): m is PlayerRecentMatch => m !== null)
+}
+
+export type SidelinedEntry = {
+  type: string
+  start: string | null
+  end: string | null
+}
+
+export async function getSidelined(playerId: string): Promise<SidelinedEntry[]> {
+  if (process.env.USE_MOCK_DATA === "true") return []
+  try {
+    const res = await fetch(
+      `https://v3.football.api-sports.io/sidelined?player=${playerId}`,
+      { headers: HEADERS(), next: { revalidate: 3600 } }
+    )
+    const data = await res.json()
+    return (data.response ?? []).map((s: { type: string; start: string | null; end: string | null }) => ({
+      type: s.type,
+      start: s.start,
+      end: s.end,
+    }))
+  } catch {
+    return []
+  }
 }
