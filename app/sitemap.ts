@@ -35,7 +35,9 @@ type SitemapFixture = {
 async function getFixturesByDate(date: string): Promise<SitemapFixture[]> {
   const res = await fetch(`https://v3.football.api-sports.io/fixtures?date=${date}`, {
     headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-    next: { revalidate: 3600 },
+    // 날짜별로 하루 캐시. 캐시 키가 날짜라서 날이 바뀔 때만 새로 호출되고,
+    // 사이트맵에 필요한 건 URL 목록이라 스코어가 몇 시간 굳어도 문제 없음
+    next: { revalidate: 86400 },
   })
   if (!res.ok) return []
   const data = await res.json()

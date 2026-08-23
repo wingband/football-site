@@ -141,7 +141,9 @@ type NewsArticle = {
 const LIVE_CODES = ["1H", "HT", "2H", "ET", "BT", "P", "SUSP", "INT", "LIVE"]
 const FINISHED_CODES = ["FT", "AET", "PEN"]
 
-async function apiFetch(path: string) {
+// revalidate를 넘기면 그 값으로 캐시한다. 안 넘기면 기존 기본값 유지
+// (/fixtures?id= 은 no-store, 나머지는 1시간)
+async function apiFetch(path: string, revalidate?: number) {
   if (process.env.USE_MOCK_DATA === "true") {
     if (path.startsWith("/fixtures?id=")) return MOCK_MATCH_DETAIL.fixture
     if (path.startsWith("/fixtures/statistics")) return MOCK_MATCH_DETAIL.statistics
@@ -158,10 +160,12 @@ async function apiFetch(path: string) {
   const res = await fetch(`https://v3.football.api-sports.io${path}`, {
     headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
     // fixtures?id= 는 캐시 무시 (빈 결과가 캐시됐을 경우 대비)
-    // 나머지는 1시간 캐시
-    ...(path.startsWith("/fixtures?id=")
-      ? { cache: "no-store" as const }
-      : { next: { revalidate: 3600 } }),
+    // 나머지는 호출자가 지정한 값, 없으면 1시간 캐시
+    ...(revalidate !== undefined
+      ? { next: { revalidate } }
+      : path.startsWith("/fixtures?id=")
+        ? { cache: "no-store" as const }
+        : { next: { revalidate: 3600 } }),
   })
   const data = await res.json()
   return data.response
@@ -410,6 +414,16 @@ export default async function MatchDetailPage({
 
   const season = getSeasonYear(match.league.country)
 
+  const isFinished = FINISHED_CODES.includes(match.fixture.status.short ?? "")
+  const isLive = LIVE_CODES.includes(match.fixture.status.short ?? "")
+
+  // 라인업/통계/이벤트/선수평점은 경기 상태에 따라 바뀌는 빈도가 완전히 다르다.
+  //  - 종료: 다시 안 바뀌므로 하루 캐시
+  //  - 진행 중: 1분마다 갱신
+  //  - 시작 전: 라인업이 킥오프 1시간쯤 전에 뜨는 정도라 1시간 유지
+  //    (예정 경기를 1분 캐시로 두면 오히려 콜 수가 폭증함)
+  const matchDataRevalidate = isFinished ? 86400 : isLive ? 60 : 3600
+
   const [
     stats,
     events,
@@ -426,17 +440,17 @@ export default async function MatchDetailPage({
     venueInfo,
     roundFixtures,
   ] = await Promise.all([
-    apiFetch(`/fixtures/statistics?fixture=${fixtureId}`) as Promise<Statistic[]>,
-    apiFetch(`/fixtures/events?fixture=${fixtureId}`) as Promise<MatchEvent[]>,
-    apiFetch(`/fixtures/players?fixture=${fixtureId}`) as Promise<PlayerStat[]>,
-    apiFetch(`/fixtures/lineups?fixture=${fixtureId}`) as Promise<Lineup[]>,
-    apiFetch(`/fixtures/headtohead?h2h=${match.teams.home.id}-${match.teams.away.id}&last=20`) as Promise<H2HMatch[]>,
-    apiFetch(`/predictions?fixture=${fixtureId}`) as Promise<Prediction[]>,
+    apiFetch(`/fixtures/statistics?fixture=${fixtureId}`, matchDataRevalidate) as Promise<Statistic[]>,
+    apiFetch(`/fixtures/events?fixture=${fixtureId}`, matchDataRevalidate) as Promise<MatchEvent[]>,
+    apiFetch(`/fixtures/players?fixture=${fixtureId}`, matchDataRevalidate) as Promise<PlayerStat[]>,
+    apiFetch(`/fixtures/lineups?fixture=${fixtureId}`, matchDataRevalidate) as Promise<Lineup[]>,
+    apiFetch(`/fixtures/headtohead?h2h=${match.teams.home.id}-${match.teams.away.id}&last=20`, 86400) as Promise<H2HMatch[]>,
+    apiFetch(`/predictions?fixture=${fixtureId}`, 86400) as Promise<Prediction[]>,
     getStandings(match.league.id, season),
-    apiFetch(`/fixtures?team=${match.teams.home.id}&last=6`) as Promise<TeamFixture[]>,
-    apiFetch(`/fixtures?team=${match.teams.away.id}&last=6`) as Promise<TeamFixture[]>,
-    apiFetch(`/fixtures?team=${match.teams.home.id}&next=1`) as Promise<TeamFixture[]>,
-    apiFetch(`/fixtures?team=${match.teams.away.id}&next=1`) as Promise<TeamFixture[]>,
+    apiFetch(`/fixtures?team=${match.teams.home.id}&last=6`, 21600) as Promise<TeamFixture[]>,
+    apiFetch(`/fixtures?team=${match.teams.away.id}&last=6`, 21600) as Promise<TeamFixture[]>,
+    apiFetch(`/fixtures?team=${match.teams.home.id}&next=1`, 21600) as Promise<TeamFixture[]>,
+    apiFetch(`/fixtures?team=${match.teams.away.id}&next=1`, 21600) as Promise<TeamFixture[]>,
     getMatchNews(match.teams.home.name, match.teams.away.name),
     getVenueInfo(match.fixture.venue?.id, match.fixture.venue?.name ?? "", match.fixture.venue?.city ?? ""),
     match.league.round
@@ -449,8 +463,6 @@ export default async function MatchDetailPage({
         .map((s, i) => `${s.type}: ${s.value ?? 0} vs ${stats[1].statistics[i]?.value ?? 0}`)
         .join(", ")
     : "통계 데이터 없음"
-
-  const isFinished = FINISHED_CODES.includes(match.fixture.status.short ?? "")
 
   // 경기가 끝난 경우에만 AI 리뷰를 생성. 시작 전/진행 중 경기에 결과 요약을 요청하면
   // AI가 없는 사실을 지어낼 수 있어서(할루시네이션) 반드시 이 조건이 필요함
@@ -478,7 +490,6 @@ export default async function MatchDetailPage({
   const homeXg = getStatValue(homeStats, "expected_goals")
   const awayXg = getStatValue(awayStats, "expected_goals")
   const hasXg = homeXg !== null || awayXg !== null
-  const isLive = LIVE_CODES.includes(match.fixture.status.short ?? "")
 
   const insights = buildInsights(
     h2h,
