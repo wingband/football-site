@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import AdSlot from "@/components/AdSlot";
 import { GoogleTagManager, GoogleAnalytics } from '@next/third-parties/google';
 import { ClerkProvider } from "@clerk/nextjs";
+import { SITE_URL } from "@/lib/siteConfig";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,6 +33,10 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  // canonical/og:image의 상대주소를 절대주소로 바꿀 기준 도메인.
+  // 이게 없으면 Next가 배포 URL(...vercel.app)을 기준으로 삼아서,
+  // 그 주소로 들어온 방문자에게는 canonical이 vercel.app으로 찍혀 중복 색인이 생긴다
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "GoalLine - 실시간 축구 스코어 · 순위표 · AI 경기 분석",
     template: "%s | GoalLine",
@@ -39,7 +44,12 @@ export const metadata: Metadata = {
   description:
     "전 세계 축구 리그의 실시간 스코어, 순위표, 라인업, AI 경기 분석을 한곳에서 확인하세요. 한국인 해외파 선수 소식도 매일 업데이트됩니다.",
   verification: {
-    google: "dHUEnfghtcC90rFALLbmNhtyBzcT9034n9AcTiKBTAE",
+    // Search Console 속성이 둘(도메인/URL 접두어)이라 토큰도 둘이다.
+    // 배열로 두면 meta 태그가 두 개 렌더되어 기존 인증이 풀리지 않는다
+    google: [
+      "dHUEnfghtcC90rFALLbmNhtyBzcT9034n9AcTiKBTAE",
+      "QvrjeTaJdEjRFF8PJ2mKx2Q6WbM-J7SEkYlo6NeqiVc",
+    ],
   },
 };
 
