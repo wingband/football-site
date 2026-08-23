@@ -2,16 +2,9 @@ import Link from "next/link"
 import PlayerAvatar from "@/components/PlayerAvatar"
 import { KOREAN_PLAYERS_ABROAD } from "@/lib/koreanPlayersAbroad"
 import { MOCK_KOREAN_ABROAD } from "@/lib/mockData"
+import { saveCachedPlayerStat, getCachedPlayerStat, type CachedPlayerStat } from "@/lib/playerStatCache"
 
-type PlayerStat = {
-  player: { id: number; name: string; photo: string }
-  statistics: {
-    team: { name: string; logo: string }
-    league: { name: string }
-    games: { appearences: number | null; rating: string | null }
-    goals: { total: number | null; assists: number | null }
-  }[]
-}
+type PlayerStat = CachedPlayerStat
 
 async function fetchPlayerStat(playerId: number, season: number, useCache: boolean) {
   const url = `https://v3.football.api-sports.io/players?id=${playerId}&season=${season}`
@@ -22,22 +15,32 @@ async function fetchPlayerStat(playerId: number, season: number, useCache: boole
   return res.json()
 }
 
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
 async function getPlayerStat(playerId: number, season: number): Promise<PlayerStat | null> {
   let data = await fetchPlayerStat(playerId, season, true)
 
-  // 1차 실패 -> 캐시 없이 즉시 1회 재시도 (일시적 실패가 1시간 캐싱되는 것 방지)
+  // 1차 실패 -> 짧게 대기 후 캐시 없이 재시도 (순간적인 레이트리밋 완화)
   if (!data.response?.[0]) {
-    console.log(`=== 1차 조회 실패, no-store로 재시도: id=${playerId} ===`)
+    console.log(`=== 1차 조회 실패, 잠시 후 no-store로 재시도: id=${playerId} ===`)
+    await sleep(400)
     data = await fetchPlayerStat(playerId, season, false)
   }
 
-  if (!data.response?.[0]) {
-    console.log(`=== 한국인 해외파 선수 조회 최종 실패: id=${playerId}, season=${season} ===`)
-    console.log("errors:", data.errors)
-    console.log("results:", data.results)
+  const fresh: PlayerStat | null = data.response?.[0] ?? null
+
+  if (fresh) {
+    // 성공했으면 DB에 최신값 저장 (다음번 실패에 대비)
+    await saveCachedPlayerStat(playerId, fresh)
+    return fresh
   }
 
-  return data.response?.[0] ?? null
+  // API가 두 번 다 실패하면, 화면에서 선수가 사라지는 대신 DB에 저장된 마지막 성공값을 대신 보여줌
+  console.log(`=== 한국인 해외파 선수 조회 최종 실패, DB 캐시로 대체: id=${playerId}, season=${season} ===`)
+  console.log("errors:", data.errors)
+  return getCachedPlayerStat(playerId)
 }
 
 async function getAllKoreanAbroad(): Promise<PlayerStat[]> {
