@@ -16,19 +16,6 @@ async function fetchStat(playerId: number, season: number) {
   return res.json()
 }
 
-async function fetchLastMatch(playerId: number): Promise<string | null> {
-  try {
-    const res = await fetch(
-      `https://v3.football.api-sports.io/fixtures?player=${playerId}&last=1`,
-      { headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! }, next: { revalidate: 3600 } }
-    )
-    const data = await res.json()
-    return data.response?.[0]?.fixture?.date ?? null
-  } catch {
-    return null
-  }
-}
-
 export async function GET() {
   const season = new Date().getFullYear()
 
@@ -51,9 +38,6 @@ export async function GET() {
           if (cached) stat = getClubStat(cached.statistics ?? [])
         }
 
-        // 최근 경기 날짜 (정렬용)
-        const lastMatchDate = await fetchLastMatch(player.id)
-
         return {
           id: player.id,
           name: player.name,
@@ -67,7 +51,6 @@ export async function GET() {
           apps: stat?.games.appearences ?? 0,
           minutes: stat?.games.minutes ?? 0,
           rating: stat?.games.rating ?? null,
-          lastMatchDate,
         }
       } catch {
         return {
@@ -83,18 +66,19 @@ export async function GET() {
           apps: 0,
           minutes: 0,
           rating: null,
-          lastMatchDate: null,
         }
       }
     })
   )
 
-  // tier 내에서 최근 경기 날짜 순 정렬 (최신이 위)
+  // 정렬: tier → 출전시간(minutes) 내림차순 → 출전경기수(apps) 내림차순
+  // 출전 시간이 많을수록 최근에 많이 뛴 선수 = 위에 표시
   const sorted = [...players].sort((a, b) => {
     if (a.tier !== b.tier) return a.tier - b.tier
-    const dateA = a.lastMatchDate ? new Date(a.lastMatchDate).getTime() : 0
-    const dateB = b.lastMatchDate ? new Date(b.lastMatchDate).getTime() : 0
-    return dateB - dateA
+    const minutesA = a.minutes ?? 0
+    const minutesB = b.minutes ?? 0
+    if (minutesB !== minutesA) return minutesB - minutesA
+    return (b.apps ?? 0) - (a.apps ?? 0)
   })
 
   return NextResponse.json({ players: sorted }, {

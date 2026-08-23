@@ -16,7 +16,6 @@ type Player = {
   apps: number
   minutes: number
   rating: string | null
-  lastMatchDate: string | null
 }
 
 function RatingBadge({ rating }: { rating: string | null }) {
@@ -55,16 +54,6 @@ function PlayerRow({ p }: { p: Player }) {
           <span className="text-xs text-floodlight/40 truncate">{p.league}</span>
         </div>
       </div>
-
-      {/* 최근 경기 날짜 */}
-      {p.lastMatchDate && (
-        <div className="text-center w-12 shrink-0 hidden sm:block">
-          <p className="text-xs text-floodlight/50 font-data">
-            {new Date(p.lastMatchDate).toLocaleDateString("ko-KR", { month: "numeric", day: "numeric" })}
-          </p>
-          <p className="text-[9px] text-floodlight/30">최근</p>
-        </div>
-      )}
 
       {/* 스탯 */}
       <div className="flex items-center gap-4 shrink-0">
