@@ -1,12 +1,56 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { getSeasonYear } from "@/lib/season"
+import { getSeasonYear, formatSeasonLabel } from "@/lib/season"
 import { getLeagueStandings } from "@/lib/leagueData"
+import SeasonSelect from "@/components/SeasonSelect"
 
-export const metadata: Metadata = {
-  title: "2026-27 유럽 축구 리그 순위표 — 프리미어리그·라리가·분데스리가 | GoalLine",
-  description: "2026-27 시즌 프리미어리그, 라리가, 분데스리가, 세리에A, 리그1 순위표를 한눈에 확인하세요. 매일 업데이트.",
-  keywords: ["프리미어리그 순위", "라리가 순위", "분데스리가 순위", "세리에A 순위", "리그1 순위", "유럽 축구 순위표"],
+// 드롭다운에 띄울 가장 오래된 시즌. 위쪽 끝은 현재 시즌이라 해가 넘어가면 자동으로 늘어남
+const FIRST_SEASON = 2020
+
+function getSeasonOptions(currentSeason: number): number[] {
+  const last = Math.max(2026, currentSeason)
+  return Array.from({ length: last - FIRST_SEASON + 1 }, (_, i) => last - i)
+}
+
+// ?season= 값 검증. 목록에 없는 값(오타·범위 밖)이면 현재 시즌으로 되돌린다
+function resolveSeason(raw: string | undefined): { season: number; explicit: boolean } {
+  const currentSeason = getSeasonYear("England")
+  const requested = Number(raw)
+  const isValid =
+    raw !== undefined &&
+    Number.isInteger(requested) &&
+    getSeasonOptions(currentSeason).includes(requested)
+
+  return { season: isValid ? requested : currentSeason, explicit: isValid }
+}
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ season?: string }>
+}): Promise<Metadata> {
+  const { season } = resolveSeason((await searchParams).season)
+  const label = formatSeasonLabel(season)
+  const currentSeason = getSeasonYear("England")
+
+  return {
+    // layout.tsx의 title.template이 "| GoalLine"을 붙여주므로 여기서는 생략
+    title: `${label} 유럽 축구 리그 순위표 — 프리미어리그·라리가·분데스리가`,
+    description: `${label} 시즌 프리미어리그, 라리가, 분데스리가, 세리에A, 리그1 순위표를 한눈에 확인하세요. 매일 업데이트.`,
+    keywords: [
+      `${label} 프리미어리그 순위`,
+      "프리미어리그 순위",
+      "라리가 순위",
+      "분데스리가 순위",
+      "세리에A 순위",
+      "리그1 순위",
+      "유럽 축구 순위표",
+    ],
+    // 현재 시즌은 파라미터 없는 /standings가 정규 URL
+    alternates: {
+      canonical: season === currentSeason ? "/standings" : `/standings?season=${season}`,
+    },
+  }
 }
 
 const LEAGUES = [
@@ -46,16 +90,27 @@ async function getStandingsData(leagueId: number, season: number) {
   return data
 }
 
-export default async function StandingsPage() {
-  const season = getSeasonYear("England")
+export default async function StandingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ season?: string }>
+}) {
+  const { season, explicit } = resolveSeason((await searchParams).season)
+  const currentSeason = getSeasonYear("England")
+  const seasonOptions = getSeasonOptions(currentSeason)
+  const isCurrentSeason = season === currentSeason
 
   const allData = await Promise.all(
     LEAGUES.map(async (l) => {
       let data = await getStandingsData(l.id, season)
-      if (!data) data = await getStandingsData(l.id, season - 1)
+      // 시즌 초에는 새 시즌 순위표가 아직 안 올라와서 직전 시즌으로 대체.
+      // 단 사용자가 시즌을 직접 고른 경우엔 그 시즌만 보여준다 (다른 시즌이 섞이면 오해의 소지)
+      if (!data && !explicit) data = await getStandingsData(l.id, season - 1)
       return { ...l, data }
     })
   )
+
+  const hasAnyStandings = allData.some((d) => d.data?.league?.standings?.length)
 
   const week = Math.ceil(new Date().getDate() / 7)
   const monthName = new Date().toLocaleDateString("ko-KR", { month: "long" })
@@ -65,15 +120,17 @@ export default async function StandingsPage() {
       <div className="max-w-4xl mx-auto px-4 pb-16">
         <div className="pt-8 pb-4 border-b border-turf-line/40 mb-6">
           <h1 className="font-display uppercase text-xl text-score-amber">
-            {season}-{String(season + 1).slice(2)} 리그 순위표
+            {formatSeasonLabel(season)} 리그 순위표
           </h1>
           <p className="text-xs text-floodlight/40 mt-1">
-            {monthName} {week}주차 기준 · 매일 업데이트
+            {isCurrentSeason ? `${monthName} ${week}주차 기준 · 매일 업데이트` : "종료된 시즌 최종 순위"}
           </p>
         </div>
 
-        {/* 리그 탭 */}
+        {/* 시즌 선택 + 리그 탭 */}
         <div className="flex gap-2 overflow-x-auto pb-3 mb-6 [scrollbar-width:none]">
+          <SeasonSelect seasons={seasonOptions} current={season} />
+          <span className="shrink-0 w-px bg-turf-line/40 my-1" />
           {LEAGUES.map(l => (
             <a key={l.id} href={`#league-${l.id}`}
               className="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-turf-line/30 hover:bg-turf-line/50 rounded-full text-xs text-floodlight/70 hover:text-floodlight transition-colors">
@@ -82,6 +139,16 @@ export default async function StandingsPage() {
             </a>
           ))}
         </div>
+
+        {/* 해당 시즌 데이터가 아예 없을 때 (예: API 플랜이 커버하지 않는 과거 시즌) */}
+        {!hasAnyStandings && (
+          <div className="bg-turf/30 border border-turf-line/30 px-5 py-8 text-center">
+            <p className="text-sm text-floodlight/50">
+              {formatSeasonLabel(season)} 시즌 순위표 데이터가 없습니다.
+            </p>
+            <p className="text-xs text-floodlight/30 mt-1.5">다른 시즌을 선택해 주세요.</p>
+          </div>
+        )}
 
         {/* 각 리그 순위표 */}
         <div className="space-y-10">
@@ -195,7 +262,7 @@ export default async function StandingsPage() {
         <section className="mt-12 pt-8 border-t border-turf-line/30">
           <h2 className="font-semibold text-sm text-floodlight/60 mb-2">유럽 축구 리그 순위표 안내</h2>
           <p className="text-xs text-floodlight/40 leading-relaxed">
-            본 페이지에서는 {season}-{season + 1} 시즌 프리미어리그(잉글랜드), 라리가(스페인),
+            본 페이지에서는 {formatSeasonLabel(season)} 시즌 프리미어리그(잉글랜드), 라리가(스페인),
             분데스리가(독일), 세리에A(이탈리아), 리그1(프랑스) 순위표를 제공합니다.
             각 팀의 경기수, 승·무·패, 득실차, 승점과 최근 5경기 폼을 확인할 수 있습니다.
             리그 로고 또는 팀명을 클릭하면 상세 정보 페이지로 이동합니다.
