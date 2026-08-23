@@ -775,22 +775,16 @@ export default async function MatchDetailPage({
                 }
               : null
           }
-        />
+        >
+          {isFinished && <MatchVote matchId={parseInt(id)} />}
 
-        {isFinished && (
-          <div className="mt-4">
-            <MatchVote matchId={parseInt(id)} />
-          </div>
-        )}
-
-        {/* 경기 댓글 — 종료 여부 관계없이 항상 표시 */}
-        <div className="mt-4">
+          {/* 경기 댓글 — 종료 여부 관계없이 항상 표시 */}
           <MatchComments
             matchId={parseInt(id)}
             homeTeam={match.teams.home.name}
             awayTeam={match.teams.away.name}
           />
-        </div>
+        </MatchSidebar>
       </aside>
       </div>
     </main>

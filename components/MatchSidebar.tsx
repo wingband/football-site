@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import Link from "next/link"
 import AdSlot from "@/components/AdSlot"
 import PlayerAvatar from "@/components/PlayerAvatar"
@@ -310,6 +311,7 @@ export default function MatchSidebar({
   homeInjuries = [],
   awayInjuries = [],
   odds = null,
+  children,
 }: {
   homeTeamName: string
   awayTeamName: string
@@ -326,6 +328,7 @@ export default function MatchSidebar({
   homeInjuries?: InjuredPlayer[]
   awayInjuries?: InjuredPlayer[]
   odds?: OddsData
+  children?: ReactNode
 }) {
   return (
     <div className="space-y-4">
@@ -346,6 +349,7 @@ export default function MatchSidebar({
       />
       <AdSlot label="사이드바 광고 (예: 300x250)" className="w-full h-64" />
       <VenueCard venue={venue} />
+      {children}
       <RoundFixturesCard
         leagueName={leagueName}
         round={round}
