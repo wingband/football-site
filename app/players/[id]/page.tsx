@@ -139,7 +139,16 @@ export default async function PlayerPage({
               )}
             </div>
           </div>
-          <FollowButton />
+          <div className="flex flex-col items-end gap-2 shrink-0">
+            <FollowButton />
+            {/* 이 선수를 선수1로 넣고 비교 페이지로 — 상대는 거기서 검색해서 고름 */}
+            <Link
+              href={`/compare?player1=${id}`}
+              className="whitespace-nowrap text-xs px-3 py-1.5 border border-score-amber/60 bg-score-amber/10 text-score-amber hover:bg-score-amber/20 rounded-full transition-colors"
+            >
+              이 선수와 비교하기
+            </Link>
+          </div>
         </div>
 
         <AdSlot label="선수 페이지 배너 광고 (예: 728x90)" className="w-full h-16 my-4" />

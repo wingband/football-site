@@ -3,6 +3,7 @@ import { SITE_URL } from "@/lib/siteConfig"
 import { matchHref } from "@/lib/slug"
 import { getTodayStr, shiftDate } from "@/lib/dateUtils"
 import { MOCK_FIXTURES } from "@/lib/mockData"
+import { compareSitemapPath, koreanComparePairs } from "@/lib/compare"
 
 // 사이트맵은 기본적으로 캐시되는 라우트 핸들러라서, 경기 목록이 하루 종일 굳지 않도록
 // 1시간마다 다시 만든다
@@ -90,6 +91,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: "/transfers",       priority: 0.7, changeFrequency: "daily" },
     { path: "/news",            priority: 0.7, changeFrequency: "hourly" },
     { path: "/best11",          priority: 0.6, changeFrequency: "weekly" },
+    { path: "/compare",         priority: 0.6, changeFrequency: "weekly" },
     { path: "/privacy",         priority: 0.3, changeFrequency: "yearly" },
   ]
 
@@ -127,6 +129,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }))
 
+  // 한국인 해외파끼리의 비교 페이지. (A,B)와 (B,A)는 같은 화면이라
+  // 정규 URL(id 오름차순) 한 쪽만 넣는다 — 13명이면 78개
+  const compareEntries: MetadataRoute.Sitemap = koreanComparePairs().map(([a, b]) => ({
+    url: `${SITE_URL}${compareSitemapPath(a, b)}`,
+    lastModified: now,
+    changeFrequency: "weekly",
+    priority: 0.5,
+  }))
+
   return [
     ...staticRoutes.map(({ path, priority, changeFrequency }) => ({
       url: `${SITE_URL}${path}`,
@@ -137,5 +148,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...matchEntries,
     ...leagueEntries,
     ...teamEntries,
+    ...compareEntries,
   ]
 }
