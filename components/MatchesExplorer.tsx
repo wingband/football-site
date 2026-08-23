@@ -406,7 +406,12 @@ export default function MatchesExplorer({ fixtures, userCountry }: { fixtures: F
             주요 리그
           </p>
           <div className="space-y-1 mb-5">
-            {featured.map((league) => (
+            {/* 즐겨찾기한 리그는 위 즐겨찾기 섹션으로 옮겨가므로 여기서는 제외한다.
+                즐겨찾기 목록은 오늘 경기가 없는 리그도 포함하므로(deriveFavoriteLeagues)
+                여기서 빼도 화면에서 사라지지 않는다 */}
+            {featured
+              .filter((league) => !isFavorite(league.id))
+              .map((league) => (
               <LeagueLink
                 key={league.displayName}
                 id={league.id}
