@@ -58,6 +58,24 @@ const LEAGUE_SORT_ORDER: Record<number, number> = {
   45:  11, // FA Cup
 }
 
+// ── 리그 ID → 로컬 고품질 로고 매핑 ─────────────────────────────────────
+// public/leagues/ 폴더에 저장된 이미지를 우선 사용
+const LOCAL_LEAGUE_LOGOS: Record<number, string> = {
+  39:  "/leagues/pl.png",
+  2:   "/leagues/cl.png",
+  140: "/leagues/laliga.png",
+  78:  "/leagues/bundesliga.png",
+  135: "/leagues/seriea.png",
+  61:  "/leagues/ligue1.png",
+  3:   "/leagues/europa.png",
+  292: "/leagues/kleague.png",
+  45:  "/leagues/facup.png",
+}
+
+function getLeagueLogo(leagueId: number, fallback: string): string {
+  return LOCAL_LEAGUE_LOGOS[leagueId] ?? fallback
+}
+
 function isFeatured(country: string, name: string) {
   return FEATURED_LEAGUES.some(
     (f) =>
@@ -229,7 +247,7 @@ export default function MatchesExplorer({ fixtures, userCountry }: { fixtures: F
         displayName: f.displayName,
         apiName: match?.name ?? f.name,
         id: f.id,
-        logo: `https://media.api-sports.io/football/leagues/${f.id}.png`,
+        logo: getLeagueLogo(f.id, `https://media.api-sports.io/football/leagues/${f.id}.png`),
         available: !!match,
       }
     })
@@ -449,7 +467,7 @@ export default function MatchesExplorer({ fixtures, userCountry }: { fixtures: F
                     : "bg-turf/40 border border-turf-line text-floodlight/60"
                 }`}
               >
-                <img src={l.logo} alt="" className="w-3.5 h-3.5" />
+                <img src={getLeagueLogo(l.id, l.logo)} alt="" className="w-3.5 h-3.5" />
                 {l.displayName}
               </button>
             ))}
@@ -502,7 +520,7 @@ export default function MatchesExplorer({ fixtures, userCountry }: { fixtures: F
               return (
                 <section key={league.name} className="bg-turf/40 border-l-2 border-score-amber overflow-hidden">
                   <div className="flex items-center gap-2 px-4 py-3 border-b border-turf-line/60">
-                    <img src={league.logo} alt="" className="w-5 h-5" />
+                    <img src={getLeagueLogo(league.id, league.logo)} alt="" className="w-5 h-5" />
                     <Link
                       href={`/leagues/${league.id}`}
                       className="text-sm font-display uppercase tracking-wide text-floodlight/90 hover:text-score-amber"
