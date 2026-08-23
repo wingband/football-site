@@ -606,7 +606,7 @@ export const MOCK_TOP_SCORERS = [
       {
         team: { name: "Manchester City", logo: "https://media.api-sports.io/football/teams/50.png" },
         goals: { total: 11, assists: 3 },
-        games: { appearences: 8 },
+        games: { appearences: 8, rating: "7.60" },
       },
     ],
   },
@@ -616,7 +616,7 @@ export const MOCK_TOP_SCORERS = [
       {
         team: { name: "Arsenal", logo: "https://media.api-sports.io/football/teams/42.png" },
         goals: { total: 8, assists: 5 },
-        games: { appearences: 8 },
+        games: { appearences: 8, rating: "7.60" },
       },
     ],
   },
@@ -626,7 +626,7 @@ export const MOCK_TOP_SCORERS = [
       {
         team: { name: "Manchester City", logo: "https://media.api-sports.io/football/teams/50.png" },
         goals: { total: 6, assists: 7 },
-        games: { appearences: 7 },
+        games: { appearences: 7, rating: "7.30" },
       },
     ],
   },

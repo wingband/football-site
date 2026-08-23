@@ -48,7 +48,7 @@ export type ScorerEntry = {
   statistics: {
     team: { name: string; logo: string }
     goals: { total: number | null; assists: number | null }
-    games: { appearences: number | null }
+    games: { appearences: number | null; rating: string | null }
   }[]
 }
 
@@ -114,10 +114,22 @@ export async function getLeagueTopScorers(leagueId: string, season: number): Pro
   return data.response ?? []
 }
 
+export async function getLeagueTopAssists(leagueId: string, season: number): Promise<ScorerEntry[]> {
+  if (process.env.USE_MOCK_DATA === "true") return MOCK_TOP_SCORERS as unknown as ScorerEntry[]
+
+  const res = await fetch(
+    `https://v3.football.api-sports.io/players/topassists?league=${leagueId}&season=${season}`,
+    { headers: HEADERS(), next: { revalidate: 3600 } }
+  )
+  const data = await res.json()
+  return data.response ?? []
+}
+
 export async function getLeagueNews(leagueName: string): Promise<NewsArticle[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_NEWS as unknown as NewsArticle[]
 
-  const query = encodeURIComponent(leagueName)
+  // 따옴표로 정확한 구문 검색을 걸어서, 리그명과 무관한 일반 뉴스가 섞이는 것을 방지
+  const query = encodeURIComponent(`"${leagueName}"`)
   const res = await fetch(
     `https://newsdata.io/api/1/news?apikey=${process.env.NEWSDATA_API_KEY}&q=${query}&language=en&category=sports`,
     { next: { revalidate: 3600 } }

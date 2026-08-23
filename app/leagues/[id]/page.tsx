@@ -1,16 +1,101 @@
 import Link from "next/link"
 import type { Metadata } from "next"
+import PlayerAvatar from "@/components/PlayerAvatar"
 import { getSeasonYear } from "@/lib/season"
 import StandingsWithFilter from "@/components/StandingsWithFilter"
 import {
   getLeagueStandings,
   getLeagueFixturesByMode,
   getLeagueNews,
+  getLeagueTopScorers,
+  getLeagueTopAssists,
   buildNextOpponentMap,
   type LeagueFixture,
+  type ScorerEntry,
 } from "@/lib/leagueData"
 
 const FINISHED_CODES = ["FT", "AET", "PEN"]
+
+type LeaderRow = { id: number; name: string; photo: string; teamName: string; teamLogo: string; value: string | number }
+
+function LeaderboardCard({ title, rows, moreHref }: { title: string; rows: LeaderRow[]; moreHref?: string }) {
+  return (
+    <div className="bg-turf/40 border border-turf-line/40 rounded-md p-4">
+      <p className="text-sm font-medium mb-3">{title}</p>
+      {rows.length === 0 ? (
+        <p className="text-floodlight/40 text-xs">데이터가 없습니다.</p>
+      ) : (
+        <div className="divide-y divide-turf-line/30">
+          {rows.map((r) => (
+            <Link
+              key={r.id}
+              href={`/players/${r.id}`}
+              className="flex items-center gap-2.5 py-2 hover:bg-turf-line/20 transition-colors -mx-1 px-1"
+            >
+              <PlayerAvatar src={r.photo} alt={r.name} className="w-8 h-8 rounded-full object-cover bg-turf-line text-[10px] shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm truncate">{r.name}</p>
+                <div className="flex items-center gap-1 mt-0.5">
+                  <img src={r.teamLogo} alt="" className="w-3 h-3" />
+                  <span className="text-[11px] text-floodlight/40 truncate">{r.teamName}</span>
+                </div>
+              </div>
+              <span className="font-data font-bold bg-score-amber/15 text-score-amber px-2 py-0.5 rounded-full shrink-0 text-sm">
+                {r.value}
+              </span>
+            </Link>
+          ))}
+        </div>
+      )}
+      {moreHref && (
+        <Link href={moreHref} className="block text-center text-xs text-floodlight/40 hover:text-score-amber mt-3">
+          모두 →
+        </Link>
+      )}
+    </div>
+  )
+}
+
+function toGoalRows(scorers: ScorerEntry[]): LeaderRow[] {
+  return scorers.slice(0, 3).map((s) => ({
+    id: s.player.id,
+    name: s.player.name,
+    photo: s.player.photo,
+    teamName: s.statistics[0]?.team.name ?? "",
+    teamLogo: s.statistics[0]?.team.logo ?? "",
+    value: s.statistics[0]?.goals.total ?? 0,
+  }))
+}
+
+function toAssistRows(assists: ScorerEntry[]): LeaderRow[] {
+  return assists.slice(0, 3).map((s) => ({
+    id: s.player.id,
+    name: s.player.name,
+    photo: s.player.photo,
+    teamName: s.statistics[0]?.team.name ?? "",
+    teamLogo: s.statistics[0]?.team.logo ?? "",
+    value: s.statistics[0]?.goals.assists ?? 0,
+  }))
+}
+
+// 리그 전용 "최고 평점" 엔드포인트는 API에 없어서, 득점왕+도움왕 명단을 합쳐 평점순으로 재정렬해 근사치로 대체
+function toRatingRows(scorers: ScorerEntry[], assists: ScorerEntry[]): LeaderRow[] {
+  const pool = new Map<number, ScorerEntry>()
+  for (const s of [...scorers, ...assists]) pool.set(s.player.id, s)
+
+  return [...pool.values()]
+    .filter((s) => s.statistics[0]?.games.rating)
+    .sort((a, b) => Number(b.statistics[0].games.rating) - Number(a.statistics[0].games.rating))
+    .slice(0, 3)
+    .map((s) => ({
+      id: s.player.id,
+      name: s.player.name,
+      photo: s.player.photo,
+      teamName: s.statistics[0]?.team.name ?? "",
+      teamLogo: s.statistics[0]?.team.logo ?? "",
+      value: s.statistics[0]?.games.rating ?? "-",
+    }))
+}
 
 export async function generateMetadata({
   params,
@@ -100,12 +185,17 @@ export default async function LeagueOverviewPage({
   const { league } = data
   const season = league.season
 
-  const [upcoming, news] = await Promise.all([
+  const [upcoming, news, topScorers, topAssists] = await Promise.all([
     getLeagueFixturesByMode(id, season, "next", 10),
     getLeagueNews(league.name),
+    getLeagueTopScorers(id, season),
+    getLeagueTopAssists(id, season),
   ])
 
   const nextOpponent = buildNextOpponentMap(upcoming)
+  const goalRows = toGoalRows(topScorers)
+  const assistRows = toAssistRows(topAssists)
+  const ratingRows = toRatingRows(topScorers, topAssists)
 
   return (
     <>
@@ -121,6 +211,13 @@ export default async function LeagueOverviewPage({
 
           {/* 다가오는 경기 위젯 */}
           {upcoming.length > 0 && <RoundFixturesWidget fixtures={upcoming} />}
+        </div>
+
+        {/* 최고 평점 / 득점 순위 / 도움 순위 */}
+        <div className="grid sm:grid-cols-3 gap-4 mt-8">
+          <LeaderboardCard title="최고 평점" rows={ratingRows} />
+          <LeaderboardCard title="득점 순위" rows={goalRows} moreHref={`/leagues/${id}/topscorers`} />
+          <LeaderboardCard title="도움 순위" rows={assistRows} />
         </div>
 
         {/* 뉴스 */}
