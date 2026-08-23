@@ -153,7 +153,11 @@ async function apiFetch(path: string) {
 
   const res = await fetch(`https://v3.football.api-sports.io${path}`, {
     headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-    next: { revalidate: 3600 },
+    // fixtures?id= 는 캐시 무시 (빈 결과가 캐시됐을 경우 대비)
+    // 나머지는 1시간 캐시
+    ...(path.startsWith("/fixtures?id=")
+      ? { cache: "no-store" as const }
+      : { next: { revalidate: 3600 } }),
   })
   const data = await res.json()
   return data.response

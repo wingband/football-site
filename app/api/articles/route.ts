@@ -14,7 +14,7 @@ async function fetchTeamLogos(matchId: number): Promise<{ homeLogo: string | nul
       `https://v3.football.api-sports.io/fixtures?id=${matchId}`,
       {
         headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-        next: { revalidate: 86400 },
+        cache: "no-store",  // Vercel 캐시 무시 — 이전에 빈 결과 캐시됐을 수 있음
       }
     )
     const data = await res.json()
