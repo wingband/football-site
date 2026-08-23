@@ -7,8 +7,10 @@ export function toDateStr(d: Date): string {
   return `${year}-${month}-${day}`
 }
   
-  export function getTodayStr(): string {
-    return toDateStr(new Date())
+  // 서버는 UTC로 실행되므로, 한국(UTC+9) 기준 오늘 날짜를 반환
+// Vercel 서버에서 new Date()는 UTC → 자정~09시 사이에 어제 날짜가 뜨는 문제 방지
+export function getTodayStr(timezone = "Asia/Seoul"): string {
+    return new Date().toLocaleDateString("sv-SE", { timeZone: timezone })
   }
   
   // 기준 날짜(centerDateStr)를 가운데 두고, 앞뒤로 offset일씩 총 (offset*2+1)개의 날짜 문자열 배열을 반환

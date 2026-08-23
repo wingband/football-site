@@ -27,18 +27,34 @@ type Fixture = {
   }
 }
 
-// API-Football에서 이 8개 리그의 id는 시즌이 바뀌어도 고정이라 미리 박아둠.
+// API-Football에서 이 리그들의 id는 시즌이 바뀌어도 고정이라 미리 박아둠.
 // 이러면 "오늘 그 리그 경기가 있는지"와 상관없이 항상 순위표로 이동 가능
 const FEATURED_LEAGUES = [
-  { id: 39, country: "England", name: "Premier League", displayName: "프리미어리그" },
-  { id: 140, country: "Spain", name: "La Liga", displayName: "라리가" },
-  { id: 135, country: "Italy", name: "Serie A", displayName: "이탈리아 리그" },
-  { id: 78, country: "Germany", name: "Bundesliga", displayName: "독일 리그" },
-  { id: 61, country: "France", name: "Ligue 1", displayName: "프랑스 리그" },
-  { id: 253, country: "USA", name: "Major League Soccer", displayName: "미국 리그" },
-  { id: 292, country: "South Korea", name: "K League 1", displayName: "한국 리그" },
-  { id: 98, country: "Japan", name: "J1 League", displayName: "일본 리그" },
+  { id: 39,  country: "England",      name: "Premier League",       displayName: "Premier League" },
+  { id: 2,   country: "World",        name: "UEFA Champions League", displayName: "Champions League" },
+  { id: 140, country: "Spain",        name: "La Liga",              displayName: "La Liga" },
+  { id: 78,  country: "Germany",      name: "Bundesliga",           displayName: "Bundesliga" },
+  { id: 135, country: "Italy",        name: "Serie A",              displayName: "Serie A" },
+  { id: 61,  country: "France",       name: "Ligue 1",              displayName: "Ligue 1" },
+  { id: 3,   country: "World",        name: "UEFA Europa League",   displayName: "Europa League" },
+  { id: 292, country: "South Korea",  name: "K League 1",           displayName: "K League 1" },
+  { id: 98,  country: "Japan",        name: "J1 League",            displayName: "J1 League" },
+  { id: 45,  country: "England",      name: "FA Cup",               displayName: "FA Cup" },
 ]
+
+// 가운데 경기 목록 정렬 우선순위 (낮을수록 먼저)
+const LEAGUE_SORT_ORDER: Record<number, number> = {
+  39:  1,  // Premier League
+  2:   2,  // Champions League
+  140: 3,  // La Liga
+  78:  4,  // Bundesliga
+  135: 5,  // Serie A
+  61:  6,  // Ligue 1
+  3:   7,  // Europa League
+  292: 8,  // K League 1
+  98:  9,  // J1 League
+  45:  10, // FA Cup
+}
 
 function isFeatured(country: string, name: string) {
   return FEATURED_LEAGUES.some(
@@ -148,9 +164,7 @@ function LeagueLink({
         <span className="w-4 h-4 shrink-0 rounded-full bg-turf-line" />
       )}
       <span className="truncate flex-1">{label}</span>
-      {noMatchToday && (
-        <span className="text-[10px] text-floodlight/20">경기없음</span>
-      )}
+      {/* noMatchToday indicator removed */}
       <StarButton active={isFavoriteLeague} onClick={onToggleFavorite} />
     </>
   )
@@ -171,7 +185,7 @@ function LeagueLink({
   )
 }
 
-export default function MatchesExplorer({ fixtures }: { fixtures: Fixture[] }) {
+export default function MatchesExplorer({ fixtures, userCountry }: { fixtures: Fixture[]; userCountry?: string }) {
   const [selectedLeague, setSelectedLeague] = useState<string>("전체")
   const [showMore, setShowMore] = useState(false)
   const [liveOnly, setLiveOnly] = useState(false)
@@ -272,14 +286,39 @@ export default function MatchesExplorer({ fixtures }: { fixtures: Fixture[] }) {
         (a, b) => new Date(a.fixture.date).getTime() - new Date(b.fixture.date).getTime()
       )
     }
+    // 국가 코드 → API-Football country 문자열 매핑 (IP 기반)
+    const countryLeagueMap: Record<string, number> = {
+      "KR": 292, // K League 1
+      "JP": 98,  // J1 League
+      "US": 253, // MLS
+      "DE": 78,  // Bundesliga
+      "ES": 140, // La Liga
+      "IT": 135, // Serie A
+      "FR": 61,  // Ligue 1
+      "GB": 39,  // Premier League
+    }
+    const userLeagueId = userCountry ? (countryLeagueMap[userCountry] ?? null) : null
+
+    function getLeaguePriority(leagueId: number): number {
+      // Premier League는 항상 1순위
+      if (leagueId === 39) return 0
+      // 유저 국가 리그는 2순위 (단, Premier League 제외)
+      if (userLeagueId && leagueId === userLeagueId && leagueId !== 39) return 1
+      // 나머지 주요 리그는 LEAGUE_SORT_ORDER 기준
+      const order = LEAGUE_SORT_ORDER[leagueId]
+      if (order !== undefined) return order + 1
+      // 그 외 리그
+      return 999
+    }
+
     return Array.from(map.values()).sort((a, b) => {
       const aFav = isFavorite(a.league.name)
       const bFav = isFavorite(b.league.name)
       if (aFav !== bFav) return aFav ? -1 : 1
 
-      const aFeatured = isFeatured(a.league.country, a.league.name)
-      const bFeatured = isFeatured(b.league.country, b.league.name)
-      if (aFeatured !== bFeatured) return aFeatured ? -1 : 1
+      const aPriority = getLeaguePriority(a.league.id)
+      const bPriority = getLeaguePriority(b.league.id)
+      if (aPriority !== bPriority) return aPriority - bPriority
 
       return a.league.name.localeCompare(b.league.name)
     })

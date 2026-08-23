@@ -6,6 +6,7 @@ import { MOCK_FIXTURES } from "@/lib/mockData"
 import AdSlot from "@/components/AdSlot"
 import KoreanAbroadWidget from "@/components/KoreanAbroadWidget"
 import type { Metadata } from "next"
+import { headers } from "next/headers"
 
 type Fixture = {
   fixture: {
@@ -26,6 +27,16 @@ type Fixture = {
     name: string
     country: string
     logo: string
+  }
+}
+
+// Vercel은 X-Vercel-IP-Country 헤더로 클라이언트 국가 코드를 자동 주입함
+async function getUserCountry(): Promise<string | null> {
+  try {
+    const h = await headers()
+    return h.get("x-vercel-ip-country") ?? null
+  } catch {
+    return null
   }
 }
 
@@ -61,7 +72,10 @@ export default async function MatchesPage({
 }) {
   const params = await searchParams
   const selectedDate = params.date || getTodayStr()
-  const fixtures = await getFixturesByDate(selectedDate)
+  const [fixtures, userCountry] = await Promise.all([
+    getFixturesByDate(selectedDate),
+    getUserCountry(),
+  ])
 
   return (
     <main className="min-h-screen bg-pitch-night p-4 sm:p-8 font-sans">
@@ -75,7 +89,7 @@ export default async function MatchesPage({
           <DateTabs selectedDate={selectedDate} />
           <div className="flex gap-6 items-start mt-8">
             <div className="flex-1 min-w-0">
-              <MatchesExplorer fixtures={fixtures} />
+              <MatchesExplorer fixtures={fixtures} userCountry={userCountry ?? undefined} />
             </div>
             <aside className="w-72 shrink-0 hidden lg:block sticky top-20 space-y-6">
               <TransferWidget />
