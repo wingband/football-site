@@ -182,7 +182,8 @@ export async function getTeamCurrentLeague(teamId: string): Promise<{ id: number
 export async function getTeamNews(teamName: string): Promise<NewsArticle[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_NEWS as unknown as NewsArticle[]
 
-  const query = encodeURIComponent(teamName)
+  // 따옴표로 정확한 구문 검색을 걸어서 팀명과 무관한 뉴스가 섞이는 것을 방지 (리그 뉴스와 동일한 방식)
+  const query = encodeURIComponent(`"${teamName}"`)
   const res = await fetch(
     `https://newsdata.io/api/1/news?apikey=${process.env.NEWSDATA_API_KEY}&q=${query}&language=en&category=sports`,
     { next: { revalidate: 3600 } }

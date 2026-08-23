@@ -182,7 +182,8 @@ async function getMatchNews(homeTeam: string, awayTeam: string): Promise<NewsArt
     return MOCK_NEWS
   }
 
-  const query = encodeURIComponent(`${homeTeam} ${awayTeam}`)
+  // 두 팀 이름이 모두 정확히 들어간 기사만 (경기 자체와 무관한 일반 팀 뉴스 배제)
+  const query = encodeURIComponent(`"${homeTeam}" AND "${awayTeam}"`)
   const res = await fetch(
     `https://newsdata.io/api/1/news?apikey=${process.env.NEWSDATA_API_KEY}&q=${query}&language=en&category=sports`,
     { next: { revalidate: 3600 } }
