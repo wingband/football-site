@@ -509,15 +509,14 @@ export default async function MatchDetailPage({
 
   const factsContent = (
     <>
-      <div className="mt-5">
-        <MatchReviewCard
-          headline={reviewHeadline}
-          summary={reviewSummary}
-          homeLogo={match.teams.home.logo}
-          awayLogo={match.teams.away.logo}
-          storySlug={null}
-        />
-      </div>
+      {/* Section과 동일하게 컴포넌트가 자기 mt-5를 들고 있어서 wrapper 불필요 */}
+      <MatchReviewCard
+        headline={reviewHeadline}
+        summary={reviewSummary}
+        homeLogo={match.teams.home.logo}
+        awayLogo={match.teams.away.logo}
+        storySlug={null}
+      />
 
       {stats.length === 2 && (
         <Section title="주요 통계">
