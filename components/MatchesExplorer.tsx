@@ -215,10 +215,14 @@ export default function MatchesExplorer({ fixtures, userCountry }: { fixtures: F
   const { favorites, toggleFavorite, isFavorite } = useFavorites()
 
   const favoriteLeagues = useMemo(() => {
-    const seen = new Map<string, { id: number; name: string; logo: string }>()
+    const seen = new Map<number, { id: number; name: string; logo: string }>()
     for (const f of fixtures) {
-      if (favorites.includes(f.league.name)) {
-        seen.set(f.league.name, { id: f.league.id, name: f.league.name, logo: f.league.logo })
+      if (isFavorite(f.league.id)) {
+        seen.set(f.league.id, {
+          id: f.league.id,
+          name: f.league.name,
+          logo: getLeagueLogo(f.league.id, f.league.logo),
+        })
       }
     }
     return Array.from(seen.values())
@@ -338,8 +342,8 @@ export default function MatchesExplorer({ fixtures, userCountry }: { fixtures: F
       if (aPL !== bPL) return aPL ? -1 : 1
 
       // 즐겨찾기는 PL 다음 우선
-      const aFav = isFavorite(a.league.name)
-      const bFav = isFavorite(b.league.name)
+      const aFav = isFavorite(a.league.id)
+      const bFav = isFavorite(b.league.id)
       if (aFav !== bFav) return aFav ? -1 : 1
 
       const aPriority = getLeaguePriority(a.league.id)
