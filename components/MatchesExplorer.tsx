@@ -5,6 +5,7 @@ import Link from "next/link"
 import { matchHref } from "@/lib/slug"
 import { getMatchPhase } from "@/lib/matchStatus"
 import { useFavorites } from "@/lib/useFavorites"
+import { deriveFavoriteLeagues } from "@/lib/leagueFavorites"
 
 type Fixture = {
   fixture: {
@@ -215,20 +216,6 @@ export default function MatchesExplorer({ fixtures, userCountry }: { fixtures: F
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
   const { favorites, toggleFavorite, isFavorite } = useFavorites()
 
-  const favoriteLeagues = useMemo(() => {
-    const seen = new Map<number, { id: number; name: string; logo: string }>()
-    for (const f of fixtures) {
-      if (isFavorite(f.league.id)) {
-        seen.set(f.league.id, {
-          id: f.league.id,
-          name: f.league.name,
-          logo: getLeagueLogo(f.league.id, f.league.logo),
-        })
-      }
-    }
-    return Array.from(seen.values())
-  }, [fixtures, favorites])
-
   const { featured, restByCountry } = useMemo(() => {
     const seen = new Map<string, { id: number; name: string; country: string; logo: string }>()
     for (const f of fixtures) {
@@ -272,6 +259,21 @@ export default function MatchesExplorer({ fixtures, userCountry }: { fixtures: F
 
     return { featured: featuredList, restByCountry: rest }
   }, [fixtures])
+
+  // 즐겨찾기 섹션 목록. 주요 리그 섹션에서 빼지 않으므로 즐겨찾기한 리그는 두 곳에 동시에 표시된다
+  const favoriteLeagues = useMemo(
+    () =>
+      deriveFavoriteLeagues(
+        featured,
+        fixtures.map((f) => ({
+          id: f.league.id,
+          name: f.league.name,
+          logo: getLeagueLogo(f.league.id, f.league.logo),
+        })),
+        (id) => isFavorite(id)
+      ),
+    [featured, fixtures, favorites]
+  )
 
   const filtered = useMemo(() => {
     let result = selectedLeague === "전체" ? fixtures : fixtures.filter((f) => String(f.league.id) === selectedLeague)
@@ -393,6 +395,7 @@ export default function MatchesExplorer({ fixtures, userCountry }: { fixtures: F
                     label={league.name}
                     isFavoriteLeague={isFavorite(league.id)}
                     onToggleFavorite={() => toggleFavorite(league.id)}
+                    noMatchToday={league.noMatchToday}
                   />
                 ))}
               </div>
@@ -403,9 +406,7 @@ export default function MatchesExplorer({ fixtures, userCountry }: { fixtures: F
             주요 리그
           </p>
           <div className="space-y-1 mb-5">
-            {featured
-              .filter((league) => !isFavorite(league.id))
-              .map((league) => (
+            {featured.map((league) => (
               <LeagueLink
                 key={league.displayName}
                 id={league.id}
@@ -437,8 +438,8 @@ export default function MatchesExplorer({ fixtures, userCountry }: { fixtures: F
                       id={league.id}
                       logo={null}
                       label={league.name}
-                      isFavoriteLeague={isFavorite(league.name)}
-                      onToggleFavorite={() => toggleFavorite(league.name)}
+                      isFavoriteLeague={isFavorite(league.id)}
+                      onToggleFavorite={() => toggleFavorite(league.id)}
                       size="xs"
                     />
                   ))}
@@ -537,8 +538,8 @@ export default function MatchesExplorer({ fixtures, userCountry }: { fixtures: F
                     <span className="text-xs text-floodlight/30">{league.country}</span>
                     <span className="ml-auto text-xs text-floodlight/30 font-data">{matches.length}경기</span>
                     <StarButton
-                      active={isFavorite(league.name)}
-                      onClick={() => toggleFavorite(league.name)}
+                      active={isFavorite(league.id)}
+                      onClick={() => toggleFavorite(league.id)}
                     />
                     <button
                       onClick={() => toggleCollapse(league.name)}
