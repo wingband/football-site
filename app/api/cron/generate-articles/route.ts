@@ -4,9 +4,22 @@ import { saveArticle, slugify } from "@/lib/articles"
 import { MOCK_FIXTURES } from "@/lib/mockData"
 
 // API 호출/AI 비용을 아끼기 위해, 기사를 만들 대상은 이 리그들의 "종료된 경기"로만 제한
-const TARGET_LEAGUE_IDS = [39, 140, 78, 135, 61, 253, 292, 98]
-// 하루에 생성할 기사 최대 개수 (한도 초과 방지용 안전장치)
-const MAX_ARTICLES_PER_RUN = 5
+const TARGET_LEAGUE_IDS = [39, 140, 78, 135, 61, 2, 3, 253, 292, 98]
+// 리그 우선순위 (낮을수록 먼저)
+const LEAGUE_PRIORITY: Record<number, number> = {
+  39: 1,   // Premier League
+  2:  2,   // Champions League
+  140: 3,  // La Liga
+  78: 4,   // Bundesliga
+  135: 5,  // Serie A
+  61: 6,   // Ligue 1
+  3:  7,   // Europa League
+  292: 8,  // K League
+  98: 9,   // J League
+  253: 10, // MLS
+}
+// 하루에 생성할 기사 최대 개수
+const MAX_ARTICLES_PER_RUN = 10
 
 async function apiFetch(path: string) {
   const res = await fetch(`https://v3.football.api-sports.io${path}`, {
@@ -33,13 +46,27 @@ export async function GET(req: NextRequest) {
   if (process.env.USE_MOCK_DATA === "true") {
     fixtures = MOCK_FIXTURES
   } else {
-    fixtures = await apiFetch(`/fixtures?date=${today}`)
+    // 오늘 + 어제 경기 모두 가져오기 (한국 시간대상 새벽 경기 포함)
+    const yesterday = new Date(today)
+    yesterday.setDate(yesterday.getDate() - 1)
+    const yesterdayStr = yesterday.toISOString().split("T")[0]
+
+    const [todayFixtures, yesterdayFixtures] = await Promise.all([
+      apiFetch(`/fixtures?date=${today}`),
+      apiFetch(`/fixtures?date=${yesterdayStr}`),
+    ])
+    fixtures = [...(todayFixtures ?? []), ...(yesterdayFixtures ?? [])]
   }
 
-  // 지정한 주요 리그 + 종료된 경기만 추려서, 앞에서부터 최대 개수만큼만 처리
+  // 주요 리그 + 종료된 경기 필터 후 우선순위 정렬
   const targets = fixtures
     .filter((f) => TARGET_LEAGUE_IDS.includes(f.league.id))
     .filter((f) => f.fixture.status.short === "FT")
+    .sort((a, b) => {
+      const pa = LEAGUE_PRIORITY[a.league.id] ?? 99
+      const pb = LEAGUE_PRIORITY[b.league.id] ?? 99
+      return pa - pb
+    })
     .slice(0, MAX_ARTICLES_PER_RUN)
 
   const created: string[] = []
