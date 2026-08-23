@@ -105,20 +105,6 @@ type Prediction = {
   }
 }
 
-type InjuredPlayer = {
-  player: { id: number; name: string; photo: string; type: string; reason: string }
-  team: { id: number; name: string; logo: string }
-}
-
-type OddsBookmaker = {
-  bookmaker: { id: number; name: string }
-  bets: {
-    id: number
-    name: string
-    values: { value: string; odd: string }[]
-  }[]
-}
-
 type StandingRow = {
   rank: number
   team: { id: number; name: string; logo: string }
@@ -400,8 +386,6 @@ export default async function MatchDetailPage({
     newsArticles,
     venueInfo,
     roundFixtures,
-    injuries,
-    oddsData,
   ] = await Promise.all([
     apiFetch(`/fixtures/statistics?fixture=${id}`) as Promise<Statistic[]>,
     apiFetch(`/fixtures/events?fixture=${id}`) as Promise<MatchEvent[]>,
@@ -419,8 +403,6 @@ export default async function MatchDetailPage({
     match.league.round
       ? getRoundFixtures(match.league.id, season, match.league.round)
       : Promise.resolve([] as TeamFixture[]),
-    apiFetch(`/injuries?fixture=${id}`) as Promise<InjuredPlayer[]>,
-    apiFetch(`/odds?fixture=${id}&bookmaker=8`) as Promise<OddsBookmaker[]>,
   ])
 
   const statsSummary = stats.length === 2
@@ -447,7 +429,7 @@ export default async function MatchDetailPage({
   const topPlayers = getTopRatedPlayers(playerStats, 3)
   const prediction = predictions?.[0]?.predictions
 
-  // ── xG: API-Football /fixtures/statistics에 이미 포함돼 있음 ──
+  // ── xG: API-Football /fixtures/statistics에 이미 포함 ──
   const getStatValue = (teamStats: Statistic["statistics"], key: string) => {
     const found = teamStats.find((s) => s.type.toLowerCase() === key.toLowerCase())
     return found?.value ?? null
@@ -456,25 +438,7 @@ export default async function MatchDetailPage({
   const awayStats = stats[1]?.statistics ?? []
   const homeXg = getStatValue(homeStats, "expected_goals")
   const awayXg = getStatValue(awayStats, "expected_goals")
-  const homeXgPrev = getStatValue(homeStats, "goals_prevented")
-  const awayXgPrev = getStatValue(awayStats, "goals_prevented")
   const hasXg = homeXg !== null || awayXg !== null
-
-  // ── 배당률: bookmaker 8 = Bet365, bet ID 1 = Match Winner ──
-  const matchWinnerBet = oddsData?.[0]?.bets?.find((b) => b.id === 1)
-  const homeOdd = matchWinnerBet?.values?.find((v) => v.value === "Home")?.odd ?? null
-  const drawOdd = matchWinnerBet?.values?.find((v) => v.value === "Draw")?.odd ?? null
-  const awayOdd = matchWinnerBet?.values?.find((v) => v.value === "Away")?.odd ?? null
-  const overUnderBet = oddsData?.[0]?.bets?.find((b) => b.id === 5)
-  const over25 = overUnderBet?.values?.find((v) => v.value === "Over 2.5")?.odd ?? null
-  const under25 = overUnderBet?.values?.find((v) => v.value === "Under 2.5")?.odd ?? null
-  const bttsBet = oddsData?.[0]?.bets?.find((b) => b.id === 8)
-  const bttsYes = bttsBet?.values?.find((v) => v.value === "Yes")?.odd ?? null
-  const hasOdds = homeOdd || drawOdd || awayOdd
-
-  // ── 부상/결장 선수 팀별 분류 ──
-  const homeInjuries = (injuries ?? []).filter((inj) => inj.team.id === match.teams.home.id)
-  const awayInjuries = (injuries ?? []).filter((inj) => inj.team.id === match.teams.away.id)
   const isLive = LIVE_CODES.includes(match.fixture.status.short ?? "")
 
   const insights = buildInsights(
@@ -521,23 +485,13 @@ export default async function MatchDetailPage({
         </Section>
       )}
 
-      {/* xG 섹션 (팩트 탭) - API-Football 직접 파싱 */}
+      {/* xG 섹션 (팩트 탭) - hasXg 기반 인라인 표시 */}
       {hasXg && (
         <Section title="기대 골 (xG)">
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="font-data font-bold text-xl text-score-amber">{homeXg ?? "–"}</span>
-              <span className="text-xs text-floodlight/30">xG</span>
-              <span className="font-data font-bold text-xl text-floodlight/80">{awayXg ?? "–"}</span>
-            </div>
-            {(homeXgPrev !== null || awayXgPrev !== null) && (
-              <div className="flex justify-between items-center text-sm">
-                <span className="font-data text-green-400">{homeXgPrev ?? "–"}</span>
-                <span className="text-xs text-floodlight/30">GK 실점방지 (xG)</span>
-                <span className="font-data text-green-400">{awayXgPrev ?? "–"}</span>
-              </div>
-            )}
-            <p className="text-[10px] text-floodlight/25">xG = 기대 골. 슛의 질(거리·각도·상황)로 계산한 기대 득점.</p>
+          <div className="flex justify-between items-center">
+            <span className="font-data font-bold text-xl text-score-amber">{homeXg ?? "–"}</span>
+            <span className="text-xs text-floodlight/30">xG</span>
+            <span className="font-data font-bold text-xl text-floodlight/80">{awayXg ?? "–"}</span>
           </div>
         </Section>
       )}
@@ -645,7 +599,7 @@ export default async function MatchDetailPage({
   const statsContent =
     stats.length === 2 ? (
       <>
-        {/* xG — API-Football에서 직접 파싱 */}
+        {/* xG — API-Football 직접 파싱 */}
         {hasXg && (
           <div className="bg-turf/40 border border-turf-line/30 p-4 mb-4 space-y-3">
             <p className="text-xs text-floodlight/40 uppercase tracking-wide font-display">기대 골 (xG)</p>
@@ -664,13 +618,6 @@ export default async function MatchDetailPage({
               </div>
               <span className="font-data font-bold text-2xl text-floodlight/80">{awayXg ?? "–"}</span>
             </div>
-            {(homeXgPrev !== null || awayXgPrev !== null) && (
-              <div className="flex justify-between items-center text-sm border-t border-turf-line/20 pt-2">
-                <span className="font-data text-green-400">{homeXgPrev ?? "–"}</span>
-                <span className="text-[10px] text-floodlight/30">GK 실점방지 (goals_prevented)</span>
-                <span className="font-data text-green-400">{awayXgPrev ?? "–"}</span>
-              </div>
-            )}
           </div>
         )}
         <Section title="통계">
@@ -679,16 +626,14 @@ export default async function MatchDetailPage({
       </>
     ) : (
       <>
-        {hasXg && (
-          <div className="bg-turf/40 border border-turf-line/30 p-4 mb-4">
-            <p className="text-xs text-floodlight/40 uppercase mb-2">기대 골 (xG)</p>
-            <div className="flex justify-between font-data font-bold text-xl">
-              <span className="text-score-amber">{homeXg}</span>
-              <span className="text-floodlight/80">{awayXg}</span>
-            </div>
-          </div>
-        )}
-        <p className="text-floodlight/40 text-sm py-6 text-center">통계 정보가 없습니다.</p>
+        <div className="py-8 text-center space-y-2">
+          <p className="text-floodlight/40 text-sm">통계 정보가 없습니다.</p>
+          {[292, 98, 253].includes(match.league.id) && (
+            <p className="text-floodlight/25 text-xs">
+              {match.league.name}은 API-Football 통계 미지원 리그입니다.
+            </p>
+          )}
+        </div>
       </>
     )
 
@@ -819,9 +764,6 @@ export default async function MatchDetailPage({
                 }
               : null
           }
-          homeInjuries={homeInjuries}
-          awayInjuries={awayInjuries}
-          odds={hasOdds ? { home: homeOdd, draw: drawOdd, away: awayOdd, over25, under25, bttsYes } : null}
         />
       </aside>
       </div>
