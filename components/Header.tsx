@@ -7,6 +7,8 @@ import { useState } from "react"
 const NAV_LINKS = [
   { href: "/matches", label: "경기" },
   { href: "/stories", label: "리뷰" },
+  { href: "/standings", label: "순위표" },
+  { href: "/korean-players", label: "🇰🇷 해외파" },
   { href: "/news", label: "뉴스" },
   { href: "/best11", label: "베스트11" },
   { href: "/transfers", label: "이적" },
