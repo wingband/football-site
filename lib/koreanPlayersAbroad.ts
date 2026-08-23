@@ -51,7 +51,7 @@ export const KOREAN_PLAYERS_ABROAD: KoreanPlayer[] = [
     tier: 1,
   },
   {
-    id: 47104,   // 확인 필요 — 틀리면 스탯만 공백, 선수 카드는 표시됨
+    id: 2906,    // ✅ 확인됨
     name: "이재성",
     teamName: "Mainz 05",
     teamLogo: `${CDN}/teams/1038.png`,
@@ -60,7 +60,7 @@ export const KOREAN_PLAYERS_ABROAD: KoreanPlayer[] = [
     tier: 1,
   },
   {
-    id: 47429,   // 확인 필요
+    id: 512,     // ✅ 확인됨
     name: "정우영",
     teamName: "Union Berlin",
     teamLogo: `${CDN}/teams/173.png`,
@@ -69,7 +69,7 @@ export const KOREAN_PLAYERS_ABROAD: KoreanPlayer[] = [
     tier: 1,
   },
   {
-    id: 342853,  // 확인 필요
+    id: 280358,  // ✅ 확인됨
     name: "옌스 카스트로프",
     teamName: "Borussia M'gladbach",
     teamLogo: `${CDN}/teams/163.png`,
@@ -80,7 +80,7 @@ export const KOREAN_PLAYERS_ABROAD: KoreanPlayer[] = [
 
   // ── 🇬🇧 Championship (5대리그 아니지만 주목 선수) ──────────────
   {
-    id: 362208,  // Bae Jun-ho — ESPN ID 기반 추정, 확인 필요
+    id: 357286,  // ✅ 확인됨
     name: "배준호",
     teamName: "Stoke City",
     teamLogo: `${CDN}/teams/70.png`,
@@ -89,7 +89,7 @@ export const KOREAN_PLAYERS_ABROAD: KoreanPlayer[] = [
     tier: 2,
   },
   {
-    id: 50837,   // 확인 필요
+    id: 2909,    // ✅ 확인됨
     name: "백승호",
     teamName: "Birmingham City",
     teamLogo: `${CDN}/teams/2.png`,
