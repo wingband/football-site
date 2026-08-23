@@ -314,6 +314,12 @@ export default function MatchesExplorer({ fixtures, userCountry }: { fixtures: F
     }
 
     return Array.from(map.values()).sort((a, b) => {
+      // Premier League는 즐겨찾기 여부와 무관하게 무조건 최우선
+      const aPL = a.league.id === 39
+      const bPL = b.league.id === 39
+      if (aPL !== bPL) return aPL ? -1 : 1
+
+      // 즐겨찾기는 PL 다음 우선
       const aFav = isFavorite(a.league.name)
       const bFav = isFavorite(b.league.name)
       if (aFav !== bFav) return aFav ? -1 : 1
