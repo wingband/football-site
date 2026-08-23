@@ -73,10 +73,26 @@ async function getFixturesByDate(date: string): Promise<Fixture[]> {
   const todayFixtures: Fixture[] = todayData.response ?? []
   const yesterdayFixtures: Fixture[] = yesterdayData.response ?? []
 
-  // 어제 경기 중 종료된 것만 포함 (진행 중인 건 날짜 혼동 방지)
+  // 어제 경기 중 주요 리그만 포함 (전체 가져오면 너무 많아짐)
+  const MAJOR_LEAGUE_IDS = new Set([
+    39,  // Premier League
+    40,  // Championship
+    2,   // Champions League
+    3,   // Europa League
+    140, // La Liga
+    78,  // Bundesliga
+    135, // Serie A
+    61,  // Ligue 1
+    45,  // FA Cup
+    292, // K League 1
+    98,  // J1 League
+    4,   // Conference League
+  ])
   const FINISHED = ["FT", "AET", "PEN", "AWD", "WO"]
-  const finishedYesterday = yesterdayFixtures.filter((f) =>
-    FINISHED.includes(f.fixture.status.short)
+  const finishedYesterday = yesterdayFixtures.filter(
+    (f) =>
+      FINISHED.includes(f.fixture.status.short) &&
+      MAJOR_LEAGUE_IDS.has(f.league.id)
   )
 
   // 중복 제거 후 합치기 (오늘 + 어제 종료 경기)
