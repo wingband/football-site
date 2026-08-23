@@ -97,6 +97,46 @@ export const KOREAN_PLAYERS_ABROAD: KoreanPlayer[] = [
     leagueLogo: `${CDN}/leagues/40.png`,
     tier: 2,
   },
+  {
+    id: 237050,  // ✅ 확인됨
+    name: "엄지성",
+    teamName: "Swansea City",
+    teamLogo: `${CDN}/teams/94.png`,
+    league: "Championship",
+    leagueLogo: `${CDN}/leagues/40.png`,
+    tier: 2,
+  },
+  {
+    id: 423708,  // ✅ 확인됨 (Portsmouth 임대 중)
+    name: "양민혁",
+    teamName: "Portsmouth",
+    teamLogo: `${CDN}/teams/743.png`,
+    league: "Championship",
+    leagueLogo: `${CDN}/leagues/40.png`,
+    tier: 2,
+  },
+
+  // ── 🇩🇪 2. Bundesliga 임대 ─────────────────────────────────────
+  {
+    id: 356237,  // ✅ 확인됨 (Brentford 소속 → Kaiserslautern 임대)
+    name: "김지수",
+    teamName: "Kaiserslautern",
+    teamLogo: `${CDN}/teams/176.png`,
+    league: "2. Bundesliga",
+    leagueLogo: `${CDN}/leagues/79.png`,
+    tier: 2,
+  },
+
+  // ── 🇧🇪 벨기에 Pro League ──────────────────────────────────────
+  {
+    id: 26519,   // ✅ 확인됨 (Mainz 소속 → Gent 임대)
+    name: "홍현석",
+    teamName: "KAA Gent",
+    teamLogo: `${CDN}/teams/717.png`,
+    league: "Belgian Pro League",
+    leagueLogo: `${CDN}/leagues/144.png`,
+    tier: 2,
+  },
 
   // ── 🏴󠁧󠁢󠁥󠁮󠁧󠁿 손흥민 (MLS — 사이트 차별화 포인트) ─────────────────
   {
