@@ -109,3 +109,72 @@ export function slugify(homeTeam: string, awayTeam: string, matchId: number): st
   const clean = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
   return `${clean(homeTeam)}-vs-${clean(awayTeam)}-${matchId}`
 }
+// ── 경기 프리뷰 ──────────────────────────────────────────────────────────────
+export type Preview = {
+  slug: string
+  matchId: number
+  title: string
+  leagueName: string
+  homeTeam: string
+  awayTeam: string
+  kickoffAt: string   // ISO 날짜
+  content: string
+  createdAt: string
+}
+
+let previewTableReady: Promise<unknown> | null = null
+function ensurePreviewTable() {
+  if (!previewTableReady) {
+    const sql = getSql()
+    previewTableReady = sql`
+      CREATE TABLE IF NOT EXISTS previews (
+        slug TEXT PRIMARY KEY,
+        match_id INTEGER NOT NULL UNIQUE,
+        title TEXT NOT NULL,
+        league_name TEXT NOT NULL,
+        home_team TEXT NOT NULL,
+        away_team TEXT NOT NULL,
+        kickoff_at TIMESTAMPTZ NOT NULL,
+        content TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )
+    `
+  }
+  return previewTableReady
+}
+
+function rowToPreview(row: Record<string, unknown>): Preview {
+  return {
+    slug: row.slug as string,
+    matchId: row.match_id as number,
+    title: row.title as string,
+    leagueName: row.league_name as string,
+    homeTeam: row.home_team as string,
+    awayTeam: row.away_team as string,
+    kickoffAt: row.kickoff_at as string,
+    content: row.content as string,
+    createdAt: row.created_at as string,
+  }
+}
+
+export async function savePreview(preview: Preview): Promise<void> {
+  if (process.env.USE_MOCK_DATA === "true") return
+  await ensurePreviewTable()
+  const sql = getSql()
+  await sql`
+    INSERT INTO previews (slug, match_id, title, league_name, home_team, away_team, kickoff_at, content, created_at)
+    VALUES (${preview.slug}, ${preview.matchId}, ${preview.title}, ${preview.leagueName},
+            ${preview.homeTeam}, ${preview.awayTeam}, ${preview.kickoffAt}, ${preview.content}, ${preview.createdAt})
+    ON CONFLICT (match_id) DO NOTHING
+  `
+}
+
+export async function getAllPreviews(): Promise<Preview[]> {
+  if (process.env.USE_MOCK_DATA === "true") return []
+  await ensurePreviewTable()
+  const sql = getSql()
+  const rows = await sql`
+    SELECT * FROM previews ORDER BY kickoff_at ASC LIMIT 20
+  `
+  return rows.map(rowToPreview)
+}

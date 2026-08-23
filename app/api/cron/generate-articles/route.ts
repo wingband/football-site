@@ -95,7 +95,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const content = await generateMatchArticle({
+    const result = await generateMatchArticle({
       homeTeam: match.teams.home.name,
       awayTeam: match.teams.away.name,
       homeScore: match.goals.home,
@@ -105,20 +105,20 @@ export async function GET(req: NextRequest) {
       eventsSummary,
     })
 
-    if (!content) continue
+    if (!result) continue
 
     const slug = slugify(match.teams.home.name, match.teams.away.name, match.fixture.id)
 
     await saveArticle({
       slug,
-      title: `${match.teams.home.name} ${match.goals.home}:${match.goals.away} ${match.teams.away.name} 경기 리뷰`,
+      title: result.title,
       matchId: match.fixture.id,
       leagueName: match.league.name,
       homeTeam: match.teams.home.name,
       awayTeam: match.teams.away.name,
       homeScore: match.goals.home,
       awayScore: match.goals.away,
-      content,
+      content: result.content,
       createdAt: new Date().toISOString(),
     })
 

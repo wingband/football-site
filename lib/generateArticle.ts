@@ -8,25 +8,50 @@ type ArticleInput = {
   eventsSummary: string
 }
 
-export async function generateMatchArticle(input: ArticleInput): Promise<string> {
+type ArticleOutput = {
+  title: string
+  content: string
+}
+
+export async function generateMatchArticle(input: ArticleInput): Promise<ArticleOutput | null> {
   if (process.env.USE_MOCK_DATA === "true") {
-    return `${input.homeTeam}와 ${input.awayTeam}의 ${input.leagueName} 경기가 ${input.homeScore}:${input.awayScore}로 끝났다. (이 문단은 가짜 데이터 모드의 샘플 기사입니다.) 실제 운영 시 이 자리에는 AI가 경기 통계와 주요 장면을 바탕으로 작성한 6~8문장 분량의 상세 리뷰가 들어갑니다. 여기에는 승부처가 된 장면, 양 팀의 전술적 특징, 눈에 띄는 활약을 펼친 선수, 그리고 이 결과가 순위表에 미치는 영향 등이 포함될 예정입니다.`
+    return {
+      title: `${input.homeTeam}, ${input.awayTeam}에 ${input.homeScore}:${input.awayScore} 완승 — 압도적 경기력으로 승점 3 획득`,
+      content: `${input.homeTeam}와 ${input.awayTeam}의 ${input.leagueName} 경기가 ${input.homeScore}:${input.awayScore}로 끝났다. (샘플 기사)`,
+    }
   }
 
-  const prompt = `너는 축구 전문 기자야. 아래 경기 데이터를 바탕으로, 6~8문장 분량의 경기 리뷰 기사를 한국어로 써줘.
+  const winner = input.homeScore !== null && input.awayScore !== null
+    ? input.homeScore > input.awayScore ? input.homeTeam
+    : input.awayScore > input.homeScore ? input.awayTeam
+    : null
+    : null
 
-작성 지침:
-- 단순 스코어 나열이 아니라, 승부처가 된 장면과 그 배경을 짚어줘
-- 팀 스탯(점유율, 슈팅 수 등) 중 의미 있는 것만 골라 자연스럽게 문장에 녹여줘
-- 과장하거나 없는 사실을 지어내지 말고, 주어진 데이터에 근거해서만 써줘
-- 문어체 기사 톤을 유지하고, 소제목이나 목록 없이 이어지는 문단으로 작성해줘
+  const prompt = `너는 축구 전문 기자야. 아래 경기 데이터를 바탕으로 두 가지를 작성해줘.
+
+**1. 자극적인 기사 제목 (1줄)**
+- 독자의 클릭을 유도하는 강렬한 헤드라인
+- 승자/패자/인상적인 장면/선수명을 활용
+- 구체적인 숫자나 임팩트 있는 표현 사용
+- 예시: "아스날, 코벤트리를 박살내다 — 사카·하버츠 합작으로 3골 완승"
+- 예시: "맨유, 굴욕의 홈패배 — 헐시티에 무릎 꿇으며 최악의 시즌 출발"
+- 한국어로 작성, 30자 내외
+
+**2. 경기 리뷰 본문 (6~8문장)**
+- 승부처가 된 장면과 그 배경
+- 팀 스탯 중 의미 있는 것만 자연스럽게 녹여서
+- 없는 사실 지어내지 말고 주어진 데이터 근거로만
+- 문어체 기사 톤, 소제목/목록 없이 이어지는 문단
 
 리그: ${input.leagueName}
 ${input.homeTeam} ${input.homeScore ?? "-"} : ${input.awayScore ?? "-"} ${input.awayTeam}
+${winner ? `승자: ${winner}` : "무승부"}
 주요 스탯: ${input.statsSummary}
 주요 이벤트(득점/카드/교체): ${input.eventsSummary}
 
-기사 본문만 출력하고, 다른 설명은 붙이지 마.`
+아래 형식으로 정확히 출력해:
+TITLE: [제목]
+CONTENT: [본문]`
 
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -36,7 +61,7 @@ ${input.homeTeam} ${input.homeScore ?? "-"} : ${input.awayScore ?? "-"} ${input.
     },
     body: JSON.stringify({
       model: "gpt-4o-mini",
-      max_tokens: 800,
+      max_tokens: 1000,
       messages: [{ role: "user", content: prompt }],
     }),
   })
@@ -45,8 +70,23 @@ ${input.homeTeam} ${input.homeScore ?? "-"} : ${input.awayScore ?? "-"} ${input.
 
   if (!res.ok) {
     console.error("OpenAI API 에러 (기사 생성):", data)
-    return ""
+    return null
   }
 
-  return data.choices?.[0]?.message?.content ?? ""
+  const raw = data.choices?.[0]?.message?.content ?? ""
+  const titleMatch = raw.match(/TITLE:\s*(.+)/i)
+  const contentMatch = raw.match(/CONTENT:\s*([\s\S]+)/i)
+
+  if (!titleMatch || !contentMatch) {
+    // 파싱 실패 시 전체를 content로, 기본 제목 사용
+    return {
+      title: `${input.homeTeam} ${input.homeScore ?? "-"}-${input.awayScore ?? "-"} ${input.awayTeam} — ${input.leagueName} 경기 리뷰`,
+      content: raw,
+    }
+  }
+
+  return {
+    title: titleMatch[1].trim(),
+    content: contentMatch[1].trim(),
+  }
 }

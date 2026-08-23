@@ -13,6 +13,7 @@ import MatchEventsTimeline from "@/components/MatchEventsTimeline"
 import TeamRecentForm from "@/components/TeamRecentForm"
 import NextMatchCard from "@/components/NextMatchCard"
 import MatchNewsCard from "@/components/MatchNewsCard"
+import MatchVote from "@/components/MatchVote"
 import H2HPanel from "@/components/H2HPanel"
 import MatchSidebar from "@/components/MatchSidebar"
 import AdSlot from "@/components/AdSlot"
@@ -539,6 +540,10 @@ export default async function MatchDetailPage({
       <Section title="뉴스">
         <MatchNewsCard articles={newsArticles} />
       </Section>
+
+      {isFinished && (
+        <MatchVote matchId={parseInt(id)} />
+      )}
 
       {/* 팩트 탭에도 라인업 미리보기 (FotMob 스타일) */}
       {lineups.length === 2 && (

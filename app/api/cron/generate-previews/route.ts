@@ -1,39 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { generateMatchPreview } from "@/lib/generatePreview"
-import { slugify } from "@/lib/articles"
-import { neon } from "@neondatabase/serverless"
-
-function getSql() { return neon(process.env.DATABASE_URL!) }
-
-async function ensurePreviewTable() {
-  const sql = getSql()
-  await sql`
-    CREATE TABLE IF NOT EXISTS previews (
-      slug TEXT PRIMARY KEY,
-      match_id INTEGER NOT NULL UNIQUE,
-      title TEXT NOT NULL,
-      league_name TEXT NOT NULL,
-      home_team TEXT NOT NULL,
-      away_team TEXT NOT NULL,
-      kickoff_at TIMESTAMPTZ NOT NULL,
-      content TEXT NOT NULL,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-    )
-  `
-}
-
-async function savePreview(p: {
-  slug: string; matchId: number; title: string; leagueName: string;
-  homeTeam: string; awayTeam: string; kickoffAt: string; content: string; createdAt: string
-}) {
-  await ensurePreviewTable()
-  const sql = getSql()
-  await sql`
-    INSERT INTO previews (slug, match_id, title, league_name, home_team, away_team, kickoff_at, content, created_at)
-    VALUES (${p.slug}, ${p.matchId}, ${p.title}, ${p.leagueName}, ${p.homeTeam}, ${p.awayTeam}, ${p.kickoffAt}, ${p.content}, ${p.createdAt})
-    ON CONFLICT (match_id) DO NOTHING
-  `
-}
+import { savePreview, slugify } from "@/lib/articles"
 
 const TARGET_LEAGUE_IDS = [39, 2, 140, 78, 135, 61, 3]
 const LEAGUE_PRIORITY: Record<number, number> = {
