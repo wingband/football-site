@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { matchHref } from "@/lib/slug"
 
 type TeamFixture = {
   fixture: { id: number; date: string; status: { short: string } }
@@ -27,7 +28,7 @@ function NextMatchColumn({ teamId, fixture }: { teamId: number; fixture: TeamFix
 
   return (
     <Link
-      href={`/matches/${fixture.fixture.id}`}
+      href={matchHref(fixture)}
       className="flex flex-col items-center gap-2 hover:bg-turf-line/20 transition-colors py-2 px-1"
     >
       <span className="flex items-center gap-1.5 text-[10px] text-floodlight/40">

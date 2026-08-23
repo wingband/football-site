@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { permanentRedirect } from "next/navigation"
 import { generateMatchStory } from "@/lib/generateStory"
 import PlayerAvatar from "@/components/PlayerAvatar"
 import FotmobLineup from "@/components/FotmobLineup"
@@ -19,6 +20,7 @@ import H2HPanel from "@/components/H2HPanel"
 import MatchSidebar from "@/components/MatchSidebar"
 import AdSlot from "@/components/AdSlot"
 import { getSeasonYear } from "@/lib/season"
+import { buildMatchSlug, matchHref, parseFixtureId } from "@/lib/slug"
 import {
   MOCK_MATCH_DETAIL,
   MOCK_STANDINGS,
@@ -336,10 +338,16 @@ function getTopRatedPlayers(playerStats: PlayerStat[], count: number) {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ id: string }>
+  params: Promise<{ slug: string }>
 }): Promise<Metadata> {
-  const { id } = await params
-  const matchArr: FixtureDetail[] = await apiFetch(`/fixtures?id=${id}`)
+  const { slug } = await params
+  const fixtureId = parseFixtureId(slug)
+
+  if (fixtureId === null) {
+    return { title: "경기 정보를 찾을 수 없습니다" }
+  }
+
+  const matchArr: FixtureDetail[] = await apiFetch(`/fixtures?id=${fixtureId}`)
   const match = matchArr?.[0] ?? null
 
   if (!match) {
@@ -351,9 +359,15 @@ export async function generateMetadata({
       ? `${match.goals.home}:${match.goals.away}`
       : "경기 정보"
 
+  const title = `${match.teams.home.name} vs ${match.teams.away.name} (${scoreText})`
+  const description = `${match.league.name} - ${match.teams.home.name}와 ${match.teams.away.name}의 경기 스코어, 라인업, 통계, AI 분석을 확인하세요.`
+
   return {
-    title: `${match.teams.home.name} vs ${match.teams.away.name} (${scoreText})`,
-    description: `${match.league.name} - ${match.teams.home.name}와 ${match.teams.away.name}의 경기 스코어, 라인업, 통계, AI 분석을 확인하세요.`,
+    title,
+    description,
+    // 같은 경기에 여러 slug(예전 숫자 URL 포함)로 들어와도 색인은 정규 URL 하나로 모이게
+    alternates: { canonical: matchHref(match) },
+    openGraph: { title, description },
   }
 }
 
@@ -362,21 +376,36 @@ export default async function MatchDetailPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ id: string }>
+  params: Promise<{ slug: string }>
   searchParams: Promise<{ from?: string }>
 }) {
-  const { id } = await params
+  const { slug } = await params
   const sp = await searchParams
   const fromReview = sp.from === "review"
-  const matchArr: FixtureDetail[] = await apiFetch(`/fixtures?id=${id}`)
+  const fixtureId = parseFixtureId(slug)
+
+  const notFoundView = (
+    <main className="min-h-screen bg-pitch-night text-floodlight p-8 font-sans">
+      <p className="text-floodlight/50">경기 정보를 찾을 수 없습니다.</p>
+    </main>
+  )
+
+  if (fixtureId === null) {
+    return notFoundView
+  }
+
+  const matchArr: FixtureDetail[] = await apiFetch(`/fixtures?id=${fixtureId}`)
   const match = matchArr?.[0] ?? null
 
   if (!match) {
-    return (
-      <main className="min-h-screen bg-pitch-night text-floodlight p-8 font-sans">
-        <p className="text-floodlight/50">경기 정보를 찾을 수 없습니다.</p>
-      </main>
-    )
+    return notFoundView
+  }
+
+  // 정규 slug가 아니면(예전 숫자 URL, 팀명 변경, 잘못된 slug 등) 308로 정규 URL로 보낸다.
+  // 나머지 API 호출 전에 처리해서 리다이렉트될 요청에 쿼터를 쓰지 않도록 함
+  const canonicalSlug = buildMatchSlug(match)
+  if (slug !== canonicalSlug) {
+    permanentRedirect(`/matches/${canonicalSlug}${fromReview ? "?from=review" : ""}`)
   }
 
   const season = getSeasonYear(match.league.country)
@@ -397,12 +426,12 @@ export default async function MatchDetailPage({
     venueInfo,
     roundFixtures,
   ] = await Promise.all([
-    apiFetch(`/fixtures/statistics?fixture=${id}`) as Promise<Statistic[]>,
-    apiFetch(`/fixtures/events?fixture=${id}`) as Promise<MatchEvent[]>,
-    apiFetch(`/fixtures/players?fixture=${id}`) as Promise<PlayerStat[]>,
-    apiFetch(`/fixtures/lineups?fixture=${id}`) as Promise<Lineup[]>,
+    apiFetch(`/fixtures/statistics?fixture=${fixtureId}`) as Promise<Statistic[]>,
+    apiFetch(`/fixtures/events?fixture=${fixtureId}`) as Promise<MatchEvent[]>,
+    apiFetch(`/fixtures/players?fixture=${fixtureId}`) as Promise<PlayerStat[]>,
+    apiFetch(`/fixtures/lineups?fixture=${fixtureId}`) as Promise<Lineup[]>,
     apiFetch(`/fixtures/headtohead?h2h=${match.teams.home.id}-${match.teams.away.id}&last=20`) as Promise<H2HMatch[]>,
-    apiFetch(`/predictions?fixture=${id}`) as Promise<Prediction[]>,
+    apiFetch(`/predictions?fixture=${fixtureId}`) as Promise<Prediction[]>,
     getStandings(match.league.id, season),
     apiFetch(`/fixtures?team=${match.teams.home.id}&last=6`) as Promise<TeamFixture[]>,
     apiFetch(`/fixtures?team=${match.teams.away.id}&last=6`) as Promise<TeamFixture[]>,
@@ -776,11 +805,11 @@ export default async function MatchDetailPage({
               : null
           }
         >
-          {isFinished && <MatchVote matchId={parseInt(id)} />}
+          {isFinished && <MatchVote matchId={fixtureId} />}
 
           {/* 경기 댓글 — 종료 여부 관계없이 항상 표시 */}
           <MatchComments
-            matchId={parseInt(id)}
+            matchId={fixtureId}
             homeTeam={match.teams.home.name}
             awayTeam={match.teams.away.name}
           />

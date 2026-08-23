@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { matchHref } from "@/lib/slug"
 
 type H2HMatch = {
   fixture: { id: number; date: string }
@@ -120,7 +121,7 @@ export default function H2HPanel({
           ) : (
             <Link
               key={m.fixture.id}
-              href={`/matches/${m.fixture.id}`}
+              href={matchHref(m)}
               className="block hover:bg-turf-line/20 transition-colors"
             >
               {row}

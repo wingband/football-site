@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import { matchHref } from "@/lib/slug"
 import { getSeasonYear } from "@/lib/season"
 import FollowButton from "@/components/FollowButton"
 import AdSlot from "@/components/AdSlot"
@@ -305,7 +306,7 @@ export default async function PlayerPage({
               {recentMatches.map((m) => (
                 <Link
                   key={m.fixture.id}
-                  href={`/matches/${m.fixture.id}`}
+                  href={matchHref(m)}
                   className="flex items-center gap-3 py-2.5 hover:bg-turf-line/20 transition-colors -mx-1 px-1"
                 >
                   <span className="text-[11px] text-floodlight/40 w-14 shrink-0">
