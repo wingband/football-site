@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { UserButton, SignInButton, useUser } from "@clerk/nextjs"
+import { UserButton, SignInButton, SignUpButton, useUser } from "@clerk/nextjs"
 
 const NAV_LINKS = [
   { href: "/matches", label: "경기" },
@@ -56,8 +56,8 @@ export default function Header() {
           />
         </form>
 
-        {/* 로그인 버튼 / 유저 버튼 */}
-        <div className="hidden md:flex items-center shrink-0">
+        {/* 로그인·회원가입 / 유저 버튼 */}
+        <div className="hidden md:flex items-center gap-2 shrink-0">
           {isSignedIn ? (
             <UserButton
               appearance={{
@@ -69,11 +69,18 @@ export default function Header() {
               }}
             />
           ) : (
-            <SignInButton mode="modal">
-              <button className="text-xs px-3 py-1.5 border border-turf-line/60 text-floodlight/60 hover:border-score-amber hover:text-score-amber rounded-full transition-colors">
-                로그인
-              </button>
-            </SignInButton>
+            <>
+              <SignInButton mode="modal">
+                <button className="text-xs px-3 py-1.5 border border-turf-line/60 text-floodlight/60 hover:border-score-amber hover:text-score-amber rounded-full transition-colors">
+                  로그인
+                </button>
+              </SignInButton>
+              <SignUpButton mode="modal">
+                <button className="text-xs px-3 py-1.5 bg-score-amber text-pitch-night font-semibold hover:bg-floodlight rounded-full transition-colors">
+                  회원가입
+                </button>
+              </SignUpButton>
+            </>
           )}
         </div>
 
@@ -82,11 +89,18 @@ export default function Header() {
           {isSignedIn ? (
             <UserButton appearance={{ elements: { avatarBox: "w-7 h-7" } }} />
           ) : (
-            <SignInButton mode="modal">
-              <button className="text-xs px-2.5 py-1 border border-turf-line/60 text-floodlight/60 rounded-full">
-                로그인
-              </button>
-            </SignInButton>
+            <>
+              <SignInButton mode="modal">
+                <button className="text-xs px-2.5 py-1 border border-turf-line/60 text-floodlight/60 rounded-full">
+                  로그인
+                </button>
+              </SignInButton>
+              <SignUpButton mode="modal">
+                <button className="text-xs px-2.5 py-1 bg-score-amber text-pitch-night font-semibold rounded-full">
+                  회원가입
+                </button>
+              </SignUpButton>
+            </>
           )}
           <button
             onClick={() => setMenuOpen((v) => !v)}
