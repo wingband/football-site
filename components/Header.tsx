@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { UserButton, SignInButton, useUser } from "@clerk/nextjs"
 
 const NAV_LINKS = [
   { href: "/matches", label: "경기" },
@@ -18,6 +19,7 @@ export default function Header() {
   const [query, setQuery] = useState("")
   const [menuOpen, setMenuOpen] = useState(false)
   const router = useRouter()
+  const { isSignedIn } = useUser()
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
@@ -54,8 +56,38 @@ export default function Header() {
           />
         </form>
 
-        {/* 모바일: 검색 아이콘 + 햄버거 버튼 */}
-        <div className="flex md:hidden items-center gap-1 ml-auto">
+        {/* 로그인 버튼 / 유저 버튼 */}
+        <div className="hidden md:flex items-center shrink-0">
+          {isSignedIn ? (
+            <UserButton
+              appearance={{
+                elements: {
+                  avatarBox: "w-8 h-8",
+                  userButtonPopoverCard: "bg-pitch-night border border-turf-line",
+                  userButtonPopoverActionButton: "text-floodlight/70 hover:text-floodlight",
+                },
+              }}
+            />
+          ) : (
+            <SignInButton mode="modal">
+              <button className="text-xs px-3 py-1.5 border border-turf-line/60 text-floodlight/60 hover:border-score-amber hover:text-score-amber rounded-full transition-colors">
+                로그인
+              </button>
+            </SignInButton>
+          )}
+        </div>
+
+        {/* 모바일: 햄버거 */}
+        <div className="flex md:hidden items-center gap-2 ml-auto">
+          {isSignedIn ? (
+            <UserButton appearance={{ elements: { avatarBox: "w-7 h-7" } }} />
+          ) : (
+            <SignInButton mode="modal">
+              <button className="text-xs px-2.5 py-1 border border-turf-line/60 text-floodlight/60 rounded-full">
+                로그인
+              </button>
+            </SignInButton>
+          )}
           <button
             onClick={() => setMenuOpen((v) => !v)}
             aria-label="메뉴 열기"
@@ -74,7 +106,7 @@ export default function Header() {
         </div>
       </div>
 
-      {/* 모바일 드롭다운 메뉴 */}
+      {/* 모바일 드롭다운 */}
       {menuOpen && (
         <div className="md:hidden border-t border-turf-line/60 bg-pitch-night px-4 py-4 space-y-4">
           <form onSubmit={handleSearch}>
