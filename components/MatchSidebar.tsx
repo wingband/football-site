@@ -1,5 +1,6 @@
 import Link from "next/link"
 import AdSlot from "@/components/AdSlot"
+import PlayerAvatar from "@/components/PlayerAvatar"
 
 type SidebarFixture = {
   fixture: { id: number; date: string; status: { short: string } }
@@ -19,6 +20,20 @@ type VenueInfo = {
 } | null
 
 type Insight = { side: "home" | "away"; text: string }
+
+type InjuredPlayer = {
+  player: { id: number; name: string; photo: string; type: string; reason: string }
+  team: { id: number; name: string; logo: string }
+}
+
+type OddsData = {
+  home: string | null
+  draw: string | null
+  away: string | null
+  over25: string | null
+  under25: string | null
+  bttsYes: string | null
+} | null
 
 const FINISHED_CODES = ["FT", "AET", "PEN"]
 
@@ -177,6 +192,90 @@ function InsightsCard({
   )
 }
 
+function InjuriesCard({
+  homeTeamName, awayTeamName, homeTeamLogo, awayTeamLogo, homeInjuries, awayInjuries,
+}: {
+  homeTeamName: string; awayTeamName: string; homeTeamLogo: string; awayTeamLogo: string
+  homeInjuries: InjuredPlayer[]; awayInjuries: InjuredPlayer[]
+}) {
+  if (homeInjuries.length === 0 && awayInjuries.length === 0) return null
+  return (
+    <div className="bg-turf/40 border border-turf-line/40 rounded-md p-4">
+      <p className="text-sm font-medium mb-3">⚕️ 부상 / 결장</p>
+      {[{ team: homeTeamName, logo: homeTeamLogo, players: homeInjuries },
+        { team: awayTeamName, logo: awayTeamLogo, players: awayInjuries }].map(({ team, logo, players }) =>
+        players.length > 0 ? (
+          <div key={team} className="mb-3 last:mb-0">
+            <div className="flex items-center gap-1.5 mb-2">
+              <img src={logo} alt="" className="w-4 h-4" />
+              <p className="text-xs text-floodlight/50">{team}</p>
+            </div>
+            <div className="space-y-1.5">
+              {players.map((inj) => (
+                <div key={inj.player.id} className="flex items-center gap-2">
+                  <PlayerAvatar
+                    src={inj.player.photo || `https://media.api-sports.io/football/players/${inj.player.id}.png`}
+                    alt={inj.player.name}
+                    className="w-6 h-6 rounded-full object-cover bg-turf-line text-[8px] shrink-0"
+                  />
+                  <span className="text-xs flex-1 truncate">{inj.player.name}</span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded shrink-0 ${
+                    inj.player.type === "Missing Fixture" ? "bg-red-900/40 text-red-400" : "bg-orange-900/40 text-orange-400"
+                  }`}>
+                    {inj.player.type === "Missing Fixture" ? "결장" : "의심"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null
+      )}
+    </div>
+  )
+}
+
+function OddsCard({
+  homeTeamName, awayTeamName, homeTeamLogo, awayTeamLogo, odds,
+}: {
+  homeTeamName: string; awayTeamName: string; homeTeamLogo: string; awayTeamLogo: string
+  odds: OddsData
+}) {
+  if (!odds?.home && !odds?.draw && !odds?.away) return null
+  const nums = [Number(odds.home), Number(odds.draw), Number(odds.away)].filter(Boolean)
+  const minOdd = Math.min(...nums)
+  return (
+    <div className="bg-turf/40 border border-turf-line/40 rounded-md p-4">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-sm font-medium">배당률</p>
+        <span className="text-[10px] text-floodlight/20">Bet365</span>
+      </div>
+      <div className="grid grid-cols-3 gap-2 mb-3">
+        {[{ label: homeTeamName, logo: homeTeamLogo, odd: odds.home },
+          { label: "무", logo: null, odd: odds.draw },
+          { label: awayTeamName, logo: awayTeamLogo, odd: odds.away }].map(({ label, logo, odd }) => (
+          <div key={label} className={`flex flex-col items-center gap-1 py-2 px-1 rounded border ${
+            odd && Number(odd) === minOdd ? "border-score-amber bg-score-amber/10" : "border-turf-line/30 bg-turf/20"
+          }`}>
+            {logo && <img src={logo} alt="" className="w-5 h-5" />}
+            <span className="text-[10px] text-floodlight/50 truncate w-full text-center">{label}</span>
+            <span className={`font-data font-bold text-sm ${odd && Number(odd) === minOdd ? "text-score-amber" : "text-floodlight/80"}`}>
+              {odd ?? "–"}
+            </span>
+          </div>
+        ))}
+      </div>
+      {(odds.over25 || odds.under25 || odds.bttsYes) && (
+        <div className="border-t border-turf-line/30 pt-2 space-y-1.5">
+          {odds.over25 && <div className="flex justify-between text-xs"><span className="text-floodlight/50">Over 2.5</span><span className="font-data font-bold">{odds.over25}</span></div>}
+          {odds.under25 && <div className="flex justify-between text-xs"><span className="text-floodlight/50">Under 2.5</span><span className="font-data font-bold">{odds.under25}</span></div>}
+          {odds.bttsYes && <div className="flex justify-between text-xs"><span className="text-floodlight/50">양팀득점 (BTTS)</span><span className="font-data font-bold">{odds.bttsYes}</span></div>}
+        </div>
+      )}
+      <p className="text-[9px] text-floodlight/15 mt-2 text-center">배당률은 참고용입니다. 도박은 본인 책임.</p>
+    </div>
+  )
+}
+
 function WhoWinsCard({
   homeLogo,
   awayLogo,
@@ -225,6 +324,9 @@ export default function MatchSidebar({
   currentFixtureId,
   insights,
   prediction,
+  homeInjuries = [],
+  awayInjuries = [],
+  odds = null,
 }: {
   homeTeamName: string
   awayTeamName: string
@@ -238,10 +340,28 @@ export default function MatchSidebar({
   currentFixtureId: number
   insights: Insight[]
   prediction: { home: string; draw: string; away: string } | null
+  homeInjuries?: InjuredPlayer[]
+  awayInjuries?: InjuredPlayer[]
+  odds?: OddsData
 }) {
   return (
     <div className="space-y-4">
       <HighlightCard homeTeam={homeTeamName} awayTeam={awayTeamName} />
+      <OddsCard
+        homeTeamName={homeTeamName}
+        awayTeamName={awayTeamName}
+        homeTeamLogo={homeTeamLogo}
+        awayTeamLogo={awayTeamLogo}
+        odds={odds}
+      />
+      <InjuriesCard
+        homeTeamName={homeTeamName}
+        awayTeamName={awayTeamName}
+        homeTeamLogo={homeTeamLogo}
+        awayTeamLogo={awayTeamLogo}
+        homeInjuries={homeInjuries}
+        awayInjuries={awayInjuries}
+      />
       <AdSlot label="사이드바 광고 (예: 300x250)" className="w-full h-64" />
       <VenueCard venue={venue} />
       <RoundFixturesCard

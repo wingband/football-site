@@ -241,3 +241,42 @@ export async function getHistoricalRank(
   }
   return null
 }
+
+// ── 팀 시즌 종합 통계 (/teams/statistics) ─────────────────────
+export type TeamSeasonStats = {
+  league: { name: string; logo: string }
+  form: string | null
+  fixtures: {
+    played: { home: number; away: number; total: number }
+    wins: { home: number; away: number; total: number }
+    draws: { home: number; away: number; total: number }
+    loses: { home: number; away: number; total: number }
+  }
+  goals: {
+    for: { total: { home: number; away: number; total: number }; average: { home: string; away: string; total: string } }
+    against: { total: { home: number; away: number; total: number }; average: { home: string; away: string; total: string } }
+  }
+  biggest: {
+    streak: { wins: number; draws: number; loses: number }
+    wins: { home: string | null; away: string | null }
+    loses: { home: string | null; away: string | null }
+    goals: { for: { home: number; away: number }; against: { home: number; away: number } }
+  }
+  clean_sheet: { home: number; away: number; total: number }
+  failed_to_score: { home: number; away: number; total: number }
+  penalty: { scored: { total: number; percentage: string }; missed: { total: number; percentage: string }; total: number }
+}
+
+export async function getTeamSeasonStats(teamId: string, leagueId: number, season: number): Promise<TeamSeasonStats | null> {
+  if (process.env.USE_MOCK_DATA === "true") return null
+  try {
+    const res = await fetch(
+      `https://v3.football.api-sports.io/teams/statistics?team=${teamId}&league=${leagueId}&season=${season}`,
+      { headers: HEADERS(), next: { revalidate: 3600 } }
+    )
+    const data = await res.json()
+    return data.response ?? null
+  } catch {
+    return null
+  }
+}

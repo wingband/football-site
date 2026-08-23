@@ -10,6 +10,7 @@ import {
   getPlayerCareer,
   getPlayerRecentMatches,
   getTrophies,
+  getSidelined,
 } from "@/lib/playerData"
 
 const POSITION_KR: Record<string, string> = {
@@ -67,11 +68,12 @@ export default async function PlayerPage({
     (a, b) => (b.games.appearences ?? 0) - (a.games.appearences ?? 0)
   )[0]
 
-  const [transfers, career, recentMatches, trophies] = await Promise.all([
+  const [transfers, career, recentMatches, trophies, sidelined] = await Promise.all([
     getPlayerTransfers(id),
     stat ? getPlayerCareer(id, season) : Promise.resolve([]),
     stat ? getPlayerRecentMatches(id, stat.team.id, season, 8) : Promise.resolve([]),
     getTrophies(id),
+    getSidelined(id),
   ])
 
   // 현재 소속팀으로의 이적만 배너로 표시 (이전 이적 기록이 뜨지 않도록)
@@ -353,6 +355,25 @@ export default async function PlayerPage({
                     {t.league} ({t.country})
                   </span>
                   <span className="text-xs text-floodlight/40 font-data">{t.season}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 부상 이력 */}
+        {sidelined.length > 0 && (
+          <div className="py-6 border-b border-turf-line/30">
+            <p className="text-sm font-medium mb-3">⚕️ 부상 이력</p>
+            <div className="space-y-2">
+              {sidelined.slice(0, 8).map((s, i) => (
+                <div key={i} className="flex items-center gap-3 text-xs">
+                  <span className="text-red-400 shrink-0">●</span>
+                  <span className="flex-1 text-floodlight/80">{s.type}</span>
+                  <span className="text-floodlight/40 font-data shrink-0">
+                    {s.start ? new Date(s.start).toLocaleDateString("ko-KR", { year: "numeric", month: "short" }) : "–"}
+                    {s.end ? ` ~ ${new Date(s.end).toLocaleDateString("ko-KR", { month: "short", day: "numeric" })}` : " ~ 진행중"}
+                  </span>
                 </div>
               ))}
             </div>
