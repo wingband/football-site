@@ -1,6 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server"
 
-// 로그인 없이 접근 가능한 페이지 (거의 모든 페이지)
 const isPublicRoute = createRouteMatcher([
   "/",
   "/matches(.*)",
@@ -14,7 +13,9 @@ const isPublicRoute = createRouteMatcher([
   "/korean-players(.*)",
   "/best11(.*)",
   "/privacy(.*)",
-  "/api/comments(.*)",      // 댓글 읽기는 공개
+  "/sitemap.xml",
+  "/robots.txt",
+  "/api/comments(.*)",
   "/api/vote(.*)",
   "/api/articles(.*)",
   "/api/korean-abroad(.*)",
