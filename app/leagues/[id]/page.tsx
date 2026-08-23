@@ -177,19 +177,29 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   }
 }
 
-export default async function LeagueOverviewPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function LeagueOverviewPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ season?: string }> }) {
   const { id } = await params
+  const sp = await searchParams
   const euroSeason = getSeasonYear("England")
-  let data = await getLeagueStandings(id, euroSeason)
-  if (!data) data = await getLeagueStandings(id, new Date().getFullYear())
-  if (!data) data = await getLeagueStandings(id, euroSeason - 1)
+
+  // URL ?season= 파라미터 우선, 없으면 기본 시즌 순서로 탐색
+  let season: number
+  let data
+  if (sp.season) {
+    season = parseInt(sp.season)
+    data = await getLeagueStandings(id, season)
+  } else {
+    data = await getLeagueStandings(id, euroSeason)
+    if (!data) data = await getLeagueStandings(id, new Date().getFullYear())
+    if (!data) data = await getLeagueStandings(id, euroSeason - 1)
+    season = data?.league.season ?? euroSeason
+  }
 
   if (!data || data.league.standings.length === 0) {
     return <p className="text-floodlight/40 pt-4">리그 정보를 찾을 수 없습니다.</p>
   }
 
   const { league } = data
-  const season = league.season
 
   const [upcoming, news, topScorers, topAssists] = await Promise.all([
     getLeagueFixturesByMode(id, season, "next", 10),
