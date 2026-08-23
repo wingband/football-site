@@ -5,6 +5,8 @@ import AdSlot from "@/components/AdSlot"
 import { useEffect, useState, useMemo } from "react"
 import type { Article } from "@/lib/articles"
 
+type ArticleWithLogos = Article & { homeLogo: string | null; awayLogo: string | null }
+
 // 리그명 → 로컬 로고 매핑
 const LEAGUE_LOGOS: Record<string, string> = {
   "Premier League":        "/leagues/pl.png",
@@ -32,16 +34,22 @@ const FEATURED_TABS = [
   { label: "K League 1",       logo: "/leagues/kleague.png" },
 ]
 
-// 팀 이니셜 원형
-function TeamBadge({ name, size = "sm" }: { name: string; size?: "sm" | "lg" }) {
-  const initials = name
-    .split(/[\s-]/)
-    .map((w) => w[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join("")
-    .toUpperCase()
+// 팀 이니셜 원형 (로고 없을 때 fallback)
+function TeamBadge({ name, logo, size = "sm" }: { name: string; logo?: string | null; size?: "sm" | "lg" }) {
+  const [imgError, setImgError] = useState(false)
   const sz = size === "lg" ? "w-10 h-10 text-sm" : "w-8 h-8 text-xs"
+
+  if (logo && !imgError) {
+    return (
+      <img
+        src={logo}
+        alt={name}
+        className={`${sz} rounded-full object-contain bg-turf-line/30 shrink-0`}
+        onError={() => setImgError(true)}
+      />
+    )
+  }
+  const initials = name.split(/[\s-]/).map((w) => w[0]).filter(Boolean).slice(0, 2).join("").toUpperCase()
   return (
     <div className={`${sz} rounded-full bg-turf-line/60 border border-turf-line flex items-center justify-center font-bold text-floodlight/80 shrink-0`}>
       {initials}
@@ -63,7 +71,7 @@ function oneLiner(a: Article): string {
 }
 
 export default function StoriesPage() {
-  const [articles, setArticles] = useState<Article[]>([])
+  const [articles, setArticles] = useState<ArticleWithLogos[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<string>("전체")
 
@@ -176,7 +184,7 @@ export default function StoriesPage() {
               return (
                 <Link
                   key={a.slug}
-                  href={`/stories/${a.slug}`}
+                  href={`/matches/${a.matchId}`}
                   className="block bg-turf/40 border border-turf-line/40 p-4 hover:bg-turf-line/20 hover:border-score-amber/40 transition-colors group"
                 >
                   {/* 리그 정보 */}
@@ -193,7 +201,7 @@ export default function StoriesPage() {
 
                   {/* 팀 엠블럼 + 스코어 */}
                   <div className="flex items-center gap-3 mb-3">
-                    <TeamBadge name={a.homeTeam} />
+                    <TeamBadge name={a.homeTeam} logo={a.homeLogo} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-floodlight/90 truncate">{a.homeTeam}</span>
@@ -201,7 +209,7 @@ export default function StoriesPage() {
                         <span className="text-sm font-medium text-floodlight/90 truncate text-right">{a.awayTeam}</span>
                       </div>
                     </div>
-                    <TeamBadge name={a.awayTeam} />
+                    <TeamBadge name={a.awayTeam} logo={a.awayLogo} />
                   </div>
 
                   {/* 한 줄 요약 */}

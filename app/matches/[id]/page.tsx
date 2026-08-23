@@ -476,6 +476,7 @@ export default async function MatchDetailPage({
           summary={reviewSummary}
           homeLogo={match.teams.home.logo}
           awayLogo={match.teams.away.logo}
+          storySlug={null}
         />
       </div>
 

@@ -1,21 +1,32 @@
+import Link from "next/link"
+
 export default function MatchReviewCard({
   headline,
   summary,
   homeLogo,
   awayLogo,
+  storySlug,
 }: {
   headline: string
   summary: string
   homeLogo: string
   awayLogo: string
+  storySlug?: string | null
 }) {
   return (
-    <div className="bg-turf/40 border-l-2 border-score-amber p-5">
-      <h3 className="font-display uppercase tracking-wide text-sm text-floodlight/70 mb-4">
-        Match review
-      </h3>
-      <div className="flex gap-4">
-        <div className="relative w-20 h-20 shrink-0 overflow-hidden bg-turf-line/40">
+    <div className="border border-score-amber/40 bg-score-amber/5 overflow-hidden">
+      {/* 헤더 */}
+      <div className="flex items-center gap-2 px-5 py-3 bg-score-amber/10 border-b border-score-amber/20">
+        <span className="text-score-amber text-xs">✦</span>
+        <h3 className="font-display uppercase tracking-widest text-xs text-score-amber font-bold">
+          Match Review
+        </h3>
+        <span className="text-score-amber text-xs ml-auto">AI 작성</span>
+      </div>
+
+      {/* 본문 */}
+      <div className="flex gap-4 p-5">
+        <div className="relative w-20 h-20 shrink-0 overflow-hidden bg-turf-line/40 rounded">
           <div
             className="absolute inset-0"
             style={{
@@ -28,9 +39,17 @@ export default function MatchReviewCard({
             <img src={awayLogo} alt="" className="w-9 h-9 -ml-2" />
           </div>
         </div>
-        <div className="min-w-0">
-          <p className="font-medium text-[15px] leading-snug text-floodlight">{headline}</p>
-          <p className="text-sm text-floodlight/50 mt-1.5 leading-relaxed">{summary}</p>
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold text-[15px] leading-snug text-floodlight mb-2">{headline}</p>
+          <p className="text-sm text-floodlight/65 leading-relaxed">{summary}</p>
+          {storySlug && (
+            <Link
+              href={`/stories/${storySlug}`}
+              className="inline-block mt-3 text-xs text-score-amber hover:underline"
+            >
+              전체 리뷰 읽기 →
+            </Link>
+          )}
         </div>
       </div>
     </div>

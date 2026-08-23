@@ -372,15 +372,6 @@ export default function MatchSidebar({
         currentFixtureId={currentFixtureId}
       />
       <InsightsCard insights={insights} homeLogo={homeTeamLogo} awayLogo={awayTeamLogo} />
-      {prediction && (
-        <WhoWinsCard
-          homeLogo={homeTeamLogo}
-          awayLogo={awayTeamLogo}
-          homePct={prediction.home}
-          drawPct={prediction.draw}
-          awayPct={prediction.away}
-        />
-      )}
     </div>
   )
 }
