@@ -1,182 +1,201 @@
+"use client"
+
+import { useEffect, useState } from "react"
 import Link from "next/link"
-import PlayerAvatar from "@/components/PlayerAvatar"
-import { KOREAN_PLAYERS_ABROAD, type KoreanPlayer } from "@/lib/koreanPlayersAbroad"
-import { saveCachedPlayerStat, getCachedPlayerStat, type CachedPlayerStat } from "@/lib/playerStatCache"
 
-// API 응답에서 클럽 스탯만 추출 (국대/친선 제외)
-const NATIONAL_KW = ["World Cup", "AFC", "Asian", "Olympic", "Friendlies", "Qualification", "Nations", "Copa America", "EURO"]
-
-function getClubStat(data: CachedPlayerStat) {
-  const club = data.statistics.find(
-    (s) => !NATIONAL_KW.some((kw) => s.league.name.includes(kw))
-  )
-  return club ?? null
-}
-
-async function fetchStat(playerId: number, season: number, useCache: boolean) {
-  const res = await fetch(
-    `https://v3.football.api-sports.io/players?id=${playerId}&season=${season}`,
-    {
-      headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      ...(useCache ? { next: { revalidate: 600 } } : { cache: "no-store" as const }),
-    }
-  )
-  return res.json()
-}
-
-async function getPlayerStat(playerId: number, season: number): Promise<CachedPlayerStat | null> {
-  let data = await fetchStat(playerId, season, true)
-  if (!data.response?.[0]) {
-    await new Promise((r) => setTimeout(r, 300))
-    data = await fetchStat(playerId, season, false)
-  }
-  const fresh: CachedPlayerStat | null = data.response?.[0] ?? null
-  if (fresh) { await saveCachedPlayerStat(playerId, fresh) }
-  return fresh ?? getCachedPlayerStat(playerId)
-}
-
-type EnrichedPlayer = KoreanPlayer & {
+// ── 타입 ──────────────────────────────────────────────────────────────────
+type Player = {
+  id: number
+  name: string
+  teamName: string
+  teamLogo: string
+  league: string
+  leagueLogo: string
+  tier: 1 | 2
   goals: number
   assists: number
   apps: number
   minutes: number
   rating: string | null
-  shots: number
-  shotsOn: number
-  passAccuracy: number | null
 }
 
-async function getAllPlayers(): Promise<EnrichedPlayer[]> {
-  const season = new Date().getFullYear()
-  const results = await Promise.all(
-    KOREAN_PLAYERS_ABROAD.map(async (player) => {
-      const raw = await getPlayerStat(player.id, season)
-      const stat = raw ? getClubStat(raw) : null
-      return {
-        ...player,
-        goals: stat?.goals.total ?? 0,
-        assists: stat?.goals.assists ?? 0,
-        apps: stat?.games.appearences ?? 0,
-        minutes: stat?.games.minutes ?? 0,
-        rating: stat?.games.rating ?? null,
-        shots: stat?.shots?.total ?? 0,
-        shotsOn: stat?.shots?.on ?? 0,
-        passAccuracy: stat?.passes?.accuracy ?? null,
-      }
-    })
-  )
-  return results
-}
-
+// ── 평점 배지 ──────────────────────────────────────────────────────────────
 function RatingBadge({ rating }: { rating: string | null }) {
-  if (!rating) return null
+  if (!rating) return <span className="text-floodlight/20 text-xs font-data">–</span>
   const n = parseFloat(rating)
-  const cls = n >= 7.5 ? "bg-green-600" : n >= 6.5 ? "bg-orange-500" : "bg-red-700"
-  return <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold text-white font-data ${cls}`}>{n.toFixed(2)}</span>
+  const bg = n >= 7.5 ? "bg-green-600" : n >= 6.5 ? "bg-orange-500" : "bg-red-700"
+  return (
+    <span className={`inline-block px-1.5 py-0.5 rounded text-[11px] font-bold text-white font-data tabular-nums ${bg}`}>
+      {n.toFixed(2)}
+    </span>
+  )
 }
 
-function PlayerCard({ p }: { p: EnrichedPlayer }) {
+// ── 선수 한 줄 ─────────────────────────────────────────────────────────────
+function PlayerRow({ p }: { p: Player }) {
   return (
     <Link
       href={`/players/${p.id}`}
-      className="shrink-0 w-48 bg-turf/40 border-l-2 border-score-amber p-3 hover:bg-turf-line/30 transition-colors flex flex-col gap-2"
+      className="flex items-center gap-3 px-3 py-2.5 hover:bg-turf-line/30 transition-colors border-b border-turf-line/20 last:border-b-0 group"
     >
-      {/* 선수 사진 + 이름 + 팀 */}
-      <div className="flex items-center gap-2.5">
-        <PlayerAvatar
-          src={`https://media.api-sports.io/football/players/${p.id}.png`}
-          alt={p.name}
-          className="w-11 h-11 rounded-full bg-turf-line object-cover shrink-0 text-xs"
-        />
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-floodlight leading-tight truncate">{p.name}</p>
-          {/* 현재 소속팀 — 하드코딩으로 항상 정확하게 표시 */}
-          <div className="flex items-center gap-1 mt-0.5">
-            <img src={p.teamLogo} alt="" className="w-3.5 h-3.5 shrink-0" />
+      {/* 선수 사진 */}
+      <img
+        src={`https://media.api-sports.io/football/players/${p.id}.png`}
+        alt={p.name}
+        className="w-8 h-8 rounded-full object-cover bg-turf-line shrink-0"
+        onError={(e) => {
+          e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=1a2a1a&color=c8a84b&size=32`
+        }}
+      />
 
-            <span className="text-[11px] font-semibold text-score-amber truncate">{p.teamName}</span>
-          </div>
-          <div className="flex items-center gap-1 mt-0.5">
-            <img src={p.leagueLogo} alt="" className="w-3 h-3 shrink-0 brightness-125" />
-            <span className="text-[9px] text-floodlight/35 truncate">{p.league}</span>
-          </div>
+      {/* 이름 + 팀 */}
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-floodlight group-hover:text-score-amber transition-colors truncate leading-tight">
+          {p.name}
+        </p>
+        <div className="flex items-center gap-1 mt-0.5">
+          <img src={p.teamLogo} alt="" className="w-3 h-3 shrink-0" />
+          <span className="text-[10px] text-floodlight/45 truncate">{p.teamName}</span>
+        </div>
+      </div>
+
+      {/* 스탯: 득점 / 도움 / 출전 */}
+      <div className="flex items-center gap-3 shrink-0">
+        <div className="text-center w-7">
+          <p className={`text-sm font-bold font-data tabular-nums ${p.goals > 0 ? "text-score-amber" : "text-floodlight/30"}`}>
+            {p.goals}
+          </p>
+          <p className="text-[9px] text-floodlight/30">골</p>
+        </div>
+        <div className="text-center w-7">
+          <p className={`text-sm font-bold font-data tabular-nums ${p.assists > 0 ? "text-floodlight/80" : "text-floodlight/30"}`}>
+            {p.assists}
+          </p>
+          <p className="text-[9px] text-floodlight/30">도움</p>
+        </div>
+        <div className="text-center w-8">
+          <p className="text-sm font-bold font-data tabular-nums text-floodlight/50">
+            {p.apps > 0 ? p.apps : "–"}
+          </p>
+          <p className="text-[9px] text-floodlight/30">경기</p>
         </div>
       </div>
 
       {/* 평점 */}
-      <div className="flex items-center justify-between">
+      <div className="w-12 text-right shrink-0">
         <RatingBadge rating={p.rating} />
-        {p.apps > 0 && <span className="text-[9px] text-floodlight/30">{p.apps}경기</span>}
-      </div>
-
-      {/* 핵심 스탯 */}
-      <div className="border-t border-turf-line/30 pt-1.5 grid grid-cols-3 text-center">
-        <div>
-          <p className="text-sm font-bold text-score-amber font-data">{p.goals}</p>
-          <p className="text-[9px] text-floodlight/40">득점</p>
-        </div>
-        <div>
-          <p className="text-sm font-bold text-floodlight font-data">{p.assists}</p>
-          <p className="text-[9px] text-floodlight/40">도움</p>
-        </div>
-        <div>
-          <p className="text-sm font-bold text-floodlight font-data">{p.minutes > 0 ? p.minutes.toLocaleString() : "-"}</p>
-          <p className="text-[9px] text-floodlight/40">출전분</p>
-        </div>
-      </div>
-
-      {/* 추가 스탯 */}
-      <div className="space-y-0.5">
-        {p.shots > 0 && (
-          <div className="flex justify-between text-[9px]">
-            <span className="text-floodlight/35">슈팅(유효)</span>
-            <span className="text-floodlight/60 font-data">{p.shots}({p.shotsOn})</span>
-          </div>
-        )}
-        {p.passAccuracy !== null && (
-          <div className="flex justify-between text-[9px]">
-            <span className="text-floodlight/35">패스 정확도</span>
-            <span className="text-floodlight/60 font-data">{p.passAccuracy}%</span>
-          </div>
-        )}
       </div>
     </Link>
   )
 }
 
-export default async function KoreanAbroadWidget() {
-  const players = await getAllPlayers()
+// ── 메인 위젯 ─────────────────────────────────────────────────────────────
+export default function KoreanAbroadWidget() {
+  const [players, setPlayers] = useState<Player[]>([])
+  const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState<"all" | "big5" | "etc">("all")
 
-  const tier1 = players.filter((p) => p.tier === 1)
-  const tier2 = players.filter((p) => p.tier === 2)
+  useEffect(() => {
+    fetch("/api/korean-abroad")
+      .then((r) => r.json())
+      .then((data) => setPlayers(data.players ?? []))
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
+
+  const big5 = players.filter((p) => p.tier === 1)
+  const etc = players.filter((p) => p.tier === 2)
+  const displayed = activeTab === "big5" ? big5 : activeTab === "etc" ? etc : players
 
   return (
-    <div className="space-y-3">
+    <div className="bg-turf/30 border border-turf-line/40 overflow-hidden">
       {/* 헤더 */}
-      <div className="flex items-center gap-2">
-        <span className="text-base">🇰🇷</span>
-        <h2 className="font-display uppercase text-sm text-score-amber tracking-wide">
-          한국인 해외파 트래커
-        </h2>
+      <div className="flex items-center justify-between px-4 py-3 border-b border-turf-line/40">
+        <div className="flex items-center gap-2">
+          <span className="text-base">🇰🇷</span>
+          <h2 className="font-display uppercase text-sm text-score-amber tracking-wide">
+            한국인 해외파 트래커
+          </h2>
+          {!loading && (
+            <span className="text-[10px] text-floodlight/30 font-data">{players.length}명</span>
+          )}
+        </div>
+
+        {/* 탭 */}
+        <div className="flex gap-1">
+          {(["all", "big5", "etc"] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`text-[10px] px-2 py-1 rounded font-medium transition-colors ${
+                activeTab === tab
+                  ? "bg-score-amber text-pitch-night font-bold"
+                  : "text-floodlight/40 hover:text-floodlight/70"
+              }`}
+            >
+              {tab === "all" ? "전체" : tab === "big5" ? "5대리그" : "주목"}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* 1부 리그 선수 */}
-      {tier1.length > 0 && (
-        <div>
-          <p className="text-[10px] text-floodlight/30 uppercase tracking-wide mb-2">5대 리그 1부</p>
-          <div className="flex gap-2.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {tier1.map((p) => <PlayerCard key={p.id} p={p} />)}
-          </div>
+      {/* 컬럼 헤더 */}
+      <div className="flex items-center gap-3 px-3 py-1.5 bg-turf/50 border-b border-turf-line/20">
+        <div className="w-8 shrink-0" />
+        <p className="flex-1 text-[9px] uppercase text-floodlight/25 tracking-wide">선수</p>
+        <div className="flex items-center gap-3 shrink-0">
+          <span className="text-[9px] uppercase text-floodlight/25 w-7 text-center">골</span>
+          <span className="text-[9px] uppercase text-floodlight/25 w-7 text-center">도움</span>
+          <span className="text-[9px] uppercase text-floodlight/25 w-8 text-center">경기</span>
         </div>
-      )}
+        <span className="text-[9px] uppercase text-floodlight/25 w-12 text-right shrink-0">평점</span>
+      </div>
 
-      {/* 기타 선수 (Championship, MLS 등) */}
-      {tier2.length > 0 && (
+      {/* 선수 목록 */}
+      {loading ? (
+        <div className="space-y-px p-1">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-3 px-3 py-2.5 animate-pulse">
+              <div className="w-8 h-8 rounded-full bg-turf-line/40 shrink-0" />
+              <div className="flex-1 space-y-1.5">
+                <div className="h-3 bg-turf-line/40 rounded w-20" />
+                <div className="h-2 bg-turf-line/30 rounded w-14" />
+              </div>
+              <div className="h-4 bg-turf-line/30 rounded w-20" />
+            </div>
+          ))}
+        </div>
+      ) : displayed.length === 0 ? (
+        <p className="text-floodlight/30 text-sm p-4 text-center">데이터 없음</p>
+      ) : (
         <div>
-          <p className="text-[10px] text-floodlight/30 uppercase tracking-wide mb-2">주목 선수</p>
-          <div className="flex gap-2.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {tier2.map((p) => <PlayerCard key={p.id} p={p} />)}
-          </div>
+          {/* 5대리그 그룹 */}
+          {(activeTab === "all" || activeTab === "big5") && big5.length > 0 && (
+            <>
+              {activeTab === "all" && (
+                <div className="px-3 py-1.5 bg-score-amber/5 border-b border-turf-line/20">
+                  <span className="text-[9px] uppercase text-score-amber/70 font-semibold tracking-widest">
+                    5대 리그 1부
+                  </span>
+                </div>
+              )}
+              {big5.map((p) => <PlayerRow key={p.id} p={p} />)}
+            </>
+          )}
+
+          {/* 주목 선수 그룹 */}
+          {(activeTab === "all" || activeTab === "etc") && etc.length > 0 && (
+            <>
+              {activeTab === "all" && (
+                <div className="px-3 py-1.5 bg-turf-line/10 border-y border-turf-line/20">
+                  <span className="text-[9px] uppercase text-floodlight/30 font-semibold tracking-widest">
+                    주목 선수
+                  </span>
+                </div>
+              )}
+              {etc.map((p) => <PlayerRow key={p.id} p={p} />)}
+            </>
+          )}
         </div>
       )}
     </div>
