@@ -4,7 +4,7 @@ import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import AdSlot from "@/components/AdSlot";
-import { GoogleTagManager } from '@next/third-parties/google';
+import { GoogleTagManager, GoogleAnalytics } from '@next/third-parties/google';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -53,6 +53,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${oswald.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <GoogleTagManager gtmId="GTM-MXDTC98T" />
+      <GoogleAnalytics gaId="G-1PL7KFH8KD" />
       <body className="min-h-full flex flex-col bg-pitch-night">
         <Header />
         {/* 전 페이지 공통 상단 배너 광고 자리 */}
