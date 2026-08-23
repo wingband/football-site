@@ -2,6 +2,7 @@ import MatchesExplorer from "@/components/MatchesExplorer"
 import DateTabs from "@/components/DateTabs"
 import TransferWidget from "@/components/TransferWidget"
 import LiveCommentsWidget from "@/components/LiveCommentsWidget"
+import GlobalChatWidget from "@/components/GlobalChatWidget"
 import { getTodayStr } from "@/lib/dateUtils"
 import { MOCK_FIXTURES } from "@/lib/mockData"
 import AdSlot from "@/components/AdSlot"
@@ -137,6 +138,7 @@ export default async function MatchesPage({
             </div>
             <aside className="w-72 shrink-0 hidden lg:block sticky top-20 space-y-6">
               <TransferWidget />
+              <GlobalChatWidget />
               <LiveCommentsWidget />
               {/* 사이드바 광고 자리 */}
               <AdSlot label="사이드바 광고 (예: 300x250)" className="w-full h-64" />
