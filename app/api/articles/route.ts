@@ -3,22 +3,28 @@ import { getAllArticles } from "@/lib/articles"
 
 export const dynamic = "force-dynamic"
 
-// matchId로 팀 로고를 가져오는 함수 (캐시 활용)
+// matchId → 팀 로고 메모리 캐시 (서버 재시작 전까지 유지)
+const logoCache = new Map<number, { homeLogo: string | null; awayLogo: string | null }>()
+
 async function fetchTeamLogos(matchId: number): Promise<{ homeLogo: string | null; awayLogo: string | null }> {
+  if (logoCache.has(matchId)) return logoCache.get(matchId)!
+
   try {
     const res = await fetch(
       `https://v3.football.api-sports.io/fixtures?id=${matchId}`,
       {
         headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-        next: { revalidate: 86400 }, // 24시간 캐시
+        next: { revalidate: 86400 },
       }
     )
     const data = await res.json()
     const fixture = data.response?.[0]
-    return {
+    const result = {
       homeLogo: fixture?.teams?.home?.logo ?? null,
       awayLogo: fixture?.teams?.away?.logo ?? null,
     }
+    logoCache.set(matchId, result)
+    return result
   } catch {
     return { homeLogo: null, awayLogo: null }
   }
@@ -28,16 +34,15 @@ export async function GET() {
   try {
     const articles = await getAllArticles()
 
-    // 팀 로고를 병렬로 가져오기 (최대 10개만, API rate limit 고려)
+    // 한 번에 최대 8개만 로고 가져오기 (rate limit 방지)
+    // 나머지는 이니셜로 표시
     const withLogos = await Promise.all(
-      articles.slice(0, 30).map(async (a) => {
-        const { homeLogo, awayLogo } = await fetchTeamLogos(a.matchId)
-        return { ...a, homeLogo, awayLogo }
+      articles.slice(0, 8).map(async (a) => {
+        const logos = await fetchTeamLogos(a.matchId)
+        return { ...a, ...logos }
       })
     )
-
-    // 나머지는 로고 없이
-    const rest = articles.slice(30).map((a) => ({ ...a, homeLogo: null, awayLogo: null }))
+    const rest = articles.slice(8).map((a) => ({ ...a, homeLogo: null, awayLogo: null }))
 
     return NextResponse.json({ articles: [...withLogos, ...rest] })
   } catch {

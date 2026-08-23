@@ -78,7 +78,13 @@ export default function StoriesPage() {
   useEffect(() => {
     fetch("/api/articles")
       .then((r) => r.json())
-      .then((data) => setArticles(data.articles ?? []))
+      .then((data) => {
+        const list: ArticleWithLogos[] = data.articles ?? []
+        setArticles(list)
+        // PL 기사가 있으면 기본 탭을 PL로
+        const hasPL = list.some((a) => a.leagueName.includes("Premier League"))
+        if (hasPL) setActiveTab("Premier League")
+      })
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
@@ -184,7 +190,7 @@ export default function StoriesPage() {
               return (
                 <Link
                   key={a.slug}
-                  href={`/matches/${a.matchId}`}
+                  href={`/stories/${a.slug}`}
                   className="block bg-turf/40 border border-turf-line/40 p-4 hover:bg-turf-line/20 hover:border-score-amber/40 transition-colors group"
                 >
                   {/* 리그 정보 */}
