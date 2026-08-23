@@ -11,12 +11,22 @@ function getClubStat(statistics: { league: { name: string }; games: { appearence
 async function fetchStat(playerId: number, season: number) {
   const res = await fetch(
     `https://v3.football.api-sports.io/players?id=${playerId}&season=${season}`,
-    {
-      headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      next: { revalidate: 1800 }, // 30분 캐시
-    }
+    { headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! }, next: { revalidate: 1800 } }
   )
   return res.json()
+}
+
+async function fetchLastMatch(playerId: number): Promise<string | null> {
+  try {
+    const res = await fetch(
+      `https://v3.football.api-sports.io/fixtures?player=${playerId}&last=1`,
+      { headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! }, next: { revalidate: 3600 } }
+    )
+    const data = await res.json()
+    return data.response?.[0]?.fixture?.date ?? null
+  } catch {
+    return null
+  }
 }
 
 export async function GET() {
@@ -26,7 +36,6 @@ export async function GET() {
     KOREAN_PLAYERS_ABROAD.map(async (player) => {
       try {
         let data = await fetchStat(player.id, season)
-        // 이번 시즌 데이터 없으면 전 시즌 시도
         if (!data.response?.[0]) {
           data = await fetchStat(player.id, season - 1)
         }
@@ -38,10 +47,12 @@ export async function GET() {
           await saveCachedPlayerStat(player.id, raw)
           stat = getClubStat(raw.statistics ?? [])
         } else {
-          // DB 캐시 fallback
           const cached = await getCachedPlayerStat(player.id)
           if (cached) stat = getClubStat(cached.statistics ?? [])
         }
+
+        // 최근 경기 날짜 (정렬용)
+        const lastMatchDate = await fetchLastMatch(player.id)
 
         return {
           id: player.id,
@@ -56,6 +67,7 @@ export async function GET() {
           apps: stat?.games.appearences ?? 0,
           minutes: stat?.games.minutes ?? 0,
           rating: stat?.games.rating ?? null,
+          lastMatchDate,
         }
       } catch {
         return {
@@ -71,12 +83,21 @@ export async function GET() {
           apps: 0,
           minutes: 0,
           rating: null,
+          lastMatchDate: null,
         }
       }
     })
   )
 
-  return NextResponse.json({ players }, {
+  // tier 내에서 최근 경기 날짜 순 정렬 (최신이 위)
+  const sorted = [...players].sort((a, b) => {
+    if (a.tier !== b.tier) return a.tier - b.tier
+    const dateA = a.lastMatchDate ? new Date(a.lastMatchDate).getTime() : 0
+    const dateB = b.lastMatchDate ? new Date(b.lastMatchDate).getTime() : 0
+    return dateB - dateA
+  })
+
+  return NextResponse.json({ players: sorted }, {
     headers: { "Cache-Control": "s-maxage=1800, stale-while-revalidate=3600" },
   })
 }
