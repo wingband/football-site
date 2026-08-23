@@ -18,6 +18,7 @@ import MatchVote from "@/components/MatchVote"
 import MatchComments from "@/components/MatchComments"
 import H2HPanel from "@/components/H2HPanel"
 import MatchSidebar from "@/components/MatchSidebar"
+import RelatedMatches from "@/components/RelatedMatches"
 import AdSlot from "@/components/AdSlot"
 import { getSeasonYear } from "@/lib/season"
 import { buildMatchSlug, matchHref, parseFixtureId } from "@/lib/slug"
@@ -468,6 +469,7 @@ export default async function MatchDetailPage({
   // AI가 없는 사실을 지어낼 수 있어서(할루시네이션) 반드시 이 조건이 필요함
   const story = isFinished
     ? await generateMatchStory({
+        matchId: fixtureId,
         homeTeam: match.teams.home.name,
         awayTeam: match.teams.away.name,
         homeScore: match.goals.home,
@@ -825,6 +827,17 @@ export default async function MatchDetailPage({
           />
         </MatchSidebar>
       </aside>
+      </div>
+
+      {/* 같은 라운드 다른 경기 — 읽고 이탈하지 않도록 다음 볼 경기를 제시 */}
+      <div className="max-w-2xl mx-auto lg:max-w-6xl px-4 pb-12">
+        <RelatedMatches
+          fixtures={roundFixtures}
+          currentFixtureId={match.fixture.id}
+          leagueName={match.league.name}
+          leagueLogo={match.league.logo}
+          round={match.league.round}
+        />
       </div>
     </main>
   )

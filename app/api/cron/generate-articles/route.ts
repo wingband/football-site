@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { generateMatchArticle } from "@/lib/generateArticle"
-import { saveArticle, slugify } from "@/lib/articles"
+import { saveArticle, slugify, getArticleByMatchId } from "@/lib/articles"
 import { MOCK_FIXTURES } from "@/lib/mockData"
 
 // API 호출/AI 비용을 아끼기 위해, 기사를 만들 대상은 이 리그들의 "종료된 경기"로만 제한
@@ -71,7 +71,17 @@ export async function GET(req: NextRequest) {
 
   const created: string[] = []
 
+  const skipped: string[] = []
+
   for (const match of targets) {
+    // 이미 기사가 있으면 GPT를 부르지 않고 넘어간다.
+    // 스탯/이벤트 조회(API-Football)도 같이 절약된다
+    const existing = await getArticleByMatchId(match.fixture.id)
+    if (existing) {
+      skipped.push(existing.slug)
+      continue
+    }
+
     let statsSummary = "통계 데이터 없음"
     let eventsSummary = "이벤트 데이터 없음"
 
@@ -125,5 +135,11 @@ export async function GET(req: NextRequest) {
     created.push(slug)
   }
 
-  return NextResponse.json({ ok: true, createdCount: created.length, slugs: created })
+  // skipped: 이미 기사가 있어서 GPT를 부르지 않고 넘어간 경기
+  return NextResponse.json({
+    ok: true,
+    createdCount: created.length,
+    slugs: created,
+    skippedCount: skipped.length,
+  })
 }
