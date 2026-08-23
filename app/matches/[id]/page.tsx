@@ -9,6 +9,7 @@ import StandingsTable from "@/components/StandingsTable"
 import MatchReviewCard from "@/components/MatchReviewCard"
 import KeyStatsPanel from "@/components/KeyStatsPanel"
 import MatchStatsPanel from "@/components/MatchStatsPanel"
+import XGPanel from "@/components/XGPanel"
 import MatchEventsTimeline from "@/components/MatchEventsTimeline"
 import TeamRecentForm from "@/components/TeamRecentForm"
 import NextMatchCard from "@/components/NextMatchCard"
@@ -474,6 +475,16 @@ export default async function MatchDetailPage({
         </Section>
       )}
 
+      {/* xG 패널 (팩트 탭) */}
+      <XGPanel
+        homeTeam={match.teams.home.name}
+        awayTeam={match.teams.away.name}
+        date={match.fixture.date}
+        leagueId={match.league.id}
+        homeGoals={match.goals.home}
+        awayGoals={match.goals.away}
+      />
+
       <Section title="이벤트">
         <MatchEventsTimeline
           events={events}
@@ -576,11 +587,33 @@ export default async function MatchDetailPage({
 
   const statsContent =
     stats.length === 2 ? (
-      <Section title="통계">
-        <MatchStatsPanel stats={stats} />
-      </Section>
+      <>
+        {/* xG 패널: Sofascore / Understat에서 가져옴 */}
+        <XGPanel
+          homeTeam={match.teams.home.name}
+          awayTeam={match.teams.away.name}
+          date={match.fixture.date}
+          leagueId={match.league.id}
+          homeGoals={match.goals.home}
+          awayGoals={match.goals.away}
+        />
+        <Section title="통계">
+          <MatchStatsPanel stats={stats} />
+        </Section>
+      </>
     ) : (
-      <p className="text-floodlight/40 text-sm py-6 text-center">통계 정보가 없습니다.</p>
+      <>
+        {/* 통계 없어도 xG는 시도 */}
+        <XGPanel
+          homeTeam={match.teams.home.name}
+          awayTeam={match.teams.away.name}
+          date={match.fixture.date}
+          leagueId={match.league.id}
+          homeGoals={match.goals.home}
+          awayGoals={match.goals.away}
+        />
+        <p className="text-floodlight/40 text-sm py-6 text-center">통계 정보가 없습니다.</p>
+      </>
     )
 
   const h2hContent =
