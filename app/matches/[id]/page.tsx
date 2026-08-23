@@ -542,17 +542,6 @@ export default async function MatchDetailPage({
         <MatchNewsCard articles={newsArticles} />
       </Section>
 
-      {isFinished && (
-        <MatchVote matchId={parseInt(id)} />
-      )}
-
-      {/* 경기 댓글 — 종료 여부 관계없이 항상 표시 */}
-      <MatchComments
-        matchId={parseInt(id)}
-        homeTeam={match.teams.home.name}
-        awayTeam={match.teams.away.name}
-      />
-
       {/* 팩트 탭에도 라인업 미리보기 (FotMob 스타일) */}
       {lineups.length === 2 && (
         <Section title="라인업">
@@ -787,6 +776,21 @@ export default async function MatchDetailPage({
               : null
           }
         />
+
+        {isFinished && (
+          <div className="mt-4">
+            <MatchVote matchId={parseInt(id)} />
+          </div>
+        )}
+
+        {/* 경기 댓글 — 종료 여부 관계없이 항상 표시 */}
+        <div className="mt-4">
+          <MatchComments
+            matchId={parseInt(id)}
+            homeTeam={match.teams.home.name}
+            awayTeam={match.teams.away.name}
+          />
+        </div>
       </aside>
       </div>
     </main>

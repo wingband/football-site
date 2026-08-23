@@ -37,23 +37,6 @@ type OddsData = {
 
 const FINISHED_CODES = ["FT", "AET", "PEN"]
 
-function HighlightCard({ homeTeam, awayTeam }: { homeTeam: string; awayTeam: string }) {
-  const query = encodeURIComponent(`${homeTeam} vs ${awayTeam} highlights`)
-  return (
-    <div className="bg-turf/40 border border-turf-line/40 rounded-md p-4">
-      <p className="text-sm font-medium mb-1">공식 하이라이트</p>
-      <a
-        href={`https://www.youtube.com/results?search_query=${query}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-xs text-floodlight/40 hover:text-score-amber"
-      >
-        www.youtube.com에서 하이라이트 검색 →
-      </a>
-    </div>
-  )
-}
-
 function VenueCard({ venue }: { venue: VenueInfo }) {
   if (!venue) return null
   return (
@@ -346,7 +329,6 @@ export default function MatchSidebar({
 }) {
   return (
     <div className="space-y-4">
-      <HighlightCard homeTeam={homeTeamName} awayTeam={awayTeamName} />
       <OddsCard
         homeTeamName={homeTeamName}
         awayTeamName={awayTeamName}
