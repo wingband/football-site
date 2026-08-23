@@ -269,7 +269,7 @@ export default function MatchesExplorer({ fixtures, userCountry }: { fixtures: F
   }, [fixtures])
 
   const filtered = useMemo(() => {
-    let result = selectedLeague === "전체" ? fixtures : fixtures.filter((f) => f.league.name === selectedLeague)
+    let result = selectedLeague === "전체" ? fixtures : fixtures.filter((f) => String(f.league.id) === selectedLeague)
 
     if (liveOnly) {
       result = result.filter((f) => getMatchPhase(f.fixture.status.short) === "live")
@@ -297,7 +297,7 @@ export default function MatchesExplorer({ fixtures, userCountry }: { fixtures: F
   const leagueGroups = useMemo(() => {
     const map = new Map<string, { league: Fixture["league"]; matches: Fixture[] }>()
     for (const f of filtered) {
-      const key = f.league.name
+      const key = String(f.league.id)  // 이름 대신 ID로 그룹핑 — "Premier League"가 여러 나라에 있어서 이름으로 하면 합쳐짐
       if (!map.has(key)) map.set(key, { league: f.league, matches: [] })
       map.get(key)!.matches.push(f)
     }
@@ -460,9 +460,9 @@ export default function MatchesExplorer({ fixtures, userCountry }: { fixtures: F
             .map((l) => (
               <button
                 key={l.displayName}
-                onClick={() => setSelectedLeague((prev) => (prev === l.apiName ? "전체" : l.apiName))}
+                onClick={() => setSelectedLeague((prev) => (prev === String(l.id) ? "전체" : String(l.id)))}
                 className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                  selectedLeague === l.apiName
+                  selectedLeague === String(l.id)
                     ? "bg-score-amber text-pitch-night"
                     : "bg-turf/40 border border-turf-line text-floodlight/60"
                 }`}
