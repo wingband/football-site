@@ -37,11 +37,16 @@ export default function GlobalChatWidget() {
     fetch("/api/global-chat")
       .then(r => r.json())
       .then(data => {
-        if (!Array.isArray(data)) return
+        if (!Array.isArray(data)) {
+          // 에러 응답({error, code})이면 목록을 비워두지 말고 원인을 보여준다
+          console.error("[global-chat] 목록 로드 실패", data)
+          setError(data?.error ?? "채팅을 불러오지 못했습니다")
+          return
+        }
         setMessages(data)
         setTimeout(() => bottomRef.current?.scrollIntoView(), 100)
       })
-      .catch(() => {})
+      .catch(err => console.error("[global-chat] 목록 요청 실패", err))
 
     const channel = supabase
       .channel("global-chat")
@@ -78,12 +83,28 @@ export default function GlobalChatWidget() {
         // user_id / nickname은 서버가 세션에서 직접 채운다
         body: JSON.stringify({ content: trimmed }),
       })
-      const data = await res.json()
-      if (!res.ok) { setError(data.error ?? "오류 발생"); return }
+
+      // 응답이 JSON이 아닐 수 있다 (미들웨어 리다이렉트, Vercel 에러 페이지 등).
+      // res.json()을 바로 호출하면 그 파싱 에러가 catch로 떨어져서
+      // 진짜 원인이 "네트워크 오류"로 덮여버림 → text로 먼저 받고 직접 파싱
+      const raw = await res.text()
+      let data: { error?: string; code?: string } = {}
+      try {
+        data = raw ? JSON.parse(raw) : {}
+      } catch {
+        console.error("[global-chat] JSON 아닌 응답", res.status, raw.slice(0, 300))
+      }
+
+      if (!res.ok) {
+        console.error("[global-chat] 전송 실패", res.status, data.code ?? "", raw.slice(0, 300))
+        setError(data.error ?? `전송 실패 (HTTP ${res.status})`)
+        return
+      }
 
       // 목록 추가는 Realtime이 처리
       setContent("")
-    } catch {
+    } catch (err) {
+      console.error("[global-chat] 요청 자체 실패", err)
       setError("네트워크 오류")
     } finally {
       setLoading(false)
@@ -102,7 +123,8 @@ export default function GlobalChatWidget() {
       </div>
 
       {/* 메시지 목록 */}
-      <div className="max-h-72 overflow-y-auto divide-y divide-turf-line/20 bg-turf/20">
+      {/* 높이 2배 (18rem → 36rem) */}
+      <div className="max-h-[36rem] overflow-y-auto divide-y divide-turf-line/20 bg-turf/20">
         {messages.length === 0 ? (
           <div className="py-8 text-center text-floodlight/30 text-sm">
             첫 번째 메시지를 남겨보세요!
@@ -128,9 +150,10 @@ export default function GlobalChatWidget() {
 
       {/* 입력창 */}
       <div className="px-4 py-3 bg-turf/40 border-t border-turf-line/40">
+        {/* 로그인 여부와 무관하게 에러는 항상 보여준다 (목록 로드 실패 포함) */}
+        {error && <p className="text-xs text-red-400 mb-2 break-words">{error}</p>}
         {isSignedIn ? (
           <div className="space-y-2">
-            {error && <p className="text-xs text-red-400">{error}</p>}
             <div className="flex gap-2 items-center">
               <input
                 type="text"
