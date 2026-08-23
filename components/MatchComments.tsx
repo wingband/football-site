@@ -36,7 +36,7 @@ export default function MatchComments({
   const [content, setContent] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-  const bottomRef = useRef<HTMLDivElement>(null)
+  const listRef = useRef<HTMLDivElement>(null)
 
   // 댓글 로드 + 30초 폴링
   useEffect(() => {
@@ -55,7 +55,12 @@ export default function MatchComments({
         filter: `match_id=eq.${matchId}`
       }, (payload) => {
         setComments(prev => [...prev, payload.new as Comment])
-        setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100)
+        // 목록 컨테이너만 스크롤. scrollIntoView는 문서까지 끌고 내려가서
+        // 새 댓글이 올 때마다 페이지가 튀었다
+        setTimeout(() => {
+          const el = listRef.current
+          if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" })
+        }, 100)
       })
       .subscribe()
   
@@ -106,7 +111,7 @@ export default function MatchComments({
       </div>
 
       {/* 댓글 목록 */}
-      <div className="max-h-72 overflow-y-auto divide-y divide-turf-line/20 bg-turf/20">
+      <div ref={listRef} className="max-h-72 overflow-y-auto divide-y divide-turf-line/20 bg-turf/20">
         {comments.length === 0 ? (
           <div className="py-8 text-center text-floodlight/30 text-sm">
             첫 번째 반응을 남겨보세요!
@@ -127,7 +132,6 @@ export default function MatchComments({
             </div>
           ))
         )}
-        <div ref={bottomRef} />
       </div>
 
       {/* 입력창 */}

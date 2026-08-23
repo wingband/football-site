@@ -24,13 +24,21 @@ function timeAgo(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("ko-KR", { month: "numeric", day: "numeric" })
 }
 
+// 채팅 목록 컨테이너만 맨 아래로 내린다.
+// scrollIntoView()는 상위 스크롤 컨테이너(=문서)까지 함께 움직여서,
+// 사이드바에 있는 이 위젯 때문에 페이지가 중간부터 시작하는 문제가 있었다
+function scrollListToBottom(el: HTMLDivElement | null, smooth = false) {
+  if (!el) return
+  el.scrollTo({ top: el.scrollHeight, behavior: smooth ? "smooth" : "auto" })
+}
+
 export default function GlobalChatWidget() {
   const { isSignedIn, user } = useUser()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [content, setContent] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-  const bottomRef = useRef<HTMLDivElement>(null)
+  const listRef = useRef<HTMLDivElement>(null)
 
   // 최근 50개 로드 + Realtime 구독
   useEffect(() => {
@@ -44,7 +52,7 @@ export default function GlobalChatWidget() {
           return
         }
         setMessages(data)
-        setTimeout(() => bottomRef.current?.scrollIntoView(), 100)
+        setTimeout(() => scrollListToBottom(listRef.current), 100)
       })
       .catch(err => console.error("[global-chat] 목록 요청 실패", err))
 
@@ -60,7 +68,7 @@ export default function GlobalChatWidget() {
           // Realtime 이벤트가 중복으로 올 수 있어서 id로 한 번 걸러줌
           prev.some(m => m.id === incoming.id) ? prev : [...prev, incoming]
         ))
-        setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100)
+        setTimeout(() => scrollListToBottom(listRef.current, true), 100)
       })
       .subscribe()
 
@@ -124,7 +132,7 @@ export default function GlobalChatWidget() {
 
       {/* 메시지 목록 */}
       {/* 메시지가 적어도 최소 높이(16rem)는 유지하고, 최대 500px까지만 늘어난다 */}
-      <div className="min-h-64 max-h-[500px] overflow-y-auto divide-y divide-turf-line/20 bg-turf/20">
+      <div ref={listRef} className="min-h-64 max-h-[500px] overflow-y-auto divide-y divide-turf-line/20 bg-turf/20">
         {messages.length === 0 ? (
           <div className="py-8 text-center text-floodlight/30 text-sm">
             첫 번째 메시지를 남겨보세요!
@@ -145,7 +153,6 @@ export default function GlobalChatWidget() {
             </div>
           ))
         )}
-        <div ref={bottomRef} />
       </div>
 
       {/* 입력창 */}
