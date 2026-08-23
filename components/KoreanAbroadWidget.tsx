@@ -92,11 +92,12 @@ function PlayerCard({ p }: { p: EnrichedPlayer }) {
           <p className="text-sm font-bold text-floodlight leading-tight truncate">{p.name}</p>
           {/* 현재 소속팀 — 하드코딩으로 항상 정확하게 표시 */}
           <div className="flex items-center gap-1 mt-0.5">
-            <img src={p.teamLogo} alt="" className="w-3.5 h-3.5 shrink-0" onError={(e) => (e.currentTarget.style.display = "none")} />
+            <img src={p.teamLogo} alt="" className="w-3.5 h-3.5 shrink-0" />
+
             <span className="text-[11px] font-semibold text-score-amber truncate">{p.teamName}</span>
           </div>
           <div className="flex items-center gap-1 mt-0.5">
-            <img src={p.leagueLogo} alt="" className="w-3 h-3 shrink-0 brightness-125" onError={(e) => (e.currentTarget.style.display = "none")} />
+            <img src={p.leagueLogo} alt="" className="w-3 h-3 shrink-0 brightness-125" />
             <span className="text-[9px] text-floodlight/35 truncate">{p.league}</span>
           </div>
         </div>
