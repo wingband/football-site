@@ -123,8 +123,8 @@ export default function GlobalChatWidget() {
       </div>
 
       {/* 메시지 목록 */}
-      {/* 높이 2배 (18rem → 36rem) */}
-      <div className="max-h-[36rem] overflow-y-auto divide-y divide-turf-line/20 bg-turf/20">
+      {/* 메시지가 적어도 최소 높이(16rem)는 유지하고, 최대 500px까지만 늘어난다 */}
+      <div className="min-h-64 max-h-[500px] overflow-y-auto divide-y divide-turf-line/20 bg-turf/20">
         {messages.length === 0 ? (
           <div className="py-8 text-center text-floodlight/30 text-sm">
             첫 번째 메시지를 남겨보세요!
