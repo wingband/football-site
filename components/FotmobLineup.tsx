@@ -57,7 +57,10 @@ function buildEnrichment(playerStats: PlayerStat[]) {
       const stat = p.statistics[0]
       const entry: Enriched = {
         rating: stat?.games?.rating ?? null,
-        photo: p.player.photo ?? null,
+        // API가 photo를 안 줄 때 (K League 등) media.api-sports.io URL 직접 구성
+        photo: (p.player.photo && p.player.photo !== "https://media.api-sports.io/football/players/null.png")
+          ? p.player.photo
+          : (p.player.id != null ? `https://media.api-sports.io/football/players/${p.player.id}.png` : null),
         goals: stat?.goals?.total ?? 0,
       }
       if (p.player.id != null) byId.set(p.player.id, entry)
@@ -141,7 +144,7 @@ function PlayerNode({
     >
       <div className="relative">
         <PlayerAvatar
-          src={data?.photo ?? ""}
+          src={data?.photo || `https://media.api-sports.io/football/players/${lp.player.id}.png`}
           alt={lp.player.name}
           className="w-10 h-10 rounded-full object-cover bg-turf-line text-xs"
         />

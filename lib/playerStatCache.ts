@@ -8,8 +8,17 @@ export type CachedPlayerStat = {
   statistics: {
     team: { name: string; logo: string }
     league: { name: string }
-    games: { appearences: number | null; rating: string | null }
+    games: {
+      appearences: number | null
+      lineups: number | null
+      minutes: number | null
+      rating: string | null
+    }
     goals: { total: number | null; assists: number | null }
+    shots?: { total: number | null; on: number | null }
+    passes?: { total: number | null; accuracy: number | null }
+    dribbles?: { attempts: number | null; success: number | null }
+    cards?: { yellow: number | null; red: number | null }
   }[]
 }
 

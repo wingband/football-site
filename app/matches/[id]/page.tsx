@@ -455,8 +455,6 @@ export default async function MatchDetailPage({
 
   const reviewSummary = story ?? "경기 예정 — AI 리뷰는 경기 종료 후 제공됩니다."
 
-  const aboutText = `${match.teams.home.name}이(가) ${match.fixture.venue?.name ?? "미정 구장"}에서 ${match.teams.away.name}를(을) 상대합니다. 이 경기는 ${match.league.name}의 일부입니다. GoalLine에서 ${match.teams.home.name} vs ${match.teams.away.name} 실시간 스코어와 함께 라인업, 통계, 순위 등 경기 정보를 확인하실 수 있습니다.`
-
   // ── 탭별 콘텐츠 ──────────────────────────────────────────
 
   const factsContent = (
@@ -511,25 +509,10 @@ export default async function MatchDetailPage({
         <MatchNewsCard articles={newsArticles} />
       </Section>
 
-      <Section title="경기에 대하여">
-        <p className="text-sm text-floodlight/60 leading-relaxed">{aboutText}</p>
-      </Section>
-
-      {prediction && (
-        <Section title="승부 예측">
-          <div className="flex h-2 overflow-hidden">
-            <div className="bg-score-amber" style={{ width: `${prediction.percent.home}` }} />
-            <div className="bg-floodlight/25" style={{ width: `${prediction.percent.draw}` }} />
-            <div className="bg-floodlight/60" style={{ width: `${prediction.percent.away}` }} />
-          </div>
-          <div className="flex justify-between text-xs text-floodlight/50 mt-3 font-data">
-            <span>{match.teams.home.name} {prediction.percent.home}</span>
-            <span>무 {prediction.percent.draw}</span>
-            <span>{match.teams.away.name} {prediction.percent.away}</span>
-          </div>
-          {prediction.winner.comment && (
-            <p className="text-xs text-floodlight/40 mt-4">{prediction.winner.comment}</p>
-          )}
+      {/* 팩트 탭에도 라인업 미리보기 (FotMob 스타일) */}
+      {lineups.length === 2 && (
+        <Section title="라인업">
+          <FotmobLineup lineups={lineups} playerStats={playerStats} events={events} />
         </Section>
       )}
 

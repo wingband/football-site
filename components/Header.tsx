@@ -27,7 +27,7 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 bg-pitch-night/95 backdrop-blur border-b border-turf-line/60">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-8">
-        <Link href="/matches" className="font-display uppercase tracking-wide text-lg text-score-amber shrink-0">
+        <Link href="/matches" className="font-display uppercase tracking-wide text-lg text-score-amber shrink-0 hover:text-floodlight transition-colors cursor-pointer">
           GoalLine
         </Link>
 

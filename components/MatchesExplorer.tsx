@@ -159,7 +159,7 @@ function LeagueLink({
   const content = (
     <>
       {logo ? (
-        <img src={logo} alt="" className="w-4 h-4 shrink-0" />
+        <img src={logo} alt="" className="w-4 h-4 shrink-0 brightness-110" />
       ) : (
         <span className="w-4 h-4 shrink-0 rounded-full bg-turf-line" />
       )}

@@ -553,46 +553,58 @@ export const MOCK_TRANSFERS = [
 // 실제 배포 시엔 KOREAN_PLAYERS_ABROAD의 선수 ID를 API-Football의 정확한 ID로 검증해서 넣어야 함
 export const MOCK_KOREAN_ABROAD = [
   {
-    player: { id: 3001, name: "손흥민", firstname: "Heung-min", lastname: "Son", photo: "https://media.api-sports.io/football/players/186.png" },
+    player: { id: 3001, name: "손흥민", photo: "https://media.api-sports.io/football/players/186.png" },
     statistics: [
       {
-        team: { name: "Tottenham", logo: "https://media.api-sports.io/football/teams/47.png" },
-        league: { name: "Premier League" },
-        games: { appearences: 7, rating: "7.4" },
-        goals: { total: 4, assists: 2 },
+        team: { name: "LAFC", logo: "https://media.api-sports.io/football/teams/1611.png" },
+        league: { name: "Major League Soccer" },
+        games: { appearences: 19, lineups: 17, minutes: 1490, rating: "7.26" },
+        goals: { total: 4, assists: 8 },
+        shots: { total: 30, on: 15 },
+        passes: { total: null, accuracy: 84 },
+        cards: { yellow: 2, red: 0 },
       },
     ],
   },
   {
-    player: { id: 3002, name: "김민재", firstname: "Min-jae", lastname: "Kim", photo: "https://media.api-sports.io/football/players/19107.png" },
+    player: { id: 3002, name: "김민재", photo: "https://media.api-sports.io/football/players/2897.png" },
     statistics: [
       {
-        team: { name: "Bayern Munich", logo: "https://media.api-sports.io/football/teams/157.png" },
+        team: { name: "Bayern München", logo: "https://media.api-sports.io/football/teams/157.png" },
         league: { name: "Bundesliga" },
-        games: { appearences: 8, rating: "7.1" },
-        goals: { total: 1, assists: 0 },
+        games: { appearences: 10, lineups: 10, minutes: 818, rating: "7.08" },
+        goals: { total: 0, assists: 1 },
+        shots: { total: 3, on: 1 },
+        passes: { total: null, accuracy: 91 },
+        cards: { yellow: 0, red: 0 },
       },
     ],
   },
   {
-    player: { id: 3003, name: "이강인", firstname: "Kang-in", lastname: "Lee", photo: "https://media.api-sports.io/football/players/18894.png" },
+    player: { id: 3003, name: "이강인", photo: "https://media.api-sports.io/football/players/927.png" },
     statistics: [
       {
-        team: { name: "Paris Saint Germain", logo: "https://media.api-sports.io/football/teams/85.png" },
-        league: { name: "Ligue 1" },
-        games: { appearences: 6, rating: "7.6" },
-        goals: { total: 2, assists: 4 },
+        team: { name: "Atletico Madrid", logo: "https://media.api-sports.io/football/teams/530.png" },
+        league: { name: "La Liga" },
+        games: { appearences: 7, lineups: 2, minutes: 280, rating: "7.47" },
+        goals: { total: 2, assists: 5 },
+        shots: { total: 8, on: 4 },
+        passes: { total: null, accuracy: 88 },
+        cards: { yellow: 1, red: 0 },
       },
     ],
   },
   {
-    player: { id: 3004, name: "황희찬", firstname: "Hee-chan", lastname: "Hwang", photo: "https://media.api-sports.io/football/players/19187.png" },
+    player: { id: 3004, name: "황희찬", photo: "https://media.api-sports.io/football/players/24888.png" },
     statistics: [
       {
         team: { name: "Wolverhampton", logo: "https://media.api-sports.io/football/teams/39.png" },
         league: { name: "Premier League" },
-        games: { appearences: 8, rating: "6.9" },
-        goals: { total: 3, assists: 1 },
+        games: { appearences: 2, lineups: 2, minutes: 180, rating: "6.84" },
+        goals: { total: 2, assists: 0 },
+        shots: { total: 4, on: 3 },
+        passes: { total: null, accuracy: 79 },
+        cards: { yellow: 0, red: 0 },
       },
     ],
   },
