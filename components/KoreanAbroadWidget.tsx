@@ -102,11 +102,11 @@ export default function KoreanAbroadWidget() {
   const displayed = activeTab === "big5" ? big5 : activeTab === "etc" ? etc : players
 
   return (
-    <div className="bg-turf/40 border border-turf-line/50 overflow-hidden">
+    <div className="bg-turf/40 border border-score-amber overflow-hidden">
       {/* 클릭해서 열고 닫는 헤더 */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-turf-line/20 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3.5 bg-score-amber/20 hover:bg-score-amber/30 transition-colors"
       >
         <div className="flex items-center gap-2.5">
           <span className="text-lg">🇰🇷</span>
