@@ -45,24 +45,51 @@ async function getFixturesByDate(date: string): Promise<Fixture[]> {
     return MOCK_FIXTURES
   }
 
-  const res = await fetch(
-    `https://v3.football.api-sports.io/fixtures?date=${date}`,
-    {
-      headers: {
-        "x-apisports-key": process.env.API_FOOTBALL_KEY!,
-      },
+  // 오늘 + 어제 경기를 같이 가져옴
+  // 이유: PL 등 유럽 리그는 한국 기준 전날 밤 경기 → "오늘" 탭에서 안 보이는 문제 방지
+  const yesterday = new Date(date + "T00:00:00")
+  yesterday.setDate(yesterday.getDate() - 1)
+  const yesterdayStr = yesterday.toISOString().slice(0, 10)
+
+  const [todayRes, yesterdayRes] = await Promise.all([
+    fetch(`https://v3.football.api-sports.io/fixtures?date=${date}`, {
+      headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
+      next: { revalidate: 300 },
+    }),
+    fetch(`https://v3.football.api-sports.io/fixtures?date=${yesterdayStr}`, {
+      headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
       next: { revalidate: 3600 },
-    }
+    }),
+  ])
+
+  const [todayData, yesterdayData] = await Promise.all([
+    todayRes.json(),
+    yesterdayRes.json(),
+  ])
+
+  console.log(`=== 경기 목록: today=${date}, yesterday=${yesterdayStr} ===`)
+  console.log("today results:", todayData.results, "yesterday results:", yesterdayData.results)
+
+  const todayFixtures: Fixture[] = todayData.response ?? []
+  const yesterdayFixtures: Fixture[] = yesterdayData.response ?? []
+
+  // 어제 경기 중 종료된 것만 포함 (진행 중인 건 날짜 혼동 방지)
+  const FINISHED = ["FT", "AET", "PEN", "AWD", "WO"]
+  const finishedYesterday = yesterdayFixtures.filter((f) =>
+    FINISHED.includes(f.fixture.status.short)
   )
 
-  const data = await res.json()
+  // 중복 제거 후 합치기 (오늘 + 어제 종료 경기)
+  const seen = new Set<number>()
+  const merged: Fixture[] = []
+  for (const f of [...todayFixtures, ...finishedYesterday]) {
+    if (!seen.has(f.fixture.id)) {
+      seen.add(f.fixture.id)
+      merged.push(f)
+    }
+  }
 
-  // 디버깅용 — Vercel 대시보드의 Logs(또는 Observability)에서 확인
-  console.log(`=== 경기 목록 요청: date=${date} ===`)
-  console.log("errors:", data.errors)
-  console.log("results:", data.results)
-
-  return data.response ?? []
+  return merged
 }
 
 export default async function MatchesPage({
