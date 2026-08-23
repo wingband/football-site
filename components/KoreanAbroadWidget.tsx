@@ -70,6 +70,7 @@ export default async function KoreanAbroadWidget() {
         <h2 className="font-display uppercase text-sm text-score-amber tracking-wide">
           한국인 해외파 트래커
         </h2>
+        <span className="text-[10px] text-floodlight/30 ml-1">5대 리그 + 손흥민</span>
       </div>
 
       <div className="flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">

@@ -74,9 +74,17 @@ export default async function PlayerPage({
     getTrophies(id),
   ])
 
+  // 현재 소속팀으로의 이적만 배너로 표시 (이전 이적 기록이 뜨지 않도록)
+  const currentTeamName = stat?.team?.name ?? ""
   const latestTransfer = [...transfers]
     .flatMap((t) => t.transfers.map((tr) => ({ ...tr, update: t.update })))
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .find((tr) =>
+      tr.teams.in?.name &&
+      currentTeamName &&
+      tr.teams.in.name.toLowerCase().replace(/\s/g, "") ===
+        currentTeamName.toLowerCase().replace(/\s/g, "")
+    ) ?? null
 
   // 국가대표 이력(팀명이 국적과 같은 항목)과 클럽 경력을 분리
   const nationalCareer = career.filter((c) => c.teamName === player.nationality)
