@@ -68,13 +68,10 @@ export default async function PlayerPage({
 
   const { player } = data
 
-  // 클럽 스탯 우선 (국가대표 리그 제외)
+  // 클럽 스탯 우선: 국가대표/친선경기/아시안게임 등 모두 제외하고 클럽 리그만
+  const NATIONAL_KEYWORDS = ["World Cup", "AFC", "Asian", "Olympic", "Friendlies", "Qualification", "Nations"]
   const clubStats = data.statistics.filter(
-    (s) =>
-      !s.league.name.includes("World Cup") &&
-      !s.league.name.includes("AFC") &&
-      !s.league.name.includes("Asian") &&
-      !s.league.name.includes("Olympic")
+    (s) => !NATIONAL_KEYWORDS.some((kw) => s.league.name.includes(kw))
   )
   const stat = (clubStats.length > 0 ? clubStats : data.statistics).sort(
     (a, b) => (b.games.appearences ?? 0) - (a.games.appearences ?? 0)

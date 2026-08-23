@@ -111,11 +111,10 @@ export default async function KoreanAbroadWidget() {
 
       <div className="flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {players.map((p) => {
-          // 현재 소속팀 스탯 우선 (클럽 리그), 없으면 첫번째
+          // 클럽 리그 스탯만 사용 (국가대표/친선경기/아시안게임 제외)
+          const NATIONAL_KW = ["World Cup", "AFC", "Asian", "Olympic", "Friendlies", "Qualification", "Nations"]
           const clubStat = p.statistics.find(
-            (s) => !["World Cup - Qualification Asia", "FIFA World Cup", "AFC Asian Cup"].some(
-              (wc) => s.league.name.includes("World Cup") || s.league.name.includes("AFC") || s.league.name.includes("Asian")
-            )
+            (s) => !NATIONAL_KW.some((kw) => s.league.name.includes(kw))
           )
           const stat = clubStat ?? p.statistics[0]
           if (!stat) return null
