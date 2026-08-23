@@ -386,12 +386,12 @@ export default function MatchesExplorer({ fixtures, userCountry }: { fixtures: F
               <div className="space-y-1 mb-5">
                 {favoriteLeagues.map((league) => (
                   <LeagueLink
-                    key={league.name}
+                    key={league.id}
                     id={league.id}
                     logo={league.logo}
                     label={league.name}
-                    isFavoriteLeague
-                    onToggleFavorite={() => toggleFavorite(league.name)}
+                    isFavoriteLeague={isFavorite(league.id)}
+                    onToggleFavorite={() => toggleFavorite(league.id)}
                   />
                 ))}
               </div>
@@ -403,14 +403,14 @@ export default function MatchesExplorer({ fixtures, userCountry }: { fixtures: F
           </p>
           <div className="space-y-1 mb-5">
             {featured
-              .filter((league) => !isFavorite(league.id))  // 즐겨찾기된 건 위에만 표시, 중복 방지
+              .filter((league) => !isFavorite(league.id))
               .map((league) => (
               <LeagueLink
                 key={league.displayName}
                 id={league.id}
                 logo={league.logo}
                 label={league.displayName}
-                isFavoriteLeague={false}
+                isFavoriteLeague={isFavorite(league.id)}
                 onToggleFavorite={() => toggleFavorite(league.id)}
                 noMatchToday={!league.available}
               />
