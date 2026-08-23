@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useUser, SignInButton } from "@clerk/nextjs"
+import { supabase } from '@/lib/supabase'
 
 type Comment = {
   id: number
@@ -39,15 +40,26 @@ export default function MatchComments({
 
   // 댓글 로드 + 30초 폴링
   useEffect(() => {
-    const load = () => {
-      fetch(`/api/comments?matchId=${matchId}`)
-        .then(r => r.json())
-        .then(d => setComments(d.comments ?? []))
-        .catch(() => {})
-    }
-    load()
-    const interval = setInterval(load, 30000)
-    return () => clearInterval(interval)
+    // 초기 데이터 로드
+    fetch(`/api/comments?matchId=${matchId}`)
+      .then(r => r.json())
+      .then(setComments)
+  
+    // Realtime 구독
+    const channel = supabase
+      .channel(`comments-${matchId}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'match_comments',
+        filter: `match_id=eq.${matchId}`
+      }, (payload) => {
+        setComments(prev => [...prev, payload.new as Comment])
+        setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100)
+      })
+      .subscribe()
+  
+    return () => { supabase.removeChannel(channel) }
   }, [matchId])
 
   async function handleSubmit() {
@@ -64,14 +76,20 @@ export default function MatchComments({
       const res = await fetch("/api/comments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ matchId, nickname, content: content.trim(), homeTeam, awayTeam }),
+        body: JSON.stringify({ 
+          matchId, 
+          userId: user.id,  // ✅ 추가
+          nickname, 
+          content: content.trim(), 
+          homeTeam, 
+          awayTeam 
+        }),
       })
       const data = await res.json()
       if (!res.ok) { setError(data.error ?? "오류 발생"); return }
-
-      setComments(prev => [...prev, data.comment])
+    
+      // ✅ setComments 제거 — Realtime이 자동으로 추가해줌
       setContent("")
-      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100)
     } catch {
       setError("네트워크 오류")
     } finally {
