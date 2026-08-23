@@ -34,6 +34,6 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
     )
   }
 
-  // 경기 상세 페이지로 바로 이동 — 팩트 탭에 Match Review가 표시됨
-  redirect(`/matches/${article.matchId}`)
+  // 경기 상세 페이지로 이동 — from=review 파라미터로 "뒤로" 버튼을 "리뷰"로 표시
+  redirect(`/matches/${article.matchId}?from=review`)
 }

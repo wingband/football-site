@@ -358,10 +358,14 @@ export async function generateMetadata({
 
 export default async function MatchDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ from?: string }>
 }) {
   const { id } = await params
+  const sp = await searchParams
+  const fromReview = sp.from === "review"
   const matchArr: FixtureDetail[] = await apiFetch(`/fixtures?id=${id}`)
   const match = matchArr?.[0] ?? null
 
@@ -664,9 +668,9 @@ export default async function MatchDetailPage({
       <div className="max-w-2xl mx-auto lg:mx-0 lg:max-w-none">
         {/* 상단 바: 뒤로가기 / 리그명+라운드 / 팔로우 */}
         <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-turf-line/60">
-          <Link href="/matches" className="flex items-center gap-1.5 text-floodlight/70 hover:text-floodlight shrink-0">
+          <Link href={fromReview ? "/stories" : "/matches"} className="flex items-center gap-1.5 text-floodlight/70 hover:text-floodlight shrink-0">
             <span className="text-lg leading-none">‹</span>
-            <span className="text-sm">경기</span>
+            <span className="text-sm">{fromReview ? "리뷰" : "경기"}</span>
           </Link>
           <div className="flex items-center gap-2 text-sm text-floodlight/80 min-w-0">
             <img src={match.league.logo} alt="" className="w-4 h-4 shrink-0" />
