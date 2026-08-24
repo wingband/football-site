@@ -1,34 +1,27 @@
+import { Suspense } from "react"
 import Link from "next/link"
 import { permanentRedirect } from "next/navigation"
-import { generateMatchStory } from "@/lib/generateStory"
+import { apiFetch } from "@/lib/matchApi"
 import PlayerAvatar from "@/components/PlayerAvatar"
 import FotmobLineup from "@/components/FotmobLineup"
 import Section from "@/components/Section"
 import FollowButton from "@/components/FollowButton"
 import MatchTabs from "@/components/MatchTabs"
-import StandingsTable from "@/components/StandingsTable"
-import MatchReviewCard from "@/components/MatchReviewCard"
 import KeyStatsPanel from "@/components/KeyStatsPanel"
 import MatchStatsPanel from "@/components/MatchStatsPanel"
 import MatchEventsTimeline from "@/components/MatchEventsTimeline"
-import TeamRecentForm from "@/components/TeamRecentForm"
-import NextMatchCard from "@/components/NextMatchCard"
-import MatchNewsCard from "@/components/MatchNewsCard"
-import MatchVote from "@/components/MatchVote"
-import MatchComments from "@/components/MatchComments"
-import H2HPanel from "@/components/H2HPanel"
-import MatchSidebar from "@/components/MatchSidebar"
-import RelatedMatches from "@/components/RelatedMatches"
+import MatchReviewCard from "@/components/MatchReviewCard"
 import AdSlot from "@/components/AdSlot"
+import RelatedMatches from "@/components/RelatedMatches"
+import StorySection from "./_components/StorySection"
+import NewsSection from "./_components/NewsSection"
+import RecentFormSection from "./_components/RecentFormSection"
+import StandingsSection from "./_components/StandingsSection"
+import H2HSection from "./_components/H2HSection"
+import SidebarDeferredSection from "./_components/SidebarDeferredSection"
 import { getSeasonYear } from "@/lib/season"
 import { buildMatchSlug, matchHref, parseFixtureId } from "@/lib/slug"
-import {
-  MOCK_MATCH_DETAIL,
-  MOCK_STANDINGS,
-  MOCK_TEAM_RECENT_FIXTURES,
-  MOCK_NEXT_FIXTURE,
-  MOCK_NEWS,
-} from "@/lib/mockData"
+import { MOCK_MATCH_DETAIL } from "@/lib/mockData"
 import type { Metadata } from "next"
 
 
@@ -93,233 +86,15 @@ type Lineup = {
   coach: { name: string; photo?: string }
 }
 
-type H2HMatch = {
-  fixture: { id: number; date: string }
-  teams: {
-    home: { name: string; logo?: string; winner: boolean | null }
-    away: { name: string; logo?: string; winner: boolean | null }
-  }
-  goals: { home: number | null; away: number | null }
-  league?: { name: string; logo?: string }
-}
-
-type Prediction = {
-  predictions: {
-    winner: { name: string | null; comment: string | null }
-    percent: { home: string; draw: string; away: string }
-  }
-}
-
-type StandingRow = {
-  rank: number
-  team: { id: number; name: string; logo: string }
-  points: number
-  goalsDiff: number
-  group: string
-  description?: string | null
-  all: { played: number; win: number; draw: number; lose: number }
-}
-
-type TeamFixture = {
-  fixture: { id: number; date: string; status: { short: string } }
-  teams: {
-    home: { id: number; name: string; logo: string }
-    away: { id: number; name: string; logo: string }
-  }
-  goals: { home: number | null; away: number | null }
-  league: { name: string; logo: string }
-}
-
-type NewsArticle = {
-  title: string
-  link: string
-  image_url: string | null
-  pubDate: string
-  source_name: string
-  description: string | null
-}
-
 const LIVE_CODES = ["1H", "HT", "2H", "ET", "BT", "P", "SUSP", "INT", "LIVE"]
 const FINISHED_CODES = ["FT", "AET", "PEN"]
 
-// revalidate를 넘기면 그 값으로 캐시한다. 안 넘기면 기존 기본값 유지
-// (/fixtures?id= 은 no-store, 나머지는 1시간)
-async function apiFetch(path: string, revalidate?: number) {
+// 경기 상세 페이지 전용 fixture fetch — mock 모드와 실제 모드를 분리
+async function fetchFixture(fixtureId: number): Promise<FixtureDetail[]> {
   if (process.env.USE_MOCK_DATA === "true") {
-    if (path.startsWith("/fixtures?id=")) return MOCK_MATCH_DETAIL.fixture
-    if (path.startsWith("/fixtures/statistics")) return MOCK_MATCH_DETAIL.statistics
-    if (path.startsWith("/fixtures/events")) return MOCK_MATCH_DETAIL.events
-    if (path.startsWith("/fixtures/players")) return MOCK_MATCH_DETAIL.players
-    if (path.startsWith("/fixtures/lineups")) return MOCK_MATCH_DETAIL.lineups
-    if (path.startsWith("/fixtures/headtohead")) return MOCK_MATCH_DETAIL.headtohead
-    if (path.startsWith("/predictions")) return MOCK_MATCH_DETAIL.predictions
-    if (path.startsWith("/fixtures?team=") && path.includes("next=")) return MOCK_NEXT_FIXTURE
-    if (path.startsWith("/fixtures?team=") && path.includes("last=")) return MOCK_TEAM_RECENT_FIXTURES
-    return []
+    return MOCK_MATCH_DETAIL.fixture as FixtureDetail[]
   }
-
-  const res = await fetch(`https://v3.football.api-sports.io${path}`, {
-    headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-    // fixtures?id= 는 캐시 무시 (빈 결과가 캐시됐을 경우 대비)
-    // 나머지는 호출자가 지정한 값, 없으면 1시간 캐시
-    ...(revalidate !== undefined
-      ? { next: { revalidate } }
-      : path.startsWith("/fixtures?id=")
-        ? { cache: "no-store" as const }
-        : { next: { revalidate: 3600 } }),
-  })
-  const data = await res.json()
-  return data.response
-}
-
-// 순위 탭 전용 — 리그 페이지와 별도 호출 (리그 id 기준으로 시즌 순위표를 가져옴)
-async function getStandings(leagueId: number, season: number): Promise<StandingRow[][]> {
-  if (process.env.USE_MOCK_DATA === "true") {
-    return MOCK_STANDINGS.league.standings
-  }
-
-  const res = await fetch(
-    `https://v3.football.api-sports.io/standings?league=${leagueId}&season=${season}`,
-    {
-      headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      next: { revalidate: 3600 },
-    }
-  )
-  const data = await res.json()
-  return data.response?.[0]?.league?.standings ?? []
-}
-
-// 경기 관련 뉴스 — NewsData.io에서 두 팀 이름으로 검색 (news 페이지와 별개 호출)
-async function getMatchNews(homeTeam: string, awayTeam: string): Promise<NewsArticle[]> {
-  if (process.env.USE_MOCK_DATA === "true") {
-    return MOCK_NEWS
-  }
-
-  // 두 팀 이름이 모두 정확히 들어간 기사만 (경기 자체와 무관한 일반 팀 뉴스 배제)
-  const query = encodeURIComponent(`"${homeTeam}" AND "${awayTeam}"`)
-  const res = await fetch(
-    `https://newsdata.io/api/1/news?apikey=${process.env.NEWSDATA_API_KEY}&q=${query}&language=en&category=sports`,
-    { next: { revalidate: 3600 } }
-  )
-  const data = await res.json()
-
-  if (!Array.isArray(data.results)) {
-    console.error("NewsData.io 에러 (경기 관련 뉴스):", data)
-    return []
-  }
-
-  return data.results ?? []
-}
-
-type VenueInfo = {
-  name: string
-  city: string | null
-  capacity: number | null
-  surface: string | null
-  image: string | null
-} | null
-
-// 경기장 상세 정보 (수용 능력, 표면 등)
-async function getVenueInfo(venueId: number | null | undefined, fallbackName: string, fallbackCity: string): Promise<VenueInfo> {
-  if (!venueId || process.env.USE_MOCK_DATA === "true") {
-    return { name: fallbackName, city: fallbackCity, capacity: null, surface: null, image: null }
-  }
-
-  const res = await fetch(`https://v3.football.api-sports.io/venues?id=${venueId}`, {
-    headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-    next: { revalidate: 86400 },
-  })
-  const data = await res.json()
-  const v = data.response?.[0]
-  if (!v) return { name: fallbackName, city: fallbackCity, capacity: null, surface: null, image: null }
-  return {
-    name: v.name ?? fallbackName,
-    city: v.city ?? fallbackCity,
-    capacity: v.capacity ?? null,
-    surface: v.surface ?? null,
-    image: v.image ?? null,
-  }
-}
-
-// 같은 라운드의 다른 경기들 (사이드바 위젯용)
-async function getRoundFixtures(leagueId: number, season: number, round: string): Promise<TeamFixture[]> {
-  if (process.env.USE_MOCK_DATA === "true") return MOCK_TEAM_RECENT_FIXTURES
-
-  const res = await fetch(
-    `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${season}&round=${encodeURIComponent(round)}`,
-    {
-      headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      next: { revalidate: 3600 },
-    }
-  )
-  const data = await res.json()
-  return data.response ?? []
-}
-
-// 이미 가져온 상대전적/최근 폼 데이터로 인사이트 문장 생성 (실데이터 기반, AI 아님)
-function buildInsights(
-  h2h: H2HMatch[],
-  homeName: string,
-  awayName: string,
-  homeId: number,
-  awayId: number,
-  homeRecent: TeamFixture[],
-  awayRecent: TeamFixture[],
-  currentFixtureId: number
-): { side: "home" | "away"; text: string }[] {
-  const insights: { side: "home" | "away"; text: string }[] = []
-
-  // 상대전적 요약 (홈팀 관점)
-  let hWins = 0, aWins = 0, draws = 0
-  for (const m of h2h) {
-    if (m.fixture.id === currentFixtureId) continue
-    if (m.goals.home === null || m.goals.away === null) continue
-    if (m.goals.home === m.goals.away) { draws++; continue }
-    const winner = m.goals.home > m.goals.away ? m.teams.home.name : m.teams.away.name
-    if (winner === homeName) hWins++
-    else if (winner === awayName) aWins++
-  }
-  const h2hTotal = hWins + aWins + draws
-  if (h2hTotal > 0) {
-    insights.push({
-      side: "home",
-      text: `${homeName}은(는) ${awayName}과(와)의 최근 상대전적 ${h2hTotal}경기에서 ${hWins}승 ${draws}무 ${aWins}패를 기록 중입니다.`,
-    })
-  }
-
-  // 팀별 최근 폼 (현재 경기 제외 최근 5경기)
-  const formOf = (teamId: number, fixtures: TeamFixture[]) => {
-    const rows = fixtures.filter((f) => f.fixture.id !== currentFixtureId).slice(0, 5)
-    let w = 0, d = 0, l = 0, goals = 0
-    for (const f of rows) {
-      if (f.goals.home === null || f.goals.away === null) continue
-      const isHome = f.teams.home.id === teamId
-      const own = isHome ? f.goals.home : f.goals.away
-      const opp = isHome ? f.goals.away : f.goals.home
-      goals += own
-      if (own > opp) w++
-      else if (own < opp) l++
-      else d++
-    }
-    return { n: rows.length, w, d, l, goals }
-  }
-
-  const hf = formOf(homeId, homeRecent)
-  if (hf.n > 0) {
-    insights.push({
-      side: "home",
-      text: `${homeName}은(는) 최근 ${hf.n}경기에서 ${hf.w}승 ${hf.d}무 ${hf.l}패, ${hf.goals}골을 기록했습니다.`,
-    })
-  }
-  const af = formOf(awayId, awayRecent)
-  if (af.n > 0) {
-    insights.push({
-      side: "away",
-      text: `${awayName}은(는) 최근 ${af.n}경기에서 ${af.w}승 ${af.d}무 ${af.l}패, ${af.goals}골을 기록했습니다.`,
-    })
-  }
-
-  return insights
+  return apiFetch(`/fixtures?id=${fixtureId}`) as Promise<FixtureDetail[]>
 }
 
 function getTopRatedPlayers(playerStats: PlayerStat[], count: number) {
@@ -352,7 +127,7 @@ export async function generateMetadata({
     return { title: "경기 정보를 찾을 수 없습니다" }
   }
 
-  const matchArr: FixtureDetail[] = await apiFetch(`/fixtures?id=${fixtureId}`)
+  const matchArr = await fetchFixture(fixtureId)
   const match = matchArr?.[0] ?? null
 
   if (!match) {
@@ -370,7 +145,6 @@ export async function generateMetadata({
   return {
     title,
     description,
-    // 같은 경기에 여러 slug(예전 숫자 URL 포함)로 들어와도 색인은 정규 URL 하나로 모이게
     alternates: { canonical: matchHref(match) },
     openGraph: { title, description },
   }
@@ -399,15 +173,14 @@ export default async function MatchDetailPage({
     return notFoundView
   }
 
-  const matchArr: FixtureDetail[] = await apiFetch(`/fixtures?id=${fixtureId}`)
+  const matchArr = await fetchFixture(fixtureId)
   const match = matchArr?.[0] ?? null
 
   if (!match) {
     return notFoundView
   }
 
-  // 정규 slug가 아니면(예전 숫자 URL, 팀명 변경, 잘못된 slug 등) 308로 정규 URL로 보낸다.
-  // 나머지 API 호출 전에 처리해서 리다이렉트될 요청에 쿼터를 쓰지 않도록 함
+  // slug 정규화 — 리다이렉트는 Suspense 경계 앞에서 처리해야 올바른 HTTP 상태코드가 나온다
   const canonicalSlug = buildMatchSlug(match)
   if (slug !== canonicalSlug) {
     permanentRedirect(`/matches/${canonicalSlug}${fromReview ? "?from=review" : ""}`)
@@ -418,71 +191,27 @@ export default async function MatchDetailPage({
   const isFinished = FINISHED_CODES.includes(match.fixture.status.short ?? "")
   const isLive = LIVE_CODES.includes(match.fixture.status.short ?? "")
 
-  // 라인업/통계/이벤트/선수평점은 경기 상태에 따라 바뀌는 빈도가 완전히 다르다.
-  //  - 종료: 다시 안 바뀌므로 하루 캐시
-  //  - 진행 중: 1분마다 갱신
-  //  - 시작 전: 라인업이 킥오프 1시간쯤 전에 뜨는 정도라 1시간 유지
-  //    (예정 경기를 1분 캐시로 두면 오히려 콜 수가 폭증함)
+  // 종료/진행/예정에 따라 캐시 전략 분기
   const matchDataRevalidate = isFinished ? 86400 : isLive ? 60 : 3600
 
-  const [
-    stats,
-    events,
-    playerStats,
-    lineups,
-    h2h,
-    predictions,
-    standings,
-    homeRecentFixtures,
-    awayRecentFixtures,
-    homeNextFixtureArr,
-    awayNextFixtureArr,
-    newsArticles,
-    venueInfo,
-    roundFixtures,
-  ] = await Promise.all([
+  // ── 빠른 경로: 즉시 렌더링에 필요한 4개 병렬 호출 ──────────────────
+  const [stats, events, playerStats, lineups] = await Promise.all([
     apiFetch(`/fixtures/statistics?fixture=${fixtureId}`, matchDataRevalidate) as Promise<Statistic[]>,
     apiFetch(`/fixtures/events?fixture=${fixtureId}`, matchDataRevalidate) as Promise<MatchEvent[]>,
     apiFetch(`/fixtures/players?fixture=${fixtureId}`, matchDataRevalidate) as Promise<PlayerStat[]>,
     apiFetch(`/fixtures/lineups?fixture=${fixtureId}`, matchDataRevalidate) as Promise<Lineup[]>,
-    apiFetch(`/fixtures/headtohead?h2h=${match.teams.home.id}-${match.teams.away.id}&last=20`, 86400) as Promise<H2HMatch[]>,
-    apiFetch(`/predictions?fixture=${fixtureId}`, 86400) as Promise<Prediction[]>,
-    getStandings(match.league.id, season),
-    apiFetch(`/fixtures?team=${match.teams.home.id}&last=6`, 21600) as Promise<TeamFixture[]>,
-    apiFetch(`/fixtures?team=${match.teams.away.id}&last=6`, 21600) as Promise<TeamFixture[]>,
-    apiFetch(`/fixtures?team=${match.teams.home.id}&next=1`, 21600) as Promise<TeamFixture[]>,
-    apiFetch(`/fixtures?team=${match.teams.away.id}&next=1`, 21600) as Promise<TeamFixture[]>,
-    getMatchNews(match.teams.home.name, match.teams.away.name),
-    getVenueInfo(match.fixture.venue?.id, match.fixture.venue?.name ?? "", match.fixture.venue?.city ?? ""),
-    match.league.round
-      ? getRoundFixtures(match.league.id, season, match.league.round)
-      : Promise.resolve([] as TeamFixture[]),
   ])
 
-  const statsSummary = stats.length === 2
-    ? stats[0].statistics
-        .map((s, i) => `${s.type}: ${s.value ?? 0} vs ${stats[1].statistics[i]?.value ?? 0}`)
-        .join(", ")
-    : "통계 데이터 없음"
-
-  // 경기가 끝난 경우에만 AI 리뷰를 생성. 시작 전/진행 중 경기에 결과 요약을 요청하면
-  // AI가 없는 사실을 지어낼 수 있어서(할루시네이션) 반드시 이 조건이 필요함
-  const story = isFinished
-    ? await generateMatchStory({
-        matchId: fixtureId,
-        homeTeam: match.teams.home.name,
-        awayTeam: match.teams.away.name,
-        homeScore: match.goals.home,
-        awayScore: match.goals.away,
-        leagueName: match.league.name,
-        statsSummary,
-      })
-    : null
+  // statsSummary는 fast path의 stats에서 즉시 계산해 StorySection에 prop으로 전달
+  const statsSummary =
+    stats.length === 2
+      ? stats[0].statistics
+          .map((s, i) => `${s.type}: ${s.value ?? 0} vs ${stats[1].statistics[i]?.value ?? 0}`)
+          .join(", ")
+      : "통계 데이터 없음"
 
   const topPlayers = getTopRatedPlayers(playerStats, 3)
-  const prediction = predictions?.[0]?.predictions
 
-  // ── xG: API-Football /fixtures/statistics에 이미 포함 ──
   const getStatValue = (teamStats: Statistic["statistics"], key: string) => {
     const found = teamStats.find((s) => s.type.toLowerCase() === key.toLowerCase())
     return found?.value ?? null
@@ -493,17 +222,6 @@ export default async function MatchDetailPage({
   const awayXg = getStatValue(awayStats, "expected_goals")
   const hasXg = homeXg !== null || awayXg !== null
 
-  const insights = buildInsights(
-    h2h,
-    match.teams.home.name,
-    match.teams.away.name,
-    match.teams.home.id,
-    match.teams.away.id,
-    homeRecentFixtures,
-    awayRecentFixtures,
-    match.fixture.id
-  )
-
   const dateText = new Date(match.fixture.date).toLocaleString("ko-KR", {
     month: "long",
     day: "numeric",
@@ -512,24 +230,77 @@ export default async function MatchDetailPage({
     minute: "2-digit",
   })
 
-  const reviewHeadline = isFinished
-    ? `${match.teams.home.name} ${match.goals.home}-${match.goals.away} ${match.teams.away.name}`
-    : `${match.teams.home.name} vs ${match.teams.away.name}`
+  // ── 스켈레톤 fallback UI ────────────────────────────────────────────
 
-  const reviewSummary = story ?? "경기 예정 — AI 리뷰는 경기 종료 후 제공됩니다."
+  const storySkeleton = (
+    <div className="mt-5 bg-score-amber/5 border-l-2 border-score-amber animate-pulse">
+      <div className="px-5 py-5 space-y-2.5">
+        <div className="h-3.5 bg-floodlight/10 rounded w-3/4" />
+        <div className="h-3 bg-floodlight/10 rounded w-full" />
+        <div className="h-3 bg-floodlight/10 rounded w-5/6" />
+        <div className="h-3 bg-floodlight/10 rounded w-4/5" />
+      </div>
+    </div>
+  )
 
-  // ── 탭별 콘텐츠 ──────────────────────────────────────────
+  const sectionSkeleton = (title: string) => (
+    <div className="mt-5 animate-pulse">
+      <div className="h-4 bg-floodlight/10 rounded w-24 mb-3" />
+      <div className="space-y-2">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-3 bg-floodlight/10 rounded" style={{ width: `${70 + i * 8}%` }} />
+        ))}
+      </div>
+    </div>
+  )
+
+  const standingsSkeleton = (
+    <div className="mt-5 animate-pulse space-y-2">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <div key={i} className="flex gap-2">
+          <div className="h-4 bg-floodlight/10 rounded w-6" />
+          <div className="h-4 bg-floodlight/10 rounded flex-1" />
+          <div className="h-4 bg-floodlight/10 rounded w-8" />
+        </div>
+      ))}
+    </div>
+  )
+
+  const sidebarSkeleton = (
+    <div className="space-y-4 animate-pulse">
+      <div className="bg-turf/40 border border-turf-line/40 rounded-md p-4 h-32" />
+      <div className="bg-turf/40 border border-turf-line/40 rounded-md p-4 h-48" />
+    </div>
+  )
+
+  // ── 탭별 콘텐츠 ──────────────────────────────────────────────────────
 
   const factsContent = (
     <>
-      {/* Section과 동일하게 컴포넌트가 자기 mt-5를 들고 있어서 wrapper 불필요 */}
-      <MatchReviewCard
-        headline={reviewHeadline}
-        summary={reviewSummary}
-        homeLogo={match.teams.home.logo}
-        awayLogo={match.teams.away.logo}
-        storySlug={null}
-      />
+      {/* AI 리뷰: 종료 경기만 비동기 생성, 예정/진행 중은 즉시 표시 */}
+      {isFinished ? (
+        <Suspense fallback={storySkeleton}>
+          <StorySection
+            matchId={fixtureId}
+            homeTeam={match.teams.home.name}
+            awayTeam={match.teams.away.name}
+            homeScore={match.goals.home}
+            awayScore={match.goals.away}
+            leagueName={match.league.name}
+            statsSummary={statsSummary}
+            homeLogo={match.teams.home.logo}
+            awayLogo={match.teams.away.logo}
+          />
+        </Suspense>
+      ) : (
+        <MatchReviewCard
+          headline={`${match.teams.home.name} vs ${match.teams.away.name}`}
+          summary="경기 예정 — AI 리뷰는 경기 종료 후 제공됩니다."
+          homeLogo={match.teams.home.logo}
+          awayLogo={match.teams.away.logo}
+          storySlug={null}
+        />
+      )}
 
       {stats.length === 2 && (
         <Section title="주요 통계">
@@ -537,7 +308,6 @@ export default async function MatchDetailPage({
         </Section>
       )}
 
-      {/* xG 섹션 (팩트 탭) - hasXg 기반 인라인 표시 */}
       {hasXg && (
         <Section title="기대 골 (xG)">
           <div className="flex justify-between items-center">
@@ -560,30 +330,23 @@ export default async function MatchDetailPage({
         />
       </Section>
 
-      <Section title="팀 기록">
-        <TeamRecentForm
+      {/* 팀 최근 폼 + 다음 경기 — 캐시된 API 호출이지만 첫 로드 병목 해소 */}
+      <Suspense fallback={sectionSkeleton("팀 기록")}>
+        <RecentFormSection
           homeTeamId={match.teams.home.id}
           awayTeamId={match.teams.away.id}
-          homeFixtures={homeRecentFixtures}
-          awayFixtures={awayRecentFixtures}
           currentFixtureId={match.fixture.id}
         />
-      </Section>
+      </Suspense>
 
-      <Section title="다음 경기">
-        <NextMatchCard
-          homeTeamId={match.teams.home.id}
-          awayTeamId={match.teams.away.id}
-          homeNextFixture={homeNextFixtureArr?.[0] ?? null}
-          awayNextFixture={awayNextFixtureArr?.[0] ?? null}
+      {/* 뉴스 — 외부 API, 느릴 수 있으므로 분리 */}
+      <Suspense fallback={sectionSkeleton("뉴스")}>
+        <NewsSection
+          homeTeam={match.teams.home.name}
+          awayTeam={match.teams.away.name}
         />
-      </Section>
+      </Suspense>
 
-      <Section title="뉴스">
-        <MatchNewsCard articles={newsArticles} />
-      </Section>
-
-      {/* 팩트 탭에도 라인업 미리보기 (FotMob 스타일) */}
       {lineups.length === 2 && (
         <Section title="라인업">
           <FotmobLineup lineups={lineups} playerStats={playerStats} events={events} />
@@ -639,19 +402,21 @@ export default async function MatchDetailPage({
       <p className="text-floodlight/40 text-sm py-6 text-center">라인업 정보가 없습니다.</p>
     )
 
+  // 순위 탭 — 사용자가 탭을 클릭하기 전까지 보이지 않으므로 지연 로딩 적합
   const standingsContent = (
-    <Section title="순위">
-      <StandingsTable
-        standings={standings}
-        highlightTeamIds={[match.teams.home.id, match.teams.away.id]}
+    <Suspense fallback={standingsSkeleton}>
+      <StandingsSection
+        leagueId={match.league.id}
+        season={season}
+        homeTeamId={match.teams.home.id}
+        awayTeamId={match.teams.away.id}
       />
-    </Section>
+    </Suspense>
   )
 
   const statsContent =
     stats.length === 2 ? (
       <>
-        {/* xG — API-Football 직접 파싱 */}
         {hasXg && (
           <div className="bg-turf/40 border border-turf-line/30 p-4 mb-4 space-y-3">
             <p className="text-xs text-floodlight/40 uppercase tracking-wide font-display">기대 골 (xG)</p>
@@ -677,39 +442,36 @@ export default async function MatchDetailPage({
         </Section>
       </>
     ) : (
-      <>
-        <div className="py-8 text-center space-y-2">
-          <p className="text-floodlight/40 text-sm">통계 정보가 없습니다.</p>
-          {[292, 98, 253].includes(match.league.id) && (
-            <p className="text-floodlight/25 text-xs">
-              {match.league.name}은 API-Football 통계 미지원 리그입니다.
-            </p>
-          )}
-        </div>
-      </>
+      <div className="py-8 text-center space-y-2">
+        <p className="text-floodlight/40 text-sm">통계 정보가 없습니다.</p>
+        {[292, 98, 253].includes(match.league.id) && (
+          <p className="text-floodlight/25 text-xs">
+            {match.league.name}은 API-Football 통계 미지원 리그입니다.
+          </p>
+        )}
+      </div>
     )
 
-  const h2hContent =
-    h2h.length > 0 ? (
-      <Section title="역대 전적">
-        <H2HPanel
-          matches={h2h}
-          currentFixtureId={match.fixture.id}
-          homeTeamName={match.teams.home.name}
-          awayTeamName={match.teams.away.name}
-          homeTeamLogo={match.teams.home.logo}
-          awayTeamLogo={match.teams.away.logo}
-        />
-      </Section>
-    ) : (
-      <p className="text-floodlight/40 text-sm py-6 text-center">상대전적 정보가 없습니다.</p>
-    )
+  // 역대전적 탭 — 사용자가 탭을 클릭하기 전까지 보이지 않으므로 지연 로딩 적합
+  const h2hContent = (
+    <Suspense fallback={standingsSkeleton}>
+      <H2HSection
+        homeId={match.teams.home.id}
+        awayId={match.teams.away.id}
+        currentFixtureId={match.fixture.id}
+        homeTeamName={match.teams.home.name}
+        awayTeamName={match.teams.away.name}
+        homeTeamLogo={match.teams.home.logo}
+        awayTeamLogo={match.teams.away.logo}
+      />
+    </Suspense>
+  )
 
   return (
     <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
       <div className="max-w-5xl mx-auto pb-16 lg:grid lg:grid-cols-[1fr_320px] lg:gap-6 lg:items-start lg:px-4">
       <div className="max-w-2xl mx-auto lg:mx-0 lg:max-w-none">
-        {/* 상단 바: 뒤로가기 / 리그명+라운드 / 팔로우 */}
+        {/* 상단 바 */}
         <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-turf-line/60">
           <Link href={fromReview ? "/stories" : "/matches"} className="flex items-center gap-1.5 text-floodlight/70 hover:text-floodlight shrink-0">
             <span className="text-lg leading-none">‹</span>
@@ -725,7 +487,7 @@ export default async function MatchDetailPage({
           <FollowButton />
         </div>
 
-        {/* 경기 메타 정보: 날짜 / 구장 / 심판 */}
+        {/* 경기 메타 정보 */}
         <div className="flex items-center justify-center gap-4 flex-wrap text-xs text-floodlight/40 px-4 py-3 border-b border-turf-line/40">
           <span className="flex items-center gap-1.5">📅 {dateText}</span>
           {match.fixture.venue?.name && (
@@ -736,7 +498,7 @@ export default async function MatchDetailPage({
           )}
         </div>
 
-        {/* 스코어보드 */}
+        {/* ── LCP 요소: 스코어보드 — Suspense 경계 밖에 두어 즉시 렌더링 ── */}
         <div className="relative overflow-hidden px-6 pt-8 pb-6">
           <div
             className="absolute inset-0 -z-10"
@@ -782,7 +544,6 @@ export default async function MatchDetailPage({
           <AdSlot label="경기 상세 배너 광고 (예: 728x90)" className="w-full h-16 mb-2" />
         </div>
 
-        {/* 탭: 팩트 / 티커 / 라인업 / 순위 / 통계 / 역대전적 */}
         <MatchTabs
           facts={factsContent}
           ticker={tickerContent}
@@ -793,52 +554,76 @@ export default async function MatchDetailPage({
         />
       </div>
 
-      {/* 우측 사이드바 (모바일에서는 본문 아래로) */}
+      {/* 우측 사이드바 — venue/insights/predictions 등 비필수 데이터를 지연 로딩 */}
       <aside className="max-w-2xl mx-auto lg:mx-0 lg:max-w-none px-4 lg:px-0 mt-6 lg:mt-8">
-        <MatchSidebar
-          homeTeamName={match.teams.home.name}
-          awayTeamName={match.teams.away.name}
-          homeTeamLogo={match.teams.home.logo}
-          awayTeamLogo={match.teams.away.logo}
-          venue={venueInfo}
-          leagueName={match.league.name}
-          leagueLogo={match.league.logo}
-          round={match.league.round}
-          roundFixtures={roundFixtures}
-          currentFixtureId={match.fixture.id}
-          insights={insights}
-          prediction={
-            prediction
-              ? {
-                  home: prediction.percent.home,
-                  draw: prediction.percent.draw,
-                  away: prediction.percent.away,
-                }
-              : null
-          }
-        >
-          {isFinished && <MatchVote matchId={fixtureId} />}
-
-          {/* 경기 댓글 — 종료 여부 관계없이 항상 표시 */}
-          <MatchComments
-            matchId={fixtureId}
-            homeTeam={match.teams.home.name}
-            awayTeam={match.teams.away.name}
+        <Suspense fallback={sidebarSkeleton}>
+          <SidebarDeferredSection
+            homeTeamId={match.teams.home.id}
+            awayTeamId={match.teams.away.id}
+            homeTeamName={match.teams.home.name}
+            awayTeamName={match.teams.away.name}
+            homeTeamLogo={match.teams.home.logo}
+            awayTeamLogo={match.teams.away.logo}
+            leagueId={match.league.id}
+            leagueName={match.league.name}
+            leagueLogo={match.league.logo}
+            season={season}
+            round={match.league.round}
+            fixtureId={fixtureId}
+            venueId={match.fixture.venue?.id}
+            venueName={match.fixture.venue?.name ?? ""}
+            venueCity={match.fixture.venue?.city ?? ""}
+            isFinished={isFinished}
           />
-        </MatchSidebar>
+        </Suspense>
       </aside>
       </div>
 
-      {/* 같은 라운드 다른 경기 — 읽고 이탈하지 않도록 다음 볼 경기를 제시 */}
-      <div className="max-w-2xl mx-auto lg:max-w-6xl px-4 pb-12">
-        <RelatedMatches
-          fixtures={roundFixtures}
-          currentFixtureId={match.fixture.id}
-          leagueName={match.league.name}
-          leagueLogo={match.league.logo}
-          round={match.league.round}
-        />
-      </div>
+      {/* 같은 라운드 다른 경기 — roundFixtures는 SidebarDeferredSection에서 가져오므로
+          여기선 별도 async component로 fetch (Next.js fetch 중복 제거로 실제 요청 1회) */}
+      {match.league.round && (
+        <div className="max-w-2xl mx-auto lg:max-w-6xl px-4 pb-12">
+          <Suspense fallback={null}>
+            <RoundRelatedMatches
+              leagueId={match.league.id}
+              season={season}
+              round={match.league.round}
+              currentFixtureId={match.fixture.id}
+              leagueName={match.league.name}
+              leagueLogo={match.league.logo}
+            />
+          </Suspense>
+        </div>
+      )}
     </main>
+  )
+}
+
+// 같은 라운드 경기를 스트리밍으로 채우는 인라인 async Server Component
+async function RoundRelatedMatches({
+  leagueId,
+  season,
+  round,
+  currentFixtureId,
+  leagueName,
+  leagueLogo,
+}: {
+  leagueId: number
+  season: number
+  round: string
+  currentFixtureId: number
+  leagueName: string
+  leagueLogo: string
+}) {
+  const { getRoundFixtures } = await import("@/lib/matchApi")
+  const fixtures = await getRoundFixtures(leagueId, season, round)
+  return (
+    <RelatedMatches
+      fixtures={fixtures}
+      currentFixtureId={currentFixtureId}
+      leagueName={leagueName}
+      leagueLogo={leagueLogo}
+      round={round}
+    />
   )
 }
