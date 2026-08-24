@@ -18,8 +18,10 @@ const LEAGUE_PRIORITY: Record<number, number> = {
   98: 9,   // J League
   253: 10, // MLS
 }
-// 하루에 생성할 기사 최대 개수
-const MAX_ARTICLES_PER_RUN = 10
+// 1회 실행 시 생성할 기사 최대 개수
+const MAX_ARTICLES_PER_RUN = 20
+// 최근 며칠치 경기까지 소급 생성할지
+const LOOKBACK_DAYS = 7
 
 async function apiFetch(path: string) {
   const res = await fetch(`https://v3.football.api-sports.io${path}`, {
@@ -46,16 +48,16 @@ export async function GET(req: NextRequest) {
   if (process.env.USE_MOCK_DATA === "true") {
     fixtures = MOCK_FIXTURES
   } else {
-    // 오늘 + 어제 경기 모두 가져오기 (한국 시간대상 새벽 경기 포함)
-    const yesterday = new Date(today)
-    yesterday.setDate(yesterday.getDate() - 1)
-    const yesterdayStr = yesterday.toISOString().split("T")[0]
+    // 최근 LOOKBACK_DAYS일치 경기 모두 가져오기 (삭제된 기사 소급 재생성 포함)
+    const dateList: string[] = []
+    for (let i = 0; i < LOOKBACK_DAYS; i++) {
+      const d = new Date(today)
+      d.setDate(d.getDate() - i)
+      dateList.push(d.toISOString().split("T")[0])
+    }
 
-    const [todayFixtures, yesterdayFixtures] = await Promise.all([
-      apiFetch(`/fixtures?date=${today}`),
-      apiFetch(`/fixtures?date=${yesterdayStr}`),
-    ])
-    fixtures = [...(todayFixtures ?? []), ...(yesterdayFixtures ?? [])]
+    const results = await Promise.all(dateList.map((d) => apiFetch(`/fixtures?date=${d}`)))
+    fixtures = results.flatMap((r) => r ?? [])
   }
 
   // 주요 리그 + 종료된 경기 필터 후 우선순위 정렬
