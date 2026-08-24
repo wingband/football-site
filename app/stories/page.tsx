@@ -1,7 +1,6 @@
 "use client"
 
 import Link from "next/link"
-import AdSlot from "@/components/AdSlot"
 import { useEffect, useState, useMemo } from "react"
 import type { Article } from "@/lib/articles"
 
@@ -114,8 +113,6 @@ export default function StoriesPage() {
             AI가 자동 작성하는 주요 경기 분석 · {articles.length}개
           </p>
         </div>
-
-        <AdSlot label="리뷰 페이지 배너 광고 (예: 728x90)" className="w-full h-16 mb-6" />
 
         {/* 리그 탭 필터 */}
         <div className="flex gap-2 overflow-x-auto pb-3 mb-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">

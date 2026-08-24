@@ -154,6 +154,21 @@ export async function deleteShortArticles(minLength = 500): Promise<string[]> {
   `
   return rows.map((r) => r.slug as string)
 }
+
+// 팀 로고가 없는 기사를 삭제한다 (로고 저장 기능 배포 이전에 생성된 기사들).
+// 크론 재실행 시 로고가 채워진 채로 재생성된다
+export async function deleteArticlesMissingLogos(): Promise<string[]> {
+  if (process.env.USE_MOCK_DATA === "true") return []
+
+  await ensureTable()
+  const sql = getSql()
+  const rows = await sql`
+    DELETE FROM articles
+    WHERE home_logo IS NULL OR away_logo IS NULL
+    RETURNING slug
+  `
+  return rows.map((r) => r.slug as string)
+}
 // ── 경기 프리뷰 ──────────────────────────────────────────────────────────────
 export type Preview = {
   slug: string
