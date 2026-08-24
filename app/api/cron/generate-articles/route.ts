@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { generateMatchArticle } from "@/lib/generateArticle"
-import { saveArticle, slugify, getArticleByMatchId } from "@/lib/articles"
+import { saveArticle, slugify, getArticleByMatchId, backfillArticleLogos } from "@/lib/articles"
 import { MOCK_FIXTURES } from "@/lib/mockData"
 
 // API 호출/AI 비용을 아끼기 위해, 기사를 만들 대상은 이 리그들의 "종료된 경기"로만 제한
@@ -76,6 +76,8 @@ export async function GET(req: NextRequest) {
     // 스탯/이벤트 조회(API-Football)도 같이 절약된다
     const existing = await getArticleByMatchId(match.fixture.id)
     if (existing) {
+      // 로고 저장 기능 배포 전에 만들어진 기사면 로고만 조용히 채워준다 (GPT 재호출 없음)
+      await backfillArticleLogos(match.fixture.id, match.teams.home.logo ?? null, match.teams.away.logo ?? null)
       skipped.push(existing.slug)
       continue
     }

@@ -28,7 +28,6 @@ export default function MatchReviewCard({
           <img src={homeLogo} alt="" className="w-5 h-5" />
           <img src={awayLogo} alt="" className="w-5 h-5 -ml-1.5" />
         </span>
-        <span className="text-score-amber text-xs ml-auto shrink-0">AI 작성</span>
       </div>
 
       {/* 본문 */}

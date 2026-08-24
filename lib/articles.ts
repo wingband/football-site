@@ -155,6 +155,26 @@ export async function deleteShortArticles(minLength = 500): Promise<string[]> {
   return rows.map((r) => r.slug as string)
 }
 
+// 로고 저장 기능 배포 이전에 생성된 기사는 home_logo/away_logo가 비어있다.
+// 크론이 같은 경기를 다시 만날 때(이미 기사가 있어 GPT는 다시 부르지 않는 경우)
+// 비어있는 로고만 조용히 채워준다
+export async function backfillArticleLogos(
+  matchId: number,
+  homeLogo: string | null,
+  awayLogo: string | null
+): Promise<void> {
+  if (process.env.USE_MOCK_DATA === "true") return
+  if (!homeLogo && !awayLogo) return
+
+  await ensureTable()
+  const sql = getSql()
+  await sql`
+    UPDATE articles
+    SET home_logo = COALESCE(home_logo, ${homeLogo}), away_logo = COALESCE(away_logo, ${awayLogo})
+    WHERE match_id = ${matchId} AND (home_logo IS NULL OR away_logo IS NULL)
+  `
+}
+
 // 팀 로고가 없는 기사를 삭제한다 (로고 저장 기능 배포 이전에 생성된 기사들).
 // 크론 재실행 시 로고가 채워진 채로 재생성된다
 export async function deleteArticlesMissingLogos(): Promise<string[]> {
