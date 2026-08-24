@@ -123,6 +123,25 @@ export function slugify(homeTeam: string, awayTeam: string, matchId: number): st
   const clean = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
   return `${clean(homeTeam)}-vs-${clean(awayTeam)}-${matchId}`
 }
+
+// content가 minLength 미만인 짧은 기사를 삭제하고 삭제된 slug 목록을 반환한다
+export async function deleteShortArticles(minLength = 500): Promise<string[]> {
+  if (process.env.USE_MOCK_DATA === "true") {
+    const before = mockArticleStore.length
+    const removed = mockArticleStore.filter((a) => a.content.length < minLength).map((a) => a.slug)
+    mockArticleStore.splice(0, before, ...mockArticleStore.filter((a) => a.content.length >= minLength))
+    return removed
+  }
+
+  await ensureTable()
+  const sql = getSql()
+  const rows = await sql`
+    DELETE FROM articles
+    WHERE LENGTH(content) < ${minLength}
+    RETURNING slug
+  `
+  return rows.map((r) => r.slug as string)
+}
 // ── 경기 프리뷰 ──────────────────────────────────────────────────────────────
 export type Preview = {
   slug: string
