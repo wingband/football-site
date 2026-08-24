@@ -23,6 +23,8 @@ const isPublicRoute = createRouteMatcher([
   "/api/korean-abroad(.*)",
   "/api/player-search(.*)",
   "/api/pageview(.*)",
+  "/api/cron(.*)",
+  "/api/admin(.*)",
   "/sign-in(.*)",
   "/sign-up(.*)",
 ])
