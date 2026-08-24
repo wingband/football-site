@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import Link from "next/link"
 import { matchHref } from "@/lib/slug"
 import type { Metadata } from "next"

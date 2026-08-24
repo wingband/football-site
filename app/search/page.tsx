@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import Link from "next/link"
 import AdSlot from "@/components/AdSlot"
 import { MOCK_SEARCH_RESULTS } from "@/lib/mockData"

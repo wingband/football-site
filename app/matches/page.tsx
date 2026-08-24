@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import MatchesExplorer from "@/components/MatchesExplorer"
 import DateTabs from "@/components/DateTabs"
 import TransferWidget from "@/components/TransferWidget"
