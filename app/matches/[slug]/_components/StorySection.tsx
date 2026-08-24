@@ -1,4 +1,5 @@
 import { generateMatchStory } from "@/lib/generateStory"
+import { getArticleByMatchId } from "@/lib/articles"
 import MatchReviewCard from "@/components/MatchReviewCard"
 
 export default async function StorySection({
@@ -22,20 +23,26 @@ export default async function StorySection({
   homeLogo: string
   awayLogo: string
 }) {
-  const story = await generateMatchStory({
-    matchId,
-    homeTeam,
-    awayTeam,
-    homeScore,
-    awayScore,
-    leagueName,
-    statsSummary,
-  })
+  // 크론이 이미 300~500단어 리뷰를 만들어뒀으면 그걸 그대로 쓰고,
+  // 없을 때만(대상 리그가 아니거나 아직 생성 전) 간단한 3문장 요약으로 대체한다
+  const fullArticle = await getArticleByMatchId(matchId)
+
+  const summary = fullArticle
+    ? fullArticle.content
+    : await generateMatchStory({
+        matchId,
+        homeTeam,
+        awayTeam,
+        homeScore,
+        awayScore,
+        leagueName,
+        statsSummary,
+      })
 
   return (
     <MatchReviewCard
       headline={`${homeTeam} ${homeScore}-${awayScore} ${awayTeam}`}
-      summary={story}
+      summary={summary}
       homeLogo={homeLogo}
       awayLogo={awayLogo}
       storySlug={null}

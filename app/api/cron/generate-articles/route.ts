@@ -126,6 +126,8 @@ export async function GET(req: NextRequest) {
       awayTeam: match.teams.away.name,
       homeScore: match.goals.home,
       awayScore: match.goals.away,
+      homeLogo: match.teams.home.logo ?? null,
+      awayLogo: match.teams.away.logo ?? null,
       content: result.content,
       createdAt: new Date().toISOString(),
     })

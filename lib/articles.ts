@@ -9,6 +9,8 @@ export type Article = {
   awayTeam: string
   homeScore: number | null
   awayScore: number | null
+  homeLogo: string | null
+  awayLogo: string | null
   content: string
   createdAt: string
 }
@@ -43,7 +45,15 @@ function ensureTable() {
         content TEXT NOT NULL,
         created_at TIMESTAMPTZ NOT NULL DEFAULT now()
       )
-    `
+    `.then(() => {
+      // 이미 배포된 DB에는 home_logo/away_logo 컬럼이 없을 수 있어서 추가로 보장해준다
+      const sql2 = getSql()
+      return sql2`
+        ALTER TABLE articles
+          ADD COLUMN IF NOT EXISTS home_logo TEXT,
+          ADD COLUMN IF NOT EXISTS away_logo TEXT
+      `
+    })
   }
   return tableReady
 }
@@ -59,6 +69,8 @@ function rowToArticle(row: Record<string, unknown>): Article {
     awayTeam: row.away_team as string,
     homeScore: row.home_score as number | null,
     awayScore: row.away_score as number | null,
+    homeLogo: (row.home_logo as string | null) ?? null,
+    awayLogo: (row.away_logo as string | null) ?? null,
     content: row.content as string,
     createdAt: (row.created_at as Date).toISOString(),
   }
@@ -113,8 +125,8 @@ export async function saveArticle(article: Article): Promise<void> {
   const sql = getSql()
   // match_id가 이미 있으면(같은 경기 기사가 이미 있으면) 조용히 건너뜀 (중복 방지)
   await sql`
-    INSERT INTO articles (slug, title, match_id, league_name, home_team, away_team, home_score, away_score, content)
-    VALUES (${article.slug}, ${article.title}, ${article.matchId}, ${article.leagueName}, ${article.homeTeam}, ${article.awayTeam}, ${article.homeScore}, ${article.awayScore}, ${article.content})
+    INSERT INTO articles (slug, title, match_id, league_name, home_team, away_team, home_score, away_score, home_logo, away_logo, content)
+    VALUES (${article.slug}, ${article.title}, ${article.matchId}, ${article.leagueName}, ${article.homeTeam}, ${article.awayTeam}, ${article.homeScore}, ${article.awayScore}, ${article.homeLogo}, ${article.awayLogo}, ${article.content})
     ON CONFLICT (match_id) DO NOTHING
   `
 }

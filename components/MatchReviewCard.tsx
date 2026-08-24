@@ -34,7 +34,7 @@ export default function MatchReviewCard({
       {/* 본문 */}
       <div className="px-5 py-5">
         <p className="font-semibold text-[15px] leading-snug text-floodlight mb-2">{headline}</p>
-        <p className="text-sm text-floodlight/65 leading-relaxed">{summary}</p>
+        <p className="text-sm text-floodlight/65 leading-relaxed whitespace-pre-line">{summary}</p>
         {storySlug && (
           <Link
             href={`/stories/${storySlug}`}
