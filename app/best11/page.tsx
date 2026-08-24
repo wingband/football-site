@@ -3,21 +3,42 @@ export const dynamic = 'force-dynamic'
 import type { Metadata } from "next"
 import Link from "next/link"
 import PlayerAvatar from "@/components/PlayerAvatar"
-import { getLeagueTopScorers } from "@/lib/leagueData"
+import { getLeagueTopScorers, getLeagueTopAssists } from "@/lib/leagueData"
 import { getSeasonYear } from "@/lib/season"
 
-export const metadata: Metadata = {
-  title: "이번 주 베스트 11 — GoalLine",
-  description: "이번 주 프리미어리그 최고 평점 선수 베스트 11. AI가 선정한 주간 베스트팀.",
+const LEAGUES = [
+  { id: 39,  name: "프리미어리그", nameEn: "Premier League", country: "England",     logo: "/leagues/pl.png" },
+  { id: 140, name: "라리가",       nameEn: "La Liga",        country: "Spain",       logo: "/leagues/laliga.png" },
+  { id: 78,  name: "분데스리가",   nameEn: "Bundesliga",     country: "Germany",     logo: "/leagues/bundesliga.png" },
+  { id: 135, name: "세리에A",      nameEn: "Serie A",        country: "Italy",       logo: "/leagues/seriea.png" },
+  { id: 61,  name: "리그1",        nameEn: "Ligue 1",        country: "France",      logo: "/leagues/ligue1.png" },
+  { id: 292, name: "K리그",        nameEn: "K League 1",     country: "South Korea", logo: "/leagues/kleague.png" },
+]
+
+// ?league= 값 검증. 목록에 없는 값(오타 등)이면 프리미어리그로 되돌린다
+function resolveLeague(raw: string | undefined) {
+  const requested = Number(raw)
+  return LEAGUES.find(l => l.id === requested) ?? LEAGUES[0]
+}
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ league?: string }>
+}): Promise<Metadata> {
+  const league = resolveLeague((await searchParams).league)
+
+  return {
+    title: `이번 주 ${league.name} 베스트 11 — GoalLine`,
+    description: `이번 주 ${league.name} 최고 평점 선수 베스트 11. AI가 선정한 주간 베스트팀.`,
+  }
 }
 
 // 리그별 상위 선수 가져와서 평점 기준 베스트 11 구성
-async function getBest11() {
-  const season = getSeasonYear("England")
-  // PL 상위 득점/도움 선수들에서 평점 Top 11
+async function getBest11(leagueId: number, season: number) {
   const [scorers, assists] = await Promise.all([
-    getLeagueTopScorers("39", season),
-    getLeagueTopScorers("39", season), // 실제론 assists endpoint 별도지만 동일 데이터 활용
+    getLeagueTopScorers(String(leagueId), season),
+    getLeagueTopAssists(String(leagueId), season),
   ])
 
   const pool = new Map()
@@ -45,8 +66,14 @@ function RatingBadge({ rating }: { rating: string }) {
   )
 }
 
-export default async function Best11Page() {
-  const players = await getBest11()
+export default async function Best11Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ league?: string }>
+}) {
+  const league = resolveLeague((await searchParams).league)
+  const season = getSeasonYear(league.country)
+  const players = await getBest11(league.id, season)
   const weekNum = Math.ceil((new Date().getDate()) / 7)
   const month = new Date().toLocaleDateString("ko-KR", { month: "long" })
 
@@ -54,10 +81,6 @@ export default async function Best11Page() {
     <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
       <div className="max-w-3xl mx-auto px-4 pb-16">
         <div className="pt-8 pb-6 border-b border-turf-line/40">
-          <div className="flex items-center gap-3 mb-1">
-            <img src="/leagues/pl.png" alt="" className="w-6 h-6" />
-            <span className="text-xs text-floodlight/40 uppercase tracking-wide">Premier League</span>
-          </div>
           <h1 className="font-display uppercase text-2xl text-score-amber">
             {month} {weekNum}주차 베스트 11
           </h1>
@@ -66,12 +89,30 @@ export default async function Best11Page() {
           </p>
         </div>
 
+        {/* 리그 탭 */}
+        <div className="flex gap-2 overflow-x-auto py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {LEAGUES.map(l => (
+            <Link
+              key={l.id}
+              href={l.id === LEAGUES[0].id ? "/best11" : `/best11?league=${l.id}`}
+              className={`shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium transition-colors ${
+                l.id === league.id
+                  ? "bg-score-amber text-pitch-night font-bold"
+                  : "bg-turf-line/30 text-floodlight/60 hover:text-floodlight hover:bg-turf-line/50"
+              }`}
+            >
+              <img src={l.logo} alt="" className="w-4 h-4" />
+              {l.name}
+            </Link>
+          ))}
+        </div>
+
         {players.length === 0 ? (
           <p className="text-floodlight/40 py-12 text-center">데이터를 불러오는 중입니다.</p>
         ) : (
           <>
             {/* 선수 카드 그리드 */}
-            <div className="grid sm:grid-cols-2 gap-3 mt-6">
+            <div className="grid sm:grid-cols-2 gap-3 mt-2">
               {players.map((p, i) => {
                 const stat = p.statistics[0]
                 const pos = POSITIONS[i] ?? "MF"
@@ -122,24 +163,6 @@ export default async function Best11Page() {
                   </Link>
                 )
               })}
-            </div>
-
-            {/* 다른 리그 */}
-            <div className="mt-8 p-4 bg-turf/30 border border-turf-line/30 text-center">
-              <p className="text-sm text-floodlight/50 mb-3">다른 리그 베스트 11 보기</p>
-              <div className="flex justify-center gap-3">
-                {[
-                  { logo: "/leagues/laliga.png", id: 140, label: "La Liga" },
-                  { logo: "/leagues/bundesliga.png", id: 78, label: "Bundesliga" },
-                  { logo: "/leagues/seriea.png", id: 135, label: "Serie A" },
-                ].map(l => (
-                  <Link key={l.id} href={`/leagues/${l.id}`}
-                    className="flex items-center gap-1.5 px-3 py-2 bg-turf-line/30 hover:bg-turf-line/50 rounded transition-colors text-xs text-floodlight/70">
-                    <img src={l.logo} alt="" className="w-4 h-4" />
-                    {l.label}
-                  </Link>
-                ))}
-              </div>
             </div>
 
             <p className="text-[10px] text-floodlight/25 mt-6 text-center">
