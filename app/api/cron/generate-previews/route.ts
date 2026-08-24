@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server"
 import { generateMatchPreview } from "@/lib/generatePreview"
 import { savePreview, slugify } from "@/lib/articles"
 
-const TARGET_LEAGUE_IDS = [39, 2, 140, 78, 135, 61, 3]
+const TARGET_LEAGUE_IDS = [39, 140, 78, 292, 135, 61]
 const LEAGUE_PRIORITY: Record<number, number> = {
-  39: 1, 2: 2, 140: 3, 78: 4, 135: 5, 61: 6, 3: 7,
+  39: 1, 140: 2, 78: 3, 292: 4, 135: 5, 61: 6,
 }
 
 async function apiFetch(path: string) {

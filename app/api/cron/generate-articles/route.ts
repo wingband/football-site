@@ -4,19 +4,15 @@ import { saveArticle, slugify, getArticleByMatchId } from "@/lib/articles"
 import { MOCK_FIXTURES } from "@/lib/mockData"
 
 // API 호출/AI 비용을 아끼기 위해, 기사를 만들 대상은 이 리그들의 "종료된 경기"로만 제한
-const TARGET_LEAGUE_IDS = [39, 140, 78, 135, 61, 2, 3, 253, 292, 98]
+const TARGET_LEAGUE_IDS = [39, 140, 78, 292, 135, 61]
 // 리그 우선순위 (낮을수록 먼저)
 const LEAGUE_PRIORITY: Record<number, number> = {
   39: 1,   // Premier League
-  2:  2,   // Champions League
-  140: 3,  // La Liga
-  78: 4,   // Bundesliga
+  140: 2,  // La Liga
+  78: 3,   // Bundesliga
+  292: 4,  // K League
   135: 5,  // Serie A
   61: 6,   // Ligue 1
-  3:  7,   // Europa League
-  292: 8,  // K League
-  98: 9,   // J League
-  253: 10, // MLS
 }
 // 1회 실행 시 생성할 기사 최대 개수
 const MAX_ARTICLES_PER_RUN = 20
