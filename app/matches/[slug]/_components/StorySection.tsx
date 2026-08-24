@@ -39,6 +39,9 @@ export default async function StorySection({
         statsSummary,
       })
 
+  // 팀명·리그명은 항상 태그로 붙이고, 득점/어시스트 선수 태그는 기사가 있을 때만 추가된다
+  const tags = [homeTeam, awayTeam, leagueName, ...(fullArticle?.playerTags ?? [])]
+
   return (
     <MatchReviewCard
       headline={`${homeTeam} ${homeScore}-${awayScore} ${awayTeam}`}
@@ -46,6 +49,7 @@ export default async function StorySection({
       homeLogo={homeLogo}
       awayLogo={awayLogo}
       storySlug={null}
+      tags={tags}
     />
   )
 }

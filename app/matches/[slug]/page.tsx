@@ -22,6 +22,7 @@ import SidebarDeferredSection from "./_components/SidebarDeferredSection"
 import { getSeasonYear } from "@/lib/season"
 import { buildMatchSlug, matchHref, parseFixtureId } from "@/lib/slug"
 import { MOCK_MATCH_DETAIL } from "@/lib/mockData"
+import { getArticleByMatchId } from "@/lib/articles"
 import type { Metadata } from "next"
 
 
@@ -139,8 +140,15 @@ export async function generateMetadata({
       ? `${match.goals.home}:${match.goals.away}`
       : "경기 정보"
 
-  const title = `${match.teams.home.name} vs ${match.teams.away.name} (${scoreText})`
-  const description = `${match.league.name} - ${match.teams.home.name}와 ${match.teams.away.name}의 경기 스코어, 라인업, 통계, AI 분석을 확인하세요.`
+  // AI 리뷰가 이미 생성돼 있으면 득점/어시스트 선수 이름을 메타데이터에도 반영 (SEO)
+  const article = process.env.USE_MOCK_DATA === "true" ? null : await getArticleByMatchId(fixtureId)
+  const keyPlayers = article?.playerTags.slice(0, 3) ?? []
+  const keyPlayersText = keyPlayers.length ? ` - ${keyPlayers.join(", ")}` : ""
+
+  const title = `${match.teams.home.name} vs ${match.teams.away.name} (${scoreText})${keyPlayersText}`
+  const description = keyPlayers.length
+    ? `${match.league.name} - ${match.teams.home.name}와 ${match.teams.away.name}의 경기. ${keyPlayers.join(", ")}의 활약을 포함한 스코어, 라인업, 통계, AI 분석을 확인하세요.`
+    : `${match.league.name} - ${match.teams.home.name}와 ${match.teams.away.name}의 경기 스코어, 라인업, 통계, AI 분석을 확인하세요.`
 
   return {
     title,

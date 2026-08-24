@@ -84,6 +84,7 @@ export async function GET(req: NextRequest) {
 
     let statsSummary = "통계 데이터 없음"
     let eventsSummary = "이벤트 데이터 없음"
+    let playerTags: string[] = []
 
     if (process.env.USE_MOCK_DATA !== "true") {
       const stats = await apiFetch(`/fixtures/statistics?fixture=${match.fixture.id}`)
@@ -95,13 +96,29 @@ export async function GET(req: NextRequest) {
           .join(", ")
       }
 
-      const events = await apiFetch(`/fixtures/events?fixture=${match.fixture.id}`)
+      const events = await apiFetch(`/fixtures/events?fixture=${match.fixture.id}`) as
+        | { time: { elapsed: number }; type: string; player: { name: string }; assist: { name: string | null } }[]
+        | undefined
+
       if (events?.length) {
         eventsSummary = events
-          .map((e: { time: { elapsed: number }; type: string; player: { name: string } }) =>
-            `${e.time.elapsed}분 ${e.type} (${e.player.name})`
-          )
+          .map((e) => `${e.time.elapsed}분 ${e.type} (${e.player.name})`)
           .join(", ")
+
+        // 태그용: 득점/어시스트에 관여한 선수 이름만 등장 순서대로 중복 없이 모은다
+        const seen = new Set<string>()
+        for (const e of events) {
+          if (e.type !== "Goal") continue
+          if (e.player.name && !seen.has(e.player.name)) {
+            seen.add(e.player.name)
+            playerTags.push(e.player.name)
+          }
+          if (e.assist?.name && !seen.has(e.assist.name)) {
+            seen.add(e.assist.name)
+            playerTags.push(e.assist.name)
+          }
+        }
+        playerTags = playerTags.slice(0, 6)
       }
     }
 
@@ -131,6 +148,7 @@ export async function GET(req: NextRequest) {
       homeLogo: match.teams.home.logo ?? null,
       awayLogo: match.teams.away.logo ?? null,
       content: result.content,
+      playerTags,
       createdAt: new Date().toISOString(),
     })
 

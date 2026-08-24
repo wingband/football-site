@@ -9,12 +9,14 @@ export default function MatchReviewCard({
   homeLogo,
   awayLogo,
   storySlug,
+  tags,
 }: {
   headline: string
   summary: string
   homeLogo: string
   awayLogo: string
   storySlug?: string | null
+  tags?: string[]
 }) {
   return (
     <section className="bg-score-amber/5 border-l-2 border-score-amber mt-5">
@@ -34,6 +36,20 @@ export default function MatchReviewCard({
       <div className="px-5 py-5">
         <p className="font-semibold text-[15px] leading-snug text-floodlight mb-2">{headline}</p>
         <p className="text-sm text-floodlight/65 leading-relaxed whitespace-pre-line">{summary}</p>
+
+        {tags && tags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-4">
+            {tags.map((tag) => (
+              <span
+                key={tag}
+                className="px-2 py-1 rounded-full bg-turf-line/40 text-floodlight/60 text-[11px] font-medium"
+              >
+                #{tag.replace(/\s+/g, "")}
+              </span>
+            ))}
+          </div>
+        )}
+
         {storySlug && (
           <Link
             href={`/stories/${storySlug}`}

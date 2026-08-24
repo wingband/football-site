@@ -60,6 +60,9 @@ export async function generateMatchArticle(input: ArticleInput): Promise<Article
 - 선수 이름은 한국어 표기로 통일 (예: Havertz → 하베르츠)
 - 주어진 데이터에 없는 사실(관중 반응, 감독 발언, 부상 정보 등)은 절대 지어내지 마라
 - 스탯을 문장으로 줄줄이 나열하는 건 절대 금지. 꼭 필요한 곳에만 써라
+- SEO를 위해 중요함: 득점한 선수, 어시스트한 선수, 그 외 인상적인 활약을 보인 선수의
+  실명을 기사 전체에서 여러 번(최소 2~3회씩) 반복해서 언급하라. "그는", "이 선수는" 같은
+  대명사로만 계속 지칭하지 말고, 문단마다 실명을 다시 불러줘라
 
 리그: ${input.leagueName}
 ${input.homeTeam} ${input.homeScore ?? "-"} : ${input.awayScore ?? "-"} ${input.awayTeam}

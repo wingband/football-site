@@ -12,6 +12,8 @@ export type Article = {
   homeLogo: string | null
   awayLogo: string | null
   content: string
+  // 득점/어시스트 등 주요 활약 선수 이름 (팀명·리그명은 태그에 안 넣고 렌더링 시점에 합쳐서 보여줌)
+  playerTags: string[]
   createdAt: string
 }
 
@@ -46,12 +48,13 @@ function ensureTable() {
         created_at TIMESTAMPTZ NOT NULL DEFAULT now()
       )
     `.then(() => {
-      // 이미 배포된 DB에는 home_logo/away_logo 컬럼이 없을 수 있어서 추가로 보장해준다
+      // 이미 배포된 DB에는 home_logo/away_logo/player_tags 컬럼이 없을 수 있어서 추가로 보장해준다
       const sql2 = getSql()
       return sql2`
         ALTER TABLE articles
           ADD COLUMN IF NOT EXISTS home_logo TEXT,
-          ADD COLUMN IF NOT EXISTS away_logo TEXT
+          ADD COLUMN IF NOT EXISTS away_logo TEXT,
+          ADD COLUMN IF NOT EXISTS player_tags TEXT[] NOT NULL DEFAULT '{}'
       `
     })
   }
@@ -72,6 +75,7 @@ function rowToArticle(row: Record<string, unknown>): Article {
     homeLogo: (row.home_logo as string | null) ?? null,
     awayLogo: (row.away_logo as string | null) ?? null,
     content: row.content as string,
+    playerTags: (row.player_tags as string[] | null) ?? [],
     createdAt: (row.created_at as Date).toISOString(),
   }
 }
@@ -125,8 +129,8 @@ export async function saveArticle(article: Article): Promise<void> {
   const sql = getSql()
   // match_id가 이미 있으면(같은 경기 기사가 이미 있으면) 조용히 건너뜀 (중복 방지)
   await sql`
-    INSERT INTO articles (slug, title, match_id, league_name, home_team, away_team, home_score, away_score, home_logo, away_logo, content)
-    VALUES (${article.slug}, ${article.title}, ${article.matchId}, ${article.leagueName}, ${article.homeTeam}, ${article.awayTeam}, ${article.homeScore}, ${article.awayScore}, ${article.homeLogo}, ${article.awayLogo}, ${article.content})
+    INSERT INTO articles (slug, title, match_id, league_name, home_team, away_team, home_score, away_score, home_logo, away_logo, content, player_tags)
+    VALUES (${article.slug}, ${article.title}, ${article.matchId}, ${article.leagueName}, ${article.homeTeam}, ${article.awayTeam}, ${article.homeScore}, ${article.awayScore}, ${article.homeLogo}, ${article.awayLogo}, ${article.content}, ${article.playerTags})
     ON CONFLICT (match_id) DO NOTHING
   `
 }
