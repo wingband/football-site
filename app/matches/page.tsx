@@ -72,7 +72,9 @@ async function fetchFixturesFromApi(date: string): Promise<Fixture[] | null> {
   const [todayRes, yesterdayRes] = await Promise.all([
     fetch(`https://v3.football.api-sports.io/fixtures?date=${date}`, {
       headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      next: { revalidate: 300 },
+      // 5분(300s)이면 방문자 수와 무관하게 하루 최대 288번씩 재호출돼서
+      // 일일 쿼터를 순식간에 다 먹는다. 30분으로 늘려서 호출 빈도를 낮춘다
+      next: { revalidate: 1800 },
     }),
     fetch(`https://v3.football.api-sports.io/fixtures?date=${yesterdayStr}`, {
       headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
