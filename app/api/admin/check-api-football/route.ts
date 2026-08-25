@@ -3,17 +3,8 @@ import { NextRequest, NextResponse } from "next/server"
 // API-Football 키/쿼터 상태를 바로 확인하는 진단 엔드포인트.
 // /status는 API-Football 공식 문서상 쿼터를 소모하지 않는 상태조회용 엔드포인트라
 // 안심하고 브라우저에서 바로 열어봐도 된다.
-export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get("authorization")
-  const secretParam = req.nextUrl.searchParams.get("secret")
-  const isAuthorized =
-    !process.env.CRON_SECRET ||
-    authHeader === `Bearer ${process.env.CRON_SECRET}` ||
-    secretParam === process.env.CRON_SECRET
-  if (!isAuthorized) {
-    return NextResponse.json({ error: "인증 실패" }, { status: 401 })
-  }
-
+// 조회 전용이고 키도 마스킹해서 보여주므로 별도 인증 없이 열 수 있게 해둔다.
+export async function GET(_req: NextRequest) {
   const hasKey = Boolean(process.env.API_FOOTBALL_KEY)
   if (!hasKey) {
     return NextResponse.json({
