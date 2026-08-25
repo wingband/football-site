@@ -63,14 +63,32 @@ export type NewsArticle = {
 
 const HEADERS = () => ({ "x-apisports-key": process.env.API_FOOTBALL_KEY! })
 
+// API-Football은 파라미터가 잘못돼도 HTTP 200을 주고 response는 비워둔 채
+// errors 필드에만 원인을 담는 경우가 많아서, res.ok만 보면 실패를 놓친다.
+// 이 헬퍼가 상태코드/errors를 모두 확인해서 실패 원인을 로그로 남긴다
+async function apiFootballFetch(path: string, revalidate = 3600): Promise<unknown> {
+  const url = `https://v3.football.api-sports.io${path}`
+  const res = await fetch(url, { headers: HEADERS(), next: { revalidate } })
+  const data = await res.json()
+
+  const errors = data?.errors
+  const hasErrors = errors && (Array.isArray(errors) ? errors.length > 0 : Object.keys(errors).length > 0)
+
+  if (!res.ok || hasErrors) {
+    console.error(`API-Football 에러 [${path}]:`, {
+      status: res.status,
+      statusText: res.statusText,
+      errors,
+    })
+  }
+
+  return data
+}
+
 export async function getLeagueStandings(leagueId: string, season: number): Promise<LeagueResponse | null> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_STANDINGS as unknown as LeagueResponse
 
-  const res = await fetch(
-    `https://v3.football.api-sports.io/standings?league=${leagueId}&season=${season}`,
-    { headers: HEADERS(), next: { revalidate: 3600 } }
-  )
-  const data = await res.json()
+  const data = await apiFootballFetch(`/standings?league=${leagueId}&season=${season}`) as { response?: LeagueResponse[] }
   return data.response?.[0] ?? null
 }
 
@@ -84,44 +102,28 @@ export async function getLeagueFixturesByMode(
     return MOCK_SEASON_FIXTURES.slice(0, count) as unknown as LeagueFixture[]
   }
 
-  const res = await fetch(
-    `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${season}&${mode}=${count}`,
-    { headers: HEADERS(), next: { revalidate: 3600 } }
-  )
-  const data = await res.json()
+  const data = await apiFootballFetch(`/fixtures?league=${leagueId}&season=${season}&${mode}=${count}`) as { response?: LeagueFixture[] }
   return data.response ?? []
 }
 
 export async function getSeasonFixtures(leagueId: string, season: number): Promise<LeagueFixture[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_SEASON_FIXTURES as unknown as LeagueFixture[]
 
-  const res = await fetch(
-    `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${season}`,
-    { headers: HEADERS(), next: { revalidate: 3600 } }
-  )
-  const data = await res.json()
+  const data = await apiFootballFetch(`/fixtures?league=${leagueId}&season=${season}`) as { response?: LeagueFixture[] }
   return data.response ?? []
 }
 
 export async function getLeagueTopScorers(leagueId: string, season: number): Promise<ScorerEntry[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_TOP_SCORERS as unknown as ScorerEntry[]
 
-  const res = await fetch(
-    `https://v3.football.api-sports.io/players/topscorers?league=${leagueId}&season=${season}`,
-    { headers: HEADERS(), next: { revalidate: 3600 } }
-  )
-  const data = await res.json()
+  const data = await apiFootballFetch(`/players/topscorers?league=${leagueId}&season=${season}`) as { response?: ScorerEntry[] }
   return data.response ?? []
 }
 
 export async function getLeagueTopAssists(leagueId: string, season: number): Promise<ScorerEntry[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_TOP_SCORERS as unknown as ScorerEntry[]
 
-  const res = await fetch(
-    `https://v3.football.api-sports.io/players/topassists?league=${leagueId}&season=${season}`,
-    { headers: HEADERS(), next: { revalidate: 3600 } }
-  )
-  const data = await res.json()
+  const data = await apiFootballFetch(`/players/topassists?league=${leagueId}&season=${season}`) as { response?: ScorerEntry[] }
   return data.response ?? []
 }
 
