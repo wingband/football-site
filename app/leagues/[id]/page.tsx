@@ -16,6 +16,7 @@ import {
   type LeagueFixture,
   type ScorerEntry,
 } from "@/lib/leagueData"
+import { checkApiFootballStatus } from "@/lib/apiFootballStatus"
 
 const FINISHED_CODES = ["FT", "AET", "PEN"]
 
@@ -201,7 +202,15 @@ export default async function LeagueOverviewPage({ params, searchParams }: { par
   }
 
   if (!data || data.league.standings.length === 0) {
-    return <p className="text-floodlight/40 pt-4">리그 정보를 찾을 수 없습니다.</p>
+    const apiStatus = await checkApiFootballStatus()
+    return (
+      <div className="pt-4">
+        <p className="text-floodlight/40">리그 정보를 찾을 수 없습니다.</p>
+        {!apiStatus.ok && (
+          <p className="text-floodlight/25 text-xs mt-1.5">원인: {apiStatus.message}</p>
+        )}
+      </div>
+    )
   }
 
   const { league } = data
