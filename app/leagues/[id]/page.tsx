@@ -170,8 +170,9 @@ function toRatingRows(scorers: ScorerEntry[], assists: ScorerEntry[]): StarPlaye
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params
   const euroSeason = getSeasonYear("England")
+  const thisYear = new Date().getFullYear()
   let data = await getLeagueStandings(id, euroSeason)
-  if (!data) data = await getLeagueStandings(id, new Date().getFullYear())
+  if (!data && thisYear !== euroSeason) data = await getLeagueStandings(id, thisYear)
   if (!data) data = await getLeagueStandings(id, euroSeason - 1)
   if (!data) return { title: "리그 정보를 찾을 수 없습니다" }
   return {
@@ -184,6 +185,7 @@ export default async function LeagueOverviewPage({ params, searchParams }: { par
   const { id } = await params
   const sp = await searchParams
   const euroSeason = getSeasonYear("England")
+  const thisYear = new Date().getFullYear()
 
   // URL ?season= 파라미터 우선, 없으면 기본 시즌 순서로 탐색
   let season: number
@@ -193,7 +195,7 @@ export default async function LeagueOverviewPage({ params, searchParams }: { par
     data = await getLeagueStandings(id, season)
   } else {
     data = await getLeagueStandings(id, euroSeason)
-    if (!data) data = await getLeagueStandings(id, new Date().getFullYear())
+    if (!data && thisYear !== euroSeason) data = await getLeagueStandings(id, thisYear)
     if (!data) data = await getLeagueStandings(id, euroSeason - 1)
     season = data?.league.season ?? euroSeason
   }

@@ -1,4 +1,5 @@
 // 리그 관련 페이지들(개요/순위/경기/뉴스)이 공유하는 데이터 fetcher 모음
+import { cache } from "react"
 import { MOCK_STANDINGS, MOCK_SEASON_FIXTURES, MOCK_TOP_SCORERS, MOCK_NEWS } from "@/lib/mockData"
 
 export type TeamSplit = {
@@ -63,10 +64,14 @@ export type NewsArticle = {
 
 const HEADERS = () => ({ "x-apisports-key": process.env.API_FOOTBALL_KEY! })
 
+// 순위표/득점왕 등은 하루에도 몇 번씩 안 바뀌는 데이터라, 너무 짧게 잡으면
+// 방문자가 늘 때마다 API 호출이 반복돼서 일일 요청 한도를 금방 먹는다
+const DEFAULT_REVALIDATE = 10800 // 3시간
+
 // API-Football은 파라미터가 잘못돼도 HTTP 200을 주고 response는 비워둔 채
 // errors 필드에만 원인을 담는 경우가 많아서, res.ok만 보면 실패를 놓친다.
 // 이 헬퍼가 상태코드/errors를 모두 확인해서 실패 원인을 로그로 남긴다
-async function apiFootballFetch(path: string, revalidate = 3600): Promise<unknown> {
+async function apiFootballFetch(path: string, revalidate = DEFAULT_REVALIDATE): Promise<unknown> {
   const url = `https://v3.football.api-sports.io${path}`
   const res = await fetch(url, { headers: HEADERS(), next: { revalidate } })
   const data = await res.json()
@@ -85,12 +90,18 @@ async function apiFootballFetch(path: string, revalidate = 3600): Promise<unknow
   return data
 }
 
-export async function getLeagueStandings(leagueId: string, season: number): Promise<LeagueResponse | null> {
+// layout.tsx와 page.tsx가 같은 리그의 순위표를 각자 다시 요청하는 경우가 많아서
+// React cache()로 감싸둔다 — 같은 요청(한 페이지 방문) 안에서는 leagueId+season이
+// 같으면 실제 fetch 없이 이전 결과를 그대로 재사용한다
+export const getLeagueStandings = cache(async function getLeagueStandings(
+  leagueId: string,
+  season: number
+): Promise<LeagueResponse | null> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_STANDINGS as unknown as LeagueResponse
 
   const data = await apiFootballFetch(`/standings?league=${leagueId}&season=${season}`) as { response?: LeagueResponse[] }
   return data.response?.[0] ?? null
-}
+})
 
 export async function getLeagueFixturesByMode(
   leagueId: string,

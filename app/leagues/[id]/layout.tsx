@@ -15,9 +15,11 @@ export default async function LeagueLayout({
   const { id } = await params
 
   const euroSeason = getSeasonYear("England")
-  // 여러 시즌 순서로 시도 (CL 등 일부 리그는 연도가 다를 수 있음)
+  const thisYear = new Date().getFullYear()
+  // 여러 시즌 순서로 시도 (CL 등 일부 리그는 연도가 다를 수 있음).
+  // thisYear가 euroSeason과 같으면(7~12월) 중복 호출이라 건너뛴다
   let data = await getLeagueStandings(id, euroSeason)
-  if (!data) data = await getLeagueStandings(id, new Date().getFullYear())
+  if (!data && thisYear !== euroSeason) data = await getLeagueStandings(id, thisYear)
   if (!data) data = await getLeagueStandings(id, euroSeason - 1)
 
   return (
