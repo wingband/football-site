@@ -97,7 +97,13 @@ export async function GET(req: NextRequest) {
       }
 
       const events = await apiFetch(`/fixtures/events?fixture=${match.fixture.id}`) as
-        | { time: { elapsed: number }; type: string; player: { name: string }; assist: { name: string | null } }[]
+        | {
+            time: { elapsed: number }
+            type: string
+            team: { name: string }
+            player: { name: string }
+            assist: { name: string | null }
+          }[]
         | undefined
 
       if (events?.length) {
@@ -106,8 +112,20 @@ export async function GET(req: NextRequest) {
         const formatHalfMinute = (elapsed: number) =>
           elapsed <= 45 ? `전반 ${elapsed}분` : `후반 ${elapsed - 45}분`
 
+        // 어느 팀 소속인지를 안 알려주면 GPT가 홈/원정을 헷갈려서 골을 반대 팀에 붙이는
+        // 경우가 있었다. 팀명과 그 시점의 스코어까지 미리 계산해서 넘겨준다
+        let homeGoals = 0
+        let awayGoals = 0
         eventsSummary = events
-          .map((e) => `${formatHalfMinute(e.time.elapsed)}(전체 ${e.time.elapsed}분) ${e.type} (${e.player.name})`)
+          .map((e) => {
+            let scoreLabel = ""
+            if (e.type === "Goal") {
+              if (e.team.name === match.teams.home.name) homeGoals++
+              else if (e.team.name === match.teams.away.name) awayGoals++
+              scoreLabel = ` (스코어 ${homeGoals}-${awayGoals})`
+            }
+            return `${formatHalfMinute(e.time.elapsed)}(전체 ${e.time.elapsed}분) [${e.team.name}] ${e.type} - ${e.player.name}${scoreLabel}`
+          })
           .join(", ")
 
         // 태그용: 득점/어시스트에 관여한 선수 이름만 등장 순서대로 중복 없이 모은다

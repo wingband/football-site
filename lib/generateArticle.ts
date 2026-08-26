@@ -69,6 +69,12 @@ export async function generateMatchArticle(input: ArticleInput): Promise<Article
   30분·45분처럼 "그럴듯한" 숫자로 바꿔 쓰지 마라. 예를 들어 이벤트에 "전반 15분"이라고
   써있으면 본문에도 정확히 "전반 15분"이라고 써야 하고, 절대 "전반 30분"처럼 바꾸면 안 된다.
   스스로 계산하거나 반올림하지 말고, 주어진 숫자를 그대로 복사해서 써라
+- 아래 "주요 이벤트"의 각 항목에는 [팀명]과 그 시점의 스코어가 정확히 표시돼 있다.
+  득점/카드/교체가 어느 팀 소속인지는 반드시 그 [팀명] 표시를 그대로 따라야 한다.
+  절대로 ${input.homeTeam}(홈)과 ${input.awayTeam}(원정) 선수를 헷갈리거나 뒤바꿔 쓰지 마라.
+  예를 들어 이벤트에 "[${input.awayTeam}] Goal - 선수A (스코어 0-1)"이라고 되어 있으면
+  이건 ${input.awayTeam}(원정팀)의 골이다. 절대 ${input.homeTeam}의 골로 착각해서 쓰지 마라.
+  경기 흐름(누가 몇 대 몇으로 앞섰는지)도 이벤트에 표시된 스코어 순서를 그대로 따라야 한다
 
 리그: ${input.leagueName}
 ${input.homeTeam} ${input.homeScore ?? "-"} : ${input.awayScore ?? "-"} ${input.awayTeam}
