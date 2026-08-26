@@ -30,7 +30,7 @@ export async function generateMetadata({
 
   return {
     title: `이번 주 ${league.name} 베스트 11 — GoalLine`,
-    description: `이번 주 ${league.name} 최고 평점 선수 베스트 11. AI가 선정한 주간 베스트팀.`,
+    description: `이번 주 ${league.name} 최고 평점 선수 베스트 11. 주간 베스트팀을 확인하세요.`,
   }
 }
 

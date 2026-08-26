@@ -110,7 +110,7 @@ export default function StoriesPage() {
         <div className="pt-8 pb-4">
           <h1 className="font-display uppercase text-xl text-score-amber">경기 리뷰</h1>
           <p className="text-xs text-floodlight/40 mt-1">
-            AI가 자동 작성하는 주요 경기 분석 · {articles.length}개
+            주요 경기 분석 · {articles.length}개
           </p>
         </div>
 

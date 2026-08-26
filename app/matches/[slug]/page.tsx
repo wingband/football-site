@@ -147,8 +147,8 @@ export async function generateMetadata({
 
   const title = `${match.teams.home.name} vs ${match.teams.away.name} (${scoreText})${keyPlayersText}`
   const description = keyPlayers.length
-    ? `${match.league.name} - ${match.teams.home.name}와 ${match.teams.away.name}의 경기. ${keyPlayers.join(", ")}의 활약을 포함한 스코어, 라인업, 통계, AI 분석을 확인하세요.`
-    : `${match.league.name} - ${match.teams.home.name}와 ${match.teams.away.name}의 경기 스코어, 라인업, 통계, AI 분석을 확인하세요.`
+    ? `${match.league.name} - ${match.teams.home.name}와 ${match.teams.away.name}의 경기. ${keyPlayers.join(", ")}의 활약을 포함한 스코어, 라인업, 통계, 분석을 확인하세요.`
+    : `${match.league.name} - ${match.teams.home.name}와 ${match.teams.away.name}의 경기 스코어, 라인업, 통계, 분석을 확인하세요.`
 
   return {
     title,
@@ -303,7 +303,7 @@ export default async function MatchDetailPage({
       ) : (
         <MatchReviewCard
           headline={`${match.teams.home.name} vs ${match.teams.away.name}`}
-          summary="경기 예정 — AI 리뷰는 경기 종료 후 제공됩니다."
+          summary="경기 예정 — 리뷰는 경기 종료 후 제공됩니다."
           homeLogo={match.teams.home.logo}
           awayLogo={match.teams.away.logo}
           storySlug={null}

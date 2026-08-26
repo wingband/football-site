@@ -15,7 +15,7 @@ type StoryInput = {
 
 export async function generateMatchStory(input: StoryInput): Promise<string> {
   if (process.env.USE_MOCK_DATA === "true") {
-    return `${input.homeTeam}가 ${input.awayTeam}를 상대로 ${input.homeScore}:${input.awayScore}로 승리했습니다. (이 문장은 가짜 데이터 모드에서 보여주는 샘플 스토리입니다.) 실제 배포 시에는 이 자리에 AI가 실시간으로 생성한 경기 요약이 표시됩니다.`
+    return `${input.homeTeam}가 ${input.awayTeam}를 상대로 ${input.homeScore}:${input.awayScore}로 승리했습니다. (이 문장은 가짜 데이터 모드에서 보여주는 샘플 스토리입니다.) 실제 배포 시에는 이 자리에 실시간으로 생성된 경기 요약이 표시됩니다.`
   }
 
   // 먼저 DB 캐시. 있으면 GPT를 아예 호출하지 않는다

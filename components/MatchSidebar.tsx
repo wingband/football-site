@@ -291,7 +291,7 @@ function WhoWinsCard({
           <span className="font-data font-bold text-floodlight/90">{awayPct}</span>
         </div>
       </div>
-      <p className="text-center text-[10px] text-floodlight/30 mt-3">AI 승부 예측 기반</p>
+      <p className="text-center text-[10px] text-floodlight/30 mt-3">승부 예측 기반</p>
     </div>
   )
 }
