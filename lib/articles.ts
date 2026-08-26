@@ -135,6 +135,32 @@ export async function saveArticle(article: Article): Promise<void> {
   `
 }
 
+// 특정 팀 이름(부분 일치)으로 기사를 지운다. 오래된/잘못된 기사 하나를 지목해서
+// 지우고 크론으로 재생성할 때 씀
+export async function deleteArticleByTeams(homeTeam: string, awayTeam: string): Promise<string[]> {
+  if (process.env.USE_MOCK_DATA === "true") {
+    const before = mockArticleStore.length
+    const removed = mockArticleStore
+      .filter((a) => a.homeTeam.includes(homeTeam) && a.awayTeam.includes(awayTeam))
+      .map((a) => a.slug)
+    mockArticleStore.splice(
+      0,
+      before,
+      ...mockArticleStore.filter((a) => !(a.homeTeam.includes(homeTeam) && a.awayTeam.includes(awayTeam)))
+    )
+    return removed
+  }
+
+  await ensureTable()
+  const sql = getSql()
+  const rows = await sql`
+    DELETE FROM articles
+    WHERE home_team ILIKE ${"%" + homeTeam + "%"} AND away_team ILIKE ${"%" + awayTeam + "%"}
+    RETURNING slug
+  `
+  return rows.map((r) => r.slug as string)
+}
+
 export function slugify(homeTeam: string, awayTeam: string, matchId: number): string {
   const clean = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
   return `${clean(homeTeam)}-vs-${clean(awayTeam)}-${matchId}`
