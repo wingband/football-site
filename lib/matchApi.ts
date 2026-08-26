@@ -67,13 +67,13 @@ export async function apiFetch(path: string, revalidate?: number): Promise<unkno
     return []
   }
 
+  // revalidate를 안 넘기면 예전엔 /fixtures?id= 호출을 cache:"no-store"로 보내서
+  // 캐시를 완전히 우회했다. /matches/[slug]가 사이트 최고 트래픽 페이지라
+  // 방문마다 무조건 실시간 API 호출이 나가는 셈이었다 — 60초 캐시로 바꿔서
+  // (라이브 경기 갱신에는 충분히 짧고, 나머지 경우엔 캐시가 대부분 흡수한다)
   const res = await fetch(`https://v3.football.api-sports.io${path}`, {
     headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-    ...(revalidate !== undefined
-      ? { next: { revalidate } }
-      : path.startsWith("/fixtures?id=")
-        ? { cache: "no-store" as const }
-        : { next: { revalidate: 3600 } }),
+    next: { revalidate: revalidate ?? 60 },
   })
   const data = await res.json()
   return data.response

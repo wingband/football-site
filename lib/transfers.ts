@@ -22,9 +22,12 @@ const FEATURED_CLUB_IDS = [
 ]
 
 async function getTeamTransfers(teamId: number): Promise<TransferEntry[]> {
+  // 14개 클럽을 매번 한꺼번에 호출하는 데다 이 함수가 /matches 페이지의
+  // TransferWidget에서도 쓰여서 트래픽이 가장 많다. lib/teamData.ts의
+  // 동명 함수와 값을 맞춰(21600) 캐시 파편화도 같이 줄인다
   const res = await fetch(`https://v3.football.api-sports.io/transfers?team=${teamId}`, {
     headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-    next: { revalidate: 3600 },
+    next: { revalidate: 21600 },
   })
   const data = await res.json()
   return data.response ?? []
