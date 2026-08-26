@@ -8,10 +8,16 @@ function getClubStat(statistics: { league: { name: string }; games: { appearence
   return statistics.find((s) => !NATIONAL_KW.some((kw) => s.league.name.includes(kw))) ?? null
 }
 
+// 선수 13명 각각을 개별 호출하기 때문에(최악의 경우 선수당 2번, 시즌 폴백 포함)
+// 한 번 갱신될 때마다 최대 26번의 API 호출이 발생한다. 30분(1800s)마다 갱신되면
+// 방문자가 조금만 있어도 하루 수백~1000번씩 쿼터를 먹어서, 6시간으로 크게 늘린다.
+// 선수 스탯은 그 선수 소속팀이 경기를 뛴 뒤에나 바뀌므로 이 정도 지연은 문제 없다
+const PLAYER_STAT_REVALIDATE = 21600 // 6시간
+
 async function fetchStat(playerId: number, season: number) {
   const res = await fetch(
     `https://v3.football.api-sports.io/players?id=${playerId}&season=${season}`,
-    { headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! }, next: { revalidate: 1800 } }
+    { headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! }, next: { revalidate: PLAYER_STAT_REVALIDATE } }
   )
   return res.json()
 }
@@ -82,6 +88,6 @@ export async function GET() {
   })
 
   return NextResponse.json({ players: sorted }, {
-    headers: { "Cache-Control": "s-maxage=1800, stale-while-revalidate=3600" },
+    headers: { "Cache-Control": `s-maxage=${PLAYER_STAT_REVALIDATE}, stale-while-revalidate=3600` },
   })
 }
