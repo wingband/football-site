@@ -101,8 +101,13 @@ export async function GET(req: NextRequest) {
         | undefined
 
       if (events?.length) {
+        // GPT가 "49분"을 스스로 전/후반으로 환산하다가 자꾸 틀려서(예: 후반 30분으로 착각),
+        // 여기서 미리 "후반 4분"처럼 계산해서 넘겨준다
+        const formatHalfMinute = (elapsed: number) =>
+          elapsed <= 45 ? `전반 ${elapsed}분` : `후반 ${elapsed - 45}분`
+
         eventsSummary = events
-          .map((e) => `${e.time.elapsed}분 ${e.type} (${e.player.name})`)
+          .map((e) => `${formatHalfMinute(e.time.elapsed)}(전체 ${e.time.elapsed}분) ${e.type} (${e.player.name})`)
           .join(", ")
 
         // 태그용: 득점/어시스트에 관여한 선수 이름만 등장 순서대로 중복 없이 모은다

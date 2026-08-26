@@ -63,6 +63,9 @@ export async function generateMatchArticle(input: ArticleInput): Promise<Article
 - SEO를 위해 중요함: 득점한 선수, 어시스트한 선수, 그 외 인상적인 활약을 보인 선수의
   실명을 기사 전체에서 여러 번(최소 2~3회씩) 반복해서 언급하라. "그는", "이 선수는" 같은
   대명사로만 계속 지칭하지 말고, 문단마다 실명을 다시 불러줘라
+- 경기 장면의 시각은 아래 "주요 이벤트"에 이미 "전반 X분"/"후반 X분"으로 계산돼 있다.
+  이 표시를 그대로 써라. 스스로 전체 분(예: 49분)을 전/후반으로 다시 환산하지 마라 —
+  계산 실수로 실제와 다른 시각을 적게 되는 경우가 많다
 
 리그: ${input.leagueName}
 ${input.homeTeam} ${input.homeScore ?? "-"} : ${input.awayScore ?? "-"} ${input.awayTeam}
