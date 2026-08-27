@@ -84,6 +84,7 @@ export async function GET(req: NextRequest) {
 
     let statsSummary = "통계 데이터 없음"
     let eventsSummary = "이벤트 데이터 없음"
+    let goalsSummary = "골 데이터 없음"
     let playerTags: string[] = []
 
     if (process.env.USE_MOCK_DATA !== "true") {
@@ -116,6 +117,7 @@ export async function GET(req: NextRequest) {
         // 경우가 있었다. 팀명과 그 시점의 스코어까지 미리 계산해서 넘겨준다
         let homeGoals = 0
         let awayGoals = 0
+        const goalLines: string[] = []
         eventsSummary = events
           .map((e) => {
             let scoreLabel = ""
@@ -123,10 +125,20 @@ export async function GET(req: NextRequest) {
               if (e.team.name === match.teams.home.name) homeGoals++
               else if (e.team.name === match.teams.away.name) awayGoals++
               scoreLabel = ` (스코어 ${homeGoals}-${awayGoals})`
+              goalLines.push(
+                `${goalLines.length + 1}번째 골 — ${formatHalfMinute(e.time.elapsed)} [${e.team.name}] ${e.player.name}` +
+                  (e.assist?.name ? ` (도움: ${e.assist.name})` : "") +
+                  ` → 스코어 ${homeGoals}-${awayGoals}`
+              )
             }
             return `${formatHalfMinute(e.time.elapsed)}(전체 ${e.time.elapsed}분) [${e.team.name}] ${e.type} - ${e.player.name}${scoreLabel}`
           })
           .join(", ")
+
+        // 골만 따로, 시간순으로 번호를 매겨 명확하게 분리해서 넘긴다.
+        // 카드/교체 이벤트들 사이에 골이 묻히면 GPT가 득점 순서·소속팀·스코어를
+        // 잘못 재구성하는 경우가 많아서, 가장 중요한 사실만 별도 블록으로 뺀다
+        goalsSummary = goalLines.length ? goalLines.join("\n") : "이 경기에는 골이 없었다"
 
         // 태그용: 득점/어시스트 선수를 먼저, 그다음 카드 받은 선수를 등장 순서대로
         // 중복 없이 모은다 (태그 개수를 늘리기 위해 카드도 포함)
@@ -161,6 +173,7 @@ export async function GET(req: NextRequest) {
       leagueName: match.league.name,
       statsSummary,
       eventsSummary,
+      goalsSummary,
     })
 
     if (!result) continue

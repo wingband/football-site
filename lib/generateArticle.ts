@@ -6,6 +6,7 @@ type ArticleInput = {
   leagueName: string
   statsSummary: string
   eventsSummary: string
+  goalsSummary: string
 }
 
 type ArticleOutput = {
@@ -75,12 +76,23 @@ export async function generateMatchArticle(input: ArticleInput): Promise<Article
   예를 들어 이벤트에 "[${input.awayTeam}] Goal - 선수A (스코어 0-1)"이라고 되어 있으면
   이건 ${input.awayTeam}(원정팀)의 골이다. 절대 ${input.homeTeam}의 골로 착각해서 쓰지 마라.
   경기 흐름(누가 몇 대 몇으로 앞섰는지)도 이벤트에 표시된 스코어 순서를 그대로 따라야 한다
+- 아래 "정확한 득점 기록"은 이미 정답이 계산되어 있는 표다. 몇 번째 골인지, 몇 분에,
+  어느 팀 선수가, 도움은 누구였는지, 그 골 이후 스코어가 몇 대 몇이 됐는지 — 이 5가지를
+  절대 재계산하거나 다르게 서술하지 마라. 특히 아래를 반드시 지켜라:
+  * "이 팀의 첫 골"이라고 쓰려면 그 팀 소속 골 중 실제로 "1번째"로 표시된 골에만 써라.
+    그 팀이 이미 앞서 골을 넣었다면 이후 골은 "추가골"/"쐐기골"/"역전골" 등으로 불러라.
+  * 같은 골(같은 선수, 같은 분, 같은 스코어)을 본문 안에서 두 번 다른 장면인 것처럼
+    묘사하지 마라. 정확한 득점 기록에 있는 골 개수만큼만 언급해라.
+  * 최종 스코어는 반드시 "정확한 득점 기록"의 마지막 줄 스코어와 일치해야 한다
+
+정확한 득점 기록 (그대로 사용, 재계산 금지):
+${input.goalsSummary}
 
 리그: ${input.leagueName}
 ${input.homeTeam} ${input.homeScore ?? "-"} : ${input.awayScore ?? "-"} ${input.awayTeam}
 ${winner ? `승자: ${winner}` : "무승부"}
 주요 스탯: ${input.statsSummary}
-주요 이벤트(득점/카드/교체): ${input.eventsSummary}
+주요 이벤트(득점/카드/교체 — 참고용, 세부 서술 시 활용): ${input.eventsSummary}
 
 아래 형식으로 정확히 출력해:
 TITLE: [제목]
@@ -96,9 +108,10 @@ CONTENT: [본문]`
       model: "gpt-4o-mini",
       // 한국어 300~500단어는 토큰을 많이 먹어서 1000이면 문장이 잘린다
       max_tokens: 2500,
-      // 기본값(1.0)에서는 경기 시각 같은 구체적 숫자를 "그럴듯하게" 바꿔 쓰는
-      // 경향이 있어서 낮춰서 사실 충실도를 높인다
-      temperature: 0.4,
+      // 기본값(1.0)에서는 경기 시각/스코어 같은 구체적 사실을 "그럴듯하게" 바꿔 쓰는
+      // 경향이 있어서 크게 낮춰서 사실 충실도를 높인다 (0.4에서도 득점 순서/스코어를
+      // 재구성하며 틀리는 사례가 있어 추가로 낮춤)
+      temperature: 0.2,
       messages: [{ role: "user", content: prompt }],
     }),
   })
