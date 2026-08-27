@@ -128,20 +128,28 @@ export async function GET(req: NextRequest) {
           })
           .join(", ")
 
-        // 태그용: 득점/어시스트에 관여한 선수 이름만 등장 순서대로 중복 없이 모은다
+        // 태그용: 득점/어시스트 선수를 먼저, 그다음 카드 받은 선수를 등장 순서대로
+        // 중복 없이 모은다 (태그 개수를 늘리기 위해 카드도 포함)
         const seen = new Set<string>()
+        const cardTags: string[] = []
         for (const e of events) {
-          if (e.type !== "Goal") continue
-          if (e.player.name && !seen.has(e.player.name)) {
-            seen.add(e.player.name)
-            playerTags.push(e.player.name)
-          }
-          if (e.assist?.name && !seen.has(e.assist.name)) {
-            seen.add(e.assist.name)
-            playerTags.push(e.assist.name)
+          if (e.type === "Goal") {
+            if (e.player.name && !seen.has(e.player.name)) {
+              seen.add(e.player.name)
+              playerTags.push(e.player.name)
+            }
+            if (e.assist?.name && !seen.has(e.assist.name)) {
+              seen.add(e.assist.name)
+              playerTags.push(e.assist.name)
+            }
+          } else if (e.type === "Card") {
+            if (e.player.name && !seen.has(e.player.name)) {
+              seen.add(e.player.name)
+              cardTags.push(e.player.name)
+            }
           }
         }
-        playerTags = playerTags.slice(0, 6)
+        playerTags = [...playerTags, ...cardTags].slice(0, 12)
       }
     }
 

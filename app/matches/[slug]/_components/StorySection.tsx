@@ -1,5 +1,6 @@
 import { generateMatchStory } from "@/lib/generateStory"
 import { getArticleByMatchId } from "@/lib/articles"
+import { LEAGUE_NAME_KO, TEAM_NAME_KO } from "@/lib/koreanNames"
 import MatchReviewCard from "@/components/MatchReviewCard"
 
 export default async function StorySection({
@@ -39,8 +40,17 @@ export default async function StorySection({
         statsSummary,
       })
 
-  // 팀명·리그명은 항상 태그로 붙이고, 득점/어시스트 선수 태그는 기사가 있을 때만 추가된다
-  const tags = [homeTeam, awayTeam, leagueName, ...(fullArticle?.playerTags ?? [])]
+  // 팀명·리그명은 항상 태그로 붙이고(한글 매핑이 있으면 한글 태그도 같이),
+  // 득점/어시스트/카드 선수 태그는 기사가 있을 때만 추가된다
+  const tags = [
+    homeTeam,
+    TEAM_NAME_KO[homeTeam],
+    awayTeam,
+    TEAM_NAME_KO[awayTeam],
+    leagueName,
+    LEAGUE_NAME_KO[leagueName],
+    ...(fullArticle?.playerTags ?? []),
+  ].filter((tag): tag is string => Boolean(tag))
 
   return (
     <MatchReviewCard
