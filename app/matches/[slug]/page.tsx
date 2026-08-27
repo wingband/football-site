@@ -20,7 +20,7 @@ import StandingsSection from "./_components/StandingsSection"
 import H2HSection from "./_components/H2HSection"
 import SidebarDeferredSection from "./_components/SidebarDeferredSection"
 import { getSeasonYear } from "@/lib/season"
-import { buildMatchSlug, matchHref, parseFixtureId } from "@/lib/slug"
+import { buildMatchSlug, matchHref, parseFixtureId, parseSlugDate } from "@/lib/slug"
 import { MOCK_MATCH_DETAIL } from "@/lib/mockData"
 import { getArticleByMatchId } from "@/lib/articles"
 import type { Metadata } from "next"
@@ -92,11 +92,21 @@ const LIVE_CODES = ["1H", "HT", "2H", "ET", "BT", "P", "SUSP", "INT", "LIVE"]
 const FINISHED_CODES = ["FT", "AET", "PEN"]
 
 // 경기 상세 페이지 전용 fixture fetch — mock 모드와 실제 모드를 분리
-async function fetchFixture(fixtureId: number): Promise<FixtureDetail[]> {
+async function fetchFixture(fixtureId: number, revalidate?: number): Promise<FixtureDetail[]> {
   if (process.env.USE_MOCK_DATA === "true") {
     return MOCK_MATCH_DETAIL.fixture as FixtureDetail[]
   }
-  return apiFetch(`/fixtures?id=${fixtureId}`) as Promise<FixtureDetail[]>
+  return apiFetch(`/fixtures?id=${fixtureId}`, revalidate) as Promise<FixtureDetail[]>
+}
+
+// slug에 박힌 날짜만으로 (아직 API를 부르기 전에) 캐시 시간을 정한다.
+// 킥오프로부터 이틀 넘게 지났으면 사실상 결과가 안 바뀌는 경기이므로 24시간,
+// 아니면 라이브/예정 상태가 계속 바뀔 수 있으니 기존처럼 60초로 짧게 잡는다.
+function identityRevalidateFromSlug(slug: string): number {
+  const kickoff = parseSlugDate(slug)
+  if (!kickoff) return 60
+  const daysSince = (Date.now() - kickoff.getTime()) / (1000 * 60 * 60 * 24)
+  return daysSince > 2 ? 86400 : 60
 }
 
 function getTopRatedPlayers(playerStats: PlayerStat[], count: number) {
@@ -129,7 +139,7 @@ export async function generateMetadata({
     return { title: "경기 정보를 찾을 수 없습니다" }
   }
 
-  const matchArr = await fetchFixture(fixtureId)
+  const matchArr = await fetchFixture(fixtureId, identityRevalidateFromSlug(slug))
   const match = matchArr?.[0] ?? null
 
   if (!match) {
@@ -182,7 +192,7 @@ export default async function MatchDetailPage({
     return notFoundView
   }
 
-  const matchArr = await fetchFixture(fixtureId)
+  const matchArr = await fetchFixture(fixtureId, identityRevalidateFromSlug(slug))
   const match = matchArr?.[0] ?? null
 
   if (!match) {

@@ -46,6 +46,21 @@ export function matchHref(match: MatchSlugSource): string {
   return `/matches/${buildMatchSlug(match)}`
 }
 
+// slug → 킥오프 날짜(UTC). "team-vs-team-YYYYMMDD-fixtureId" 형식에서 날짜만 뽑아낸다.
+// API를 부르기 전에 "이 경기가 며칠 전 거라 사실상 안 바뀐다"를 미리 판단해서
+// 캐시 시간을 정하는 데 쓴다 (finished 여부를 알려면 원래 fetch가 필요한데,
+// slug의 날짜만으로 충분히 근사할 수 있다)
+export function parseSlugDate(slug: string): Date | null {
+  const matched = /-(\d{8})-\d+$/.exec(slug)
+  if (!matched) return null
+  const raw = matched[1]
+  const year = Number(raw.slice(0, 4))
+  const month = Number(raw.slice(4, 6))
+  const day = Number(raw.slice(6, 8))
+  const d = new Date(Date.UTC(year, month - 1, day))
+  return Number.isNaN(d.getTime()) ? null : d
+}
+
 // slug → fixture id. 끝에 붙은 숫자를 그대로 읽는다.
 // 팀명/날짜가 없는 예전 숫자 URL(/matches/1234)도 통과시켜서, 페이지에서
 // 정규 slug로 308 리다이렉트할 수 있게 한다.
