@@ -4,6 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { matchHref } from "@/lib/slug"
 import type { LeagueFixture } from "@/lib/leagueData"
+import Logo from "@/components/Logo"
 
 const FINISHED_CODES = ["FT", "AET", "PEN"]
 type Mode = "date" | "round" | "team"
@@ -17,11 +18,11 @@ function FixtureRow({ fx }: { fx: LeagueFixture }) {
       className="flex items-center justify-center gap-3 px-4 py-4 text-sm hover:bg-turf-line/20 border-b border-turf-line/20 last:border-b-0"
     >
       <span className="flex-1 text-right truncate">{fx.teams.home.name}</span>
-      <img src={fx.teams.home.logo} alt="" className="w-5 h-5 shrink-0" />
+      <Logo src={fx.teams.home.logo} alt="" className="w-5 h-5 shrink-0" />
       <span className="font-data text-score-amber w-16 text-center shrink-0">
         {finished ? `${fx.goals.home} - ${fx.goals.away}` : timeText}
       </span>
-      <img src={fx.teams.away.logo} alt="" className="w-5 h-5 shrink-0" />
+      <Logo src={fx.teams.away.logo} alt="" className="w-5 h-5 shrink-0" />
       <span className="flex-1 truncate">{fx.teams.away.name}</span>
     </Link>
   )

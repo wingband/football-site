@@ -2,6 +2,7 @@ import Link from "next/link"
 import PlayerAvatar from "@/components/PlayerAvatar"
 import { getSeasonYear } from "@/lib/season"
 import { MOCK_TOP_SCORERS } from "@/lib/mockData"
+import Logo from "@/components/Logo"
 
 type ScorerEntry = {
   player: { id: number; name: string; photo: string }
@@ -66,7 +67,7 @@ export default async function TopScorersPage({
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{s.player.name}</p>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <img src={stat.team.logo} alt="" className="w-3.5 h-3.5" />
+                    <Logo src={stat.team.logo} alt="" className="w-3.5 h-3.5" />
                     <span className="text-[11px] text-floodlight/40 truncate">{stat.team.name}</span>
                   </div>
                 </div>

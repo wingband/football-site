@@ -5,6 +5,7 @@ import Link from "next/link"
 import { getSeasonYear, formatSeasonLabel } from "@/lib/season"
 import { getLeagueStandings } from "@/lib/leagueData"
 import SeasonSelect from "@/components/SeasonSelect"
+import Logo from "@/components/Logo"
 
 // 드롭다운에 띄울 가장 오래된 시즌. 위쪽 끝은 현재 시즌이라 해가 넘어가면 자동으로 늘어남
 const FIRST_SEASON = 2020
@@ -136,7 +137,7 @@ export default async function StandingsPage({
           {LEAGUES.map(l => (
             <a key={l.id} href={`#league-${l.id}`}
               className="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-turf-line/30 hover:bg-turf-line/50 rounded-full text-xs text-floodlight/70 hover:text-floodlight transition-colors">
-              <img src={l.logo} alt="" className="w-4 h-4" />
+              <Logo src={l.logo} alt="" className="w-4 h-4" />
               {l.name}
             </a>
           ))}
@@ -164,7 +165,7 @@ export default async function StandingsPage({
                 {/* 리그 헤더 */}
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2.5">
-                    <img src={logo} alt="" className="w-7 h-7" />
+                    <Logo src={logo} alt="" className="w-7 h-7" />
                     <div>
                       <h2 className="font-display uppercase text-base text-floodlight font-bold">{name}</h2>
                       <p className="text-[10px] text-floodlight/30">{nameEn} {data.league.season}</p>
@@ -215,7 +216,7 @@ export default async function StandingsPage({
 
                             {/* 팀명 */}
                             <span className="flex items-center gap-2 min-w-0">
-                              <img src={row.team.logo} alt="" className="w-5 h-5 shrink-0" />
+                              <Logo src={row.team.logo} alt="" className="w-5 h-5 shrink-0" />
                               <span className="truncate text-xs font-medium">{row.team.name}</span>
                             </span>
 

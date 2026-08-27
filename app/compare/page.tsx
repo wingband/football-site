@@ -8,6 +8,7 @@ import PlayerCompareSearch from "@/components/PlayerCompareSearch"
 import { getPlayerDataWithFallback, type PlayerData, type PlayerSeasonStat } from "@/lib/playerData"
 import { getSeasonYear } from "@/lib/season"
 import { KOREAN_PLAYERS_ABROAD } from "@/lib/koreanPlayersAbroad"
+import Logo from "@/components/Logo"
 import {
   COMPARE_METRICS,
   compareHref,
@@ -97,11 +98,11 @@ function PlayerHeader({
       {stat ? (
         <>
           <div className="flex items-center gap-1.5 mt-2">
-            <img src={stat.team.logo} alt="" className="w-4 h-4 shrink-0" />
+            <Logo src={stat.team.logo} alt="" className="w-4 h-4 shrink-0" />
             <span className="text-xs text-score-amber font-semibold truncate">{stat.team.name}</span>
           </div>
           <div className="flex items-center gap-1.5 mt-1">
-            <img src={stat.league.logo} alt="" className="w-3.5 h-3.5 shrink-0" />
+            <Logo src={stat.league.logo} alt="" className="w-3.5 h-3.5 shrink-0" />
             <span className="text-[11px] text-floodlight/50 truncate">{stat.league.name}</span>
           </div>
         </>
@@ -181,7 +182,7 @@ export default async function ComparePage({
                     href={compareHref(p.id, sonId)}
                     className="flex items-center gap-3 px-4 py-3 hover:bg-score-amber/10 border-b border-turf-line/40 last:border-b-0 transition-colors"
                   >
-                    <img src={p.teamLogo} alt="" className="w-5 h-5 shrink-0" />
+                    <Logo src={p.teamLogo} alt="" className="w-5 h-5 shrink-0" />
                     <span className="text-sm">{p.name} vs 손흥민</span>
                     <span className="text-xs text-floodlight/40 ml-auto">{p.league}</span>
                   </Link>

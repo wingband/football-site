@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Logo from "@/components/Logo"
 
 type StandingRow = {
   rank: number
@@ -93,7 +94,7 @@ export default function StandingsTable({
                           href={`/teams/${row.team.id}`}
                           className="flex items-center gap-2 hover:text-score-amber"
                         >
-                          <img src={row.team.logo} alt="" className="w-5 h-5 shrink-0" />
+                          <Logo src={row.team.logo} alt="" className="w-5 h-5 shrink-0" />
                           <span className={`truncate ${highlighted ? "font-semibold text-floodlight" : ""}`}>
                             {row.team.name}
                           </span>

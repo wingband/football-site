@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import FollowButton from "@/components/FollowButton"
+import Logo from "@/components/Logo"
 
 const TABS = [
   { key: "overview", label: "팀 개요", path: "" },
@@ -37,7 +38,7 @@ export default function TeamHeader({
     <div>
       <div className="flex items-center justify-between gap-3 pt-8 pb-4">
         <div className="flex items-center gap-3 min-w-0">
-          <img src={logo} alt="" className="w-12 h-12 shrink-0" />
+          <Logo src={logo} alt="" className="w-12 h-12 shrink-0" />
           <div className="min-w-0">
             <h1 className="font-display uppercase text-xl text-floodlight truncate">{name}</h1>
             <p className="text-xs text-floodlight/40">{country}</p>

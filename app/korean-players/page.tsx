@@ -3,6 +3,8 @@ export const dynamic = 'force-dynamic'
 import type { Metadata } from "next"
 import Link from "next/link"
 import { KOREAN_PLAYERS_ABROAD } from "@/lib/koreanPlayersAbroad"
+import Logo from "@/components/Logo"
+import PlayerAvatar from "@/components/PlayerAvatar"
 
 export const metadata: Metadata = {
   title: "해외파 한국 축구 선수 — 황희찬, 이강인, 김민재, 손흥민 | GoalLine",
@@ -95,7 +97,7 @@ export default function KoreanPlayersPage() {
                       className="flex items-start gap-4 bg-turf/40 border border-turf-line/40 p-4 hover:border-score-amber/50 hover:bg-turf-line/20 transition-colors group">
 
                       {/* 선수 사진 */}
-                      <img
+                      <PlayerAvatar
                         src={`https://media.api-sports.io/football/players/${p.id}.png`}
                         alt={intro?.nameKo ?? p.name}
                         className="w-14 h-14 rounded-full object-cover bg-turf-line shrink-0"
@@ -114,10 +116,10 @@ export default function KoreanPlayersPage() {
 
                         {/* 소속팀 */}
                         <div className="flex items-center gap-2 mt-1.5">
-                          <img src={p.teamLogo} alt="" className="w-4 h-4 shrink-0" />
+                          <Logo src={p.teamLogo} alt="" className="w-4 h-4 shrink-0" />
                           <span className="text-sm font-semibold text-score-amber">{p.teamName}</span>
                           <span className="text-floodlight/30 text-xs">·</span>
-                          <img src={p.leagueLogo} alt="" className="w-3.5 h-3.5 shrink-0" />
+                          <Logo src={p.leagueLogo} alt="" className="w-3.5 h-3.5 shrink-0" />
                           <span className="text-xs text-floodlight/50">{p.league}</span>
                         </div>
 

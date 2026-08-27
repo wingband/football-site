@@ -6,6 +6,7 @@ import { matchHref } from "@/lib/slug"
 import { getMatchPhase } from "@/lib/matchStatus"
 import { useFavorites } from "@/lib/useFavorites"
 import { deriveFavoriteLeagues } from "@/lib/leagueFavorites"
+import Logo from "@/components/Logo"
 
 type Fixture = {
   fixture: {
@@ -117,14 +118,14 @@ function MatchRow({ match }: { match: Fixture }) {
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <img src={match.teams.home.logo} alt="" className="w-4 h-4 shrink-0" />
+          <Logo src={match.teams.home.logo} alt="" className="w-4 h-4 shrink-0" />
           <span className="text-sm text-floodlight/90 truncate">{match.teams.home.name}</span>
           <span className="ml-auto text-sm font-data font-semibold text-floodlight pl-2">
             {phase === "upcoming" ? "" : match.goals.home ?? "-"}
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <img src={match.teams.away.logo} alt="" className="w-4 h-4 shrink-0" />
+          <Logo src={match.teams.away.logo} alt="" className="w-4 h-4 shrink-0" />
           <span className="text-sm text-floodlight/90 truncate">{match.teams.away.name}</span>
           <span className="ml-auto text-sm font-data font-semibold text-floodlight pl-2">
             {phase === "upcoming" ? "" : match.goals.away ?? "-"}
@@ -181,7 +182,7 @@ function LeagueLink({
   const content = (
     <>
       {logo ? (
-        <img src={logo} alt="" className="w-4 h-4 shrink-0 brightness-150 saturate-150" />
+        <Logo src={logo} alt="" className="w-4 h-4 shrink-0 brightness-150 saturate-150" />
       ) : (
         <span className="w-4 h-4 shrink-0 rounded-full bg-turf-line" />
       )}
@@ -213,13 +214,13 @@ export default function MatchesExplorer({ fixtures, userCountry }: { fixtures: F
   const [liveOnly, setLiveOnly] = useState(false)
   const [sortByTime, setSortByTime] = useState(false)
   const [query, setQuery] = useState("")
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
+  const [collapsed, setCollapsed] = useState<Set<number>>(new Set())
   const { favorites, toggleFavorite, isFavorite } = useFavorites()
 
   const { featured, restByCountry } = useMemo(() => {
-    const seen = new Map<string, { id: number; name: string; country: string; logo: string }>()
+    const seen = new Map<number, { id: number; name: string; country: string; logo: string }>()
     for (const f of fixtures) {
-      seen.set(f.league.name, {
+      seen.set(f.league.id, {
         id: f.league.id,
         name: f.league.name,
         country: f.league.country,
@@ -357,11 +358,11 @@ export default function MatchesExplorer({ fixtures, userCountry }: { fixtures: F
     })
   }, [filtered, favorites])
 
-  function toggleCollapse(leagueName: string) {
+  function toggleCollapse(leagueId: number) {
     setCollapsed((prev) => {
       const next = new Set(prev)
-      if (next.has(leagueName)) next.delete(leagueName)
-      else next.add(leagueName)
+      if (next.has(leagueId)) next.delete(leagueId)
+      else next.add(leagueId)
       return next
     })
   }
@@ -480,7 +481,7 @@ export default function MatchesExplorer({ fixtures, userCountry }: { fixtures: F
                     : "bg-turf/40 border border-turf-line text-floodlight/60"
                 }`}
               >
-                <img src={getLeagueLogo(l.id, l.logo)} alt="" className="w-3.5 h-3.5" />
+                <Logo src={getLeagueLogo(l.id, l.logo)} alt="" className="w-3.5 h-3.5" />
                 {l.displayName}
               </button>
             ))}
@@ -529,11 +530,11 @@ export default function MatchesExplorer({ fixtures, userCountry }: { fixtures: F
         ) : (
           <div className="space-y-5">
             {leagueGroups.map(({ league, matches }) => {
-              const isCollapsed = collapsed.has(league.name)
+              const isCollapsed = collapsed.has(league.id)
               return (
-                <section key={league.name} className="bg-turf/40 border-l-2 border-score-amber overflow-hidden">
+                <section key={league.id} className="bg-turf/40 border-l-2 border-score-amber overflow-hidden">
                   <div className="flex items-center gap-2 px-4 py-3 border-b border-turf-line/60">
-                    <img src={getLeagueLogo(league.id, league.logo)} alt="" className="w-5 h-5" />
+                    <Logo src={getLeagueLogo(league.id, league.logo)} alt="" className="w-5 h-5" />
                     <Link
                       href={`/leagues/${league.id}`}
                       className="text-sm font-display uppercase tracking-wide text-floodlight/90 hover:text-score-amber"
@@ -547,7 +548,7 @@ export default function MatchesExplorer({ fixtures, userCountry }: { fixtures: F
                       onClick={() => toggleFavorite(league.id)}
                     />
                     <button
-                      onClick={() => toggleCollapse(league.name)}
+                      onClick={() => toggleCollapse(league.id)}
                       className="text-floodlight/40 hover:text-floodlight text-xs ml-1"
                       aria-label="접기/펼치기"
                     >

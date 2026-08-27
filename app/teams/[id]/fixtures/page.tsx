@@ -2,6 +2,7 @@ import Link from "next/link"
 import { matchHref } from "@/lib/slug"
 import type { Metadata } from "next"
 import { getTeamInfo, getTeamCurrentLeague, getTeamSeasonFixtures, type TeamFixture } from "@/lib/teamData"
+import Logo from "@/components/Logo"
 
 const FINISHED_CODES = ["FT", "AET", "PEN"]
 
@@ -72,11 +73,11 @@ export default async function TeamFixturesPage({ params }: { params: Promise<{ i
                   className="flex items-center justify-center gap-3 px-4 py-4 text-sm hover:bg-turf-line/20 border-b border-turf-line/20 last:border-b-0"
                 >
                   <span className="flex-1 text-right truncate">{fx.teams.home.name}</span>
-                  <img src={fx.teams.home.logo} alt="" className="w-5 h-5 shrink-0" />
+                  <Logo src={fx.teams.home.logo} alt="" className="w-5 h-5 shrink-0" />
                   <span className={`font-data w-16 text-center shrink-0 rounded px-1 py-0.5 ${scoreColor}`}>
                     {finished ? `${fx.goals.home} - ${fx.goals.away}` : timeText}
                   </span>
-                  <img src={fx.teams.away.logo} alt="" className="w-5 h-5 shrink-0" />
+                  <Logo src={fx.teams.away.logo} alt="" className="w-5 h-5 shrink-0" />
                   <span className="flex-1 truncate">{fx.teams.away.name}</span>
                 </Link>
               )

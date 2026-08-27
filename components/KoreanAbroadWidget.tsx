@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import Logo from "@/components/Logo"
+import PlayerAvatar from "@/components/PlayerAvatar"
 
 type Player = {
   id: number
@@ -36,7 +38,7 @@ function PlayerRow({ p }: { p: Player }) {
       className="flex items-center gap-3 px-4 py-3 hover:bg-score-amber/5 transition-colors border-b border-turf-line/30 last:border-b-0 group"
     >
       {/* 사진 */}
-      <img
+      <PlayerAvatar
         src={`https://media.api-sports.io/football/players/${p.id}.png`}
         alt={p.name}
         className="w-9 h-9 rounded-full object-cover bg-turf-line shrink-0"
@@ -48,7 +50,7 @@ function PlayerRow({ p }: { p: Player }) {
           {p.name}
         </p>
         <div className="flex items-center gap-1.5 mt-0.5">
-          <img src={p.teamLogo} alt="" className="w-3.5 h-3.5 shrink-0" />
+          <Logo src={p.teamLogo} alt="" className="w-3.5 h-3.5 shrink-0" />
           <span className="text-xs text-floodlight/60 truncate">{p.teamName}</span>
           <span className="text-floodlight/30 text-xs">·</span>
           <span className="text-xs text-floodlight/40 truncate">{p.league}</span>
@@ -125,7 +127,7 @@ export default function KoreanAbroadWidget() {
             <div className="hidden sm:flex items-center gap-2">
               {big5.filter(p => p.rating).slice(0, 4).map(p => (
                 <div key={p.id} className="flex items-center gap-1.5">
-                  <img
+                  <PlayerAvatar
                     src={`https://media.api-sports.io/football/players/${p.id}.png`}
                     alt={p.name}
                     className="w-6 h-6 rounded-full object-cover bg-turf-line"

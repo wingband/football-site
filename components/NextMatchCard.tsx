@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { matchHref } from "@/lib/slug"
+import Logo from "@/components/Logo"
 
 type TeamFixture = {
   fixture: { id: number; date: string; status: { short: string } }
@@ -32,15 +33,15 @@ function NextMatchColumn({ teamId, fixture }: { teamId: number; fixture: TeamFix
       className="flex flex-col items-center gap-2 hover:bg-turf-line/20 transition-colors py-2 px-1"
     >
       <span className="flex items-center gap-1.5 text-[10px] text-floodlight/40">
-        <img src={fixture.league.logo} alt="" className="w-3.5 h-3.5" />
+        <Logo src={fixture.league.logo} alt="" className="w-3.5 h-3.5" />
         {fixture.league.name}
       </span>
       <div className="flex items-center gap-3">
-        <img src={self.logo} alt="" className="w-7 h-7" />
+        <Logo src={self.logo} alt="" className="w-7 h-7" />
         <span className="font-data text-sm text-score-amber">
           {new Date(fixture.fixture.date).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
         </span>
-        <img src={opponent.logo} alt="" className="w-7 h-7" />
+        <Logo src={opponent.logo} alt="" className="w-7 h-7" />
       </div>
       <span className="text-xs text-floodlight/60 text-center">{opponent.name}</span>
       <span className="text-[10px] text-floodlight/30">{dateText}</span>

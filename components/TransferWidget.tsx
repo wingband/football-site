@@ -1,6 +1,7 @@
 import Link from "next/link"
 import PlayerAvatar from "@/components/PlayerAvatar"
 import { getAllTransfers } from "@/lib/transfers"
+import Logo from "@/components/Logo"
 
 function formatDate(dateStr: string) {
   const d = new Date(dateStr)
@@ -38,10 +39,10 @@ export default async function TransferWidget() {
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium truncate">{entry.player.name}</p>
                 <div className="flex items-center gap-1 mt-0.5 text-[10px] text-floodlight/40">
-                  <img src={t.teams.out.logo} alt="" className="w-3 h-3" />
+                  <Logo src={t.teams.out.logo} alt="" className="w-3 h-3" />
                   <span className="truncate max-w-[60px]">{t.teams.out.name}</span>
                   <span>→</span>
-                  <img src={t.teams.in.logo} alt="" className="w-3 h-3" />
+                  <Logo src={t.teams.in.logo} alt="" className="w-3 h-3" />
                   <span className="truncate max-w-[60px]">{t.teams.in.name}</span>
                 </div>
               </div>

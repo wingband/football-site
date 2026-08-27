@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import PlayerAvatar from "@/components/PlayerAvatar"
 import SeasonDropdown from "@/components/SeasonDropdown"
 import { getSeasonYear } from "@/lib/season"
+import Logo from "@/components/Logo"
 import {
   getLeagueStandings,
   getLeagueTopScorers,
@@ -48,7 +49,7 @@ function LeaderCard({ title, rows }: { title: string; rows: Row[] }) {
               <div className="min-w-0 flex-1">
                 <p className="text-sm truncate">{r.name}</p>
                 <div className="flex items-center gap-1 mt-0.5">
-                  <img src={r.teamLogo} alt="" className="w-3 h-3" />
+                  <Logo src={r.teamLogo} alt="" className="w-3 h-3" />
                   <span className="text-[11px] text-floodlight/40 truncate">{r.teamName}</span>
                 </div>
               </div>

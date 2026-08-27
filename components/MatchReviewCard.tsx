@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Logo from "@/components/Logo"
 
 // Section 컴포넌트와 같은 프레임(좌측 앰버 세로바 + 헤더 헤어라인 + px-5 py-5 본문)을 쓰고,
 // 앰버 배경으로만 "AI 리뷰" 카드임을 구분한다.
@@ -27,8 +28,8 @@ export default function MatchReviewCard({
           Match Review
         </h2>
         <span className="flex items-center ml-1.5">
-          <img src={homeLogo} alt="" className="w-5 h-5" />
-          <img src={awayLogo} alt="" className="w-5 h-5 -ml-1.5" />
+          <Logo src={homeLogo} alt="" className="w-5 h-5" />
+          <Logo src={awayLogo} alt="" className="w-5 h-5 -ml-1.5" />
         </span>
       </div>
 

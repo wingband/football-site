@@ -3,6 +3,8 @@ export const dynamic = 'force-dynamic'
 import Link from "next/link"
 import AdSlot from "@/components/AdSlot"
 import { MOCK_SEARCH_RESULTS } from "@/lib/mockData"
+import Logo from "@/components/Logo"
+import PlayerAvatar from "@/components/PlayerAvatar"
 
 type TeamResult = { team: { id: number; name: string; logo: string; country: string } }
 type PlayerResult = { player: { id: number; name: string; photo: string; nationality: string } }
@@ -85,7 +87,7 @@ export default async function SearchPage({
                   href={`/leagues/${l.league.id}`}
                   className="flex items-center gap-3 px-4 py-3 hover:bg-turf-line/40 border-b border-turf-line/40 last:border-b-0"
                 >
-                  <img src={l.league.logo} alt="" className="w-6 h-6" />
+                  <Logo src={l.league.logo} alt="" className="w-6 h-6" />
                   <span className="text-sm">{l.league.name}</span>
                   <span className="text-xs text-floodlight/40 ml-auto">{l.league.country}</span>
                 </Link>
@@ -104,7 +106,7 @@ export default async function SearchPage({
                   href={`/teams/${t.team.id}`}
                   className="flex items-center gap-3 px-4 py-3 hover:bg-turf-line/40 border-b border-turf-line/40 last:border-b-0"
                 >
-                  <img src={t.team.logo} alt="" className="w-6 h-6" />
+                  <Logo src={t.team.logo} alt="" className="w-6 h-6" />
                   <span className="text-sm">{t.team.name}</span>
                   <span className="text-xs text-floodlight/40 ml-auto">{t.team.country}</span>
                 </Link>
@@ -123,7 +125,7 @@ export default async function SearchPage({
                   href={`/players/${p.player.id}`}
                   className="flex items-center gap-3 px-4 py-3 hover:bg-turf-line/40 border-b border-turf-line/40 last:border-b-0"
                 >
-                  <img src={p.player.photo} alt="" className="w-8 h-8 rounded-full" />
+                  <PlayerAvatar src={p.player.photo} alt={p.player.name} className="w-8 h-8 rounded-full" />
                   <span className="text-sm">{p.player.name}</span>
                   <span className="text-xs text-floodlight/40 ml-auto">{p.player.nationality}</span>
                 </Link>

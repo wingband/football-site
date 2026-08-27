@@ -24,6 +24,7 @@ import { buildMatchSlug, matchHref, parseFixtureId } from "@/lib/slug"
 import { MOCK_MATCH_DETAIL } from "@/lib/mockData"
 import { getArticleByMatchId } from "@/lib/articles"
 import type { Metadata } from "next"
+import Logo from "@/components/Logo"
 
 
 type FixtureDetail = {
@@ -486,7 +487,7 @@ export default async function MatchDetailPage({
             <span className="text-sm">{fromReview ? "리뷰" : "경기"}</span>
           </Link>
           <div className="flex items-center gap-2 text-sm text-floodlight/80 min-w-0">
-            <img src={match.league.logo} alt="" className="w-4 h-4 shrink-0" />
+            <Logo src={match.league.logo} alt="" className="w-4 h-4 shrink-0" />
             <span className="truncate">
               {match.league.name}
               {match.league.round ? ` ${match.league.round}` : ""}
@@ -521,7 +522,7 @@ export default async function MatchDetailPage({
               <span className="font-display uppercase text-sm tracking-wide text-right leading-tight truncate">
                 {match.teams.home.name}
               </span>
-              <img src={match.teams.home.logo} alt="" className="w-9 h-9 shrink-0" />
+              <Logo src={match.teams.home.logo} alt="" className="w-9 h-9 shrink-0" />
             </div>
 
             <div className="flex flex-col items-center px-2 shrink-0">
@@ -540,7 +541,7 @@ export default async function MatchDetailPage({
             </div>
 
             <div className="flex items-center gap-2 flex-1 min-w-0">
-              <img src={match.teams.away.logo} alt="" className="w-9 h-9 shrink-0" />
+              <Logo src={match.teams.away.logo} alt="" className="w-9 h-9 shrink-0" />
               <span className="font-display uppercase text-sm tracking-wide text-left leading-tight truncate">
                 {match.teams.away.name}
               </span>

@@ -15,6 +15,7 @@ import {
   type TeamFixture,
 } from "@/lib/teamData"
 import { getLeagueStandings, getLeagueFixturesByMode, buildNextOpponentMap } from "@/lib/leagueData"
+import Logo from "@/components/Logo"
 
 const FINISHED_CODES = ["FT", "AET", "PEN"]
 
@@ -65,7 +66,7 @@ function RecentFormBadges({ fixtures, teamId }: { fixtures: TeamFixture[]; teamI
             <span className={`px-2.5 py-1 rounded font-data text-sm font-bold ${color}`}>
               {fx.goals.home ?? "-"} - {fx.goals.away ?? "-"}
             </span>
-            <img src={opponent.logo} alt="" className="w-6 h-6" />
+            <Logo src={opponent.logo} alt="" className="w-6 h-6" />
           </Link>
         )
       })}
@@ -129,7 +130,7 @@ export default async function TeamOverviewPage({
               </div>
               <div className="flex items-center justify-around">
                 <div className="flex flex-col items-center gap-1.5 min-w-0">
-                  <img src={nextFixture.teams.home.logo} alt="" className="w-9 h-9" />
+                  <Logo src={nextFixture.teams.home.logo} alt="" className="w-9 h-9" />
                   <span className="text-xs truncate">{nextFixture.teams.home.name}</span>
                 </div>
                 <div className="flex flex-col items-center">
@@ -141,7 +142,7 @@ export default async function TeamOverviewPage({
                   </span>
                 </div>
                 <div className="flex flex-col items-center gap-1.5 min-w-0">
-                  <img src={nextFixture.teams.away.logo} alt="" className="w-9 h-9" />
+                  <Logo src={nextFixture.teams.away.logo} alt="" className="w-9 h-9" />
                   <span className="text-xs truncate">{nextFixture.teams.away.name}</span>
                 </div>
               </div>

@@ -17,6 +17,7 @@ import {
   type ScorerEntry,
 } from "@/lib/leagueData"
 import { checkApiFootballStatus } from "@/lib/apiFootballStatus"
+import Logo from "@/components/Logo"
 
 const FINISHED_CODES = ["FT", "AET", "PEN"]
 
@@ -39,7 +40,7 @@ function WeekTeamPanel({ players }: { players: StarPlayer[] }) {
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium group-hover:text-score-amber transition-colors truncate">{p.name}</p>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <img src={p.teamLogo} alt="" className="w-3.5 h-3.5 shrink-0" />
+                <Logo src={p.teamLogo} alt="" className="w-3.5 h-3.5 shrink-0" />
                 <span className="text-xs text-floodlight/50 truncate">{p.teamName}</span>
               </div>
             </div>
@@ -85,11 +86,11 @@ function RoundFixturesWidget({ fixtures }: { fixtures: LeagueFixture[] }) {
               <Link key={fx.fixture.id} href={matchHref(fx)}
                 className="flex items-center justify-center gap-2 px-4 py-3 text-xs hover:bg-turf-line/20 border-b border-turf-line/20 last:border-b-0">
                 <span className="flex-1 text-right truncate text-floodlight/80">{fx.teams.home.name}</span>
-                <img src={fx.teams.home.logo} alt="" className="w-4 h-4 shrink-0" />
+                <Logo src={fx.teams.home.logo} alt="" className="w-4 h-4 shrink-0" />
                 <span className="font-data text-score-amber w-16 text-center shrink-0">
                   {finished ? `${fx.goals.home} - ${fx.goals.away}` : timeText}
                 </span>
-                <img src={fx.teams.away.logo} alt="" className="w-4 h-4 shrink-0" />
+                <Logo src={fx.teams.away.logo} alt="" className="w-4 h-4 shrink-0" />
                 <span className="flex-1 truncate text-floodlight/80">{fx.teams.away.name}</span>
               </Link>
             )
@@ -119,7 +120,7 @@ function LeaderboardCard({ title, rows, moreHref }: { title: string; rows: Leade
               <div className="min-w-0 flex-1">
                 <p className="text-sm truncate text-floodlight/90">{r.name}</p>
                 <div className="flex items-center gap-1 mt-0.5">
-                  <img src={r.teamLogo} alt="" className="w-3 h-3" />
+                  <Logo src={r.teamLogo} alt="" className="w-3 h-3" />
                   <span className="text-[11px] text-floodlight/45 truncate">{r.teamName}</span>
                 </div>
               </div>

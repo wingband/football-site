@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { getTeamInfo, getTeamTransfers } from "@/lib/teamData"
+import Logo from "@/components/Logo"
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params
@@ -51,11 +52,11 @@ export default async function TeamTransfersPage({ params }: { params: Promise<{ 
               <div key={i} className="flex items-center gap-3 py-3.5 text-sm">
                 {/* 원 소속 → 이적 대상 */}
                 <div className="flex items-center gap-2 w-56 shrink-0 min-w-0">
-                  <img src={row.outTeam.logo} alt="" className="w-5 h-5 shrink-0" />
+                  <Logo src={row.outTeam.logo} alt="" className="w-5 h-5 shrink-0" />
                   <span className="truncate text-xs text-floodlight/60">{row.outTeam.name}</span>
                   <span className={`shrink-0 ${isIncoming ? "text-green-400" : "text-orange-400"}`}>→</span>
                   <span className="truncate text-xs text-floodlight/60">{row.inTeam.name}</span>
-                  <img src={row.inTeam.logo} alt="" className="w-5 h-5 shrink-0" />
+                  <Logo src={row.inTeam.logo} alt="" className="w-5 h-5 shrink-0" />
                 </div>
 
                 <span className="flex-1 truncate font-medium">{row.playerName}</span>

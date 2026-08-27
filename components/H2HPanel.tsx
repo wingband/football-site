@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { matchHref } from "@/lib/slug"
+import Logo from "@/components/Logo"
 
 type H2HMatch = {
   fixture: { id: number; date: string }
@@ -60,13 +61,13 @@ export default function H2HPanel({
       <div className="mb-5">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <img src={homeTeamLogo} alt="" className="w-6 h-6" />
+            <Logo src={homeTeamLogo} alt="" className="w-6 h-6" />
             <span className="font-data font-bold text-score-amber">{aWins}승</span>
           </div>
           <span className="font-data text-floodlight/50 text-sm">{draws}무</span>
           <div className="flex items-center gap-2">
             <span className="font-data font-bold text-floodlight/90">{bWins}승</span>
-            <img src={awayTeamLogo} alt="" className="w-6 h-6" />
+            <Logo src={awayTeamLogo} alt="" className="w-6 h-6" />
           </div>
         </div>
         {total > 0 && (

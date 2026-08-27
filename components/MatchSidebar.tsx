@@ -1,8 +1,10 @@
 import type * as React from "react"
+import Image from "next/image"
 import Link from "next/link"
 import { matchHref } from "@/lib/slug"
 import AdSlot from "@/components/AdSlot"
 import PlayerAvatar from "@/components/PlayerAvatar"
+import Logo from "@/components/Logo"
 
 type SidebarFixture = {
   fixture: { id: number; date: string; status: { short: string } }
@@ -43,7 +45,11 @@ function VenueCard({ venue }: { venue: VenueInfo }) {
   if (!venue) return null
   return (
     <div className="bg-turf/40 border border-turf-line/40 rounded-md overflow-hidden">
-      {venue.image && <img src={venue.image} alt="" className="w-full h-32 object-cover" />}
+      {venue.image && (
+        <div className="relative w-full h-32">
+          <Image src={venue.image} alt="" fill sizes="400px" className="object-cover" />
+        </div>
+      )}
       <div className="p-4 space-y-3">
         <div className="flex items-start gap-2">
           <span className="text-sm">📍</span>
@@ -94,7 +100,7 @@ function RoundFixturesCard({
           <p className="text-sm font-medium">{leagueName}</p>
           {round && <p className="text-xs text-floodlight/40">{round}</p>}
         </div>
-        <img src={leagueLogo} alt="" className="w-6 h-6" />
+        <Logo src={leagueLogo} alt="" className="w-6 h-6" />
       </div>
       {sorted.map((fx) => {
         const finished = FINISHED_CODES.includes(fx.fixture.status.short)
@@ -107,12 +113,12 @@ function RoundFixturesCard({
           >
             <div className="flex-1 min-w-0 space-y-1.5">
               <div className="flex items-center gap-2 text-xs">
-                <img src={fx.teams.home.logo} alt="" className="w-4 h-4 shrink-0" />
+                <Logo src={fx.teams.home.logo} alt="" className="w-4 h-4 shrink-0" />
                 <span className="truncate flex-1">{fx.teams.home.name}</span>
                 {finished && <span className="font-data font-bold">{fx.goals.home}</span>}
               </div>
               <div className="flex items-center gap-2 text-xs">
-                <img src={fx.teams.away.logo} alt="" className="w-4 h-4 shrink-0" />
+                <Logo src={fx.teams.away.logo} alt="" className="w-4 h-4 shrink-0" />
                 <span className="truncate flex-1">{fx.teams.away.name}</span>
                 {finished && <span className="font-data font-bold">{fx.goals.away}</span>}
               </div>
@@ -158,7 +164,7 @@ function InsightsCard({
       <div className="space-y-3">
         {insights.map((ins, i) => (
           <div key={i} className="flex items-start gap-2.5">
-            <img
+            <Logo
               src={ins.side === "home" ? homeLogo : awayLogo}
               alt=""
               className="w-5 h-5 shrink-0 mt-1"
@@ -192,7 +198,7 @@ function InjuriesCard({
         players.length > 0 ? (
           <div key={team} className="mb-3 last:mb-0">
             <div className="flex items-center gap-1.5 mb-2">
-              <img src={logo} alt="" className="w-4 h-4" />
+              <Logo src={logo} alt="" className="w-4 h-4" />
               <p className="text-xs text-floodlight/50">{team}</p>
             </div>
             <div className="space-y-1.5">
@@ -241,7 +247,7 @@ function OddsCard({
           <div key={label} className={`flex flex-col items-center gap-1 py-2 px-1 rounded border ${
             odd && Number(odd) === minOdd ? "border-score-amber bg-score-amber/10" : "border-turf-line/30 bg-turf/20"
           }`}>
-            {logo && <img src={logo} alt="" className="w-5 h-5" />}
+            {logo && <Logo src={logo} alt="" className="w-5 h-5" />}
             <span className="text-[10px] text-floodlight/50 truncate w-full text-center">{label}</span>
             <span className={`font-data font-bold text-sm ${odd && Number(odd) === minOdd ? "text-score-amber" : "text-floodlight/80"}`}>
               {odd ?? "–"}
@@ -279,7 +285,7 @@ function WhoWinsCard({
       <p className="text-center text-sm font-medium mb-4">누가 이길까요?</p>
       <div className="flex items-center justify-around">
         <div className="flex flex-col items-center gap-1.5">
-          <img src={homeLogo} alt="" className="w-9 h-9" />
+          <Logo src={homeLogo} alt="" className="w-9 h-9" />
           <span className="font-data font-bold text-score-amber">{homePct}</span>
         </div>
         <div className="flex flex-col items-center gap-1.5">
@@ -287,7 +293,7 @@ function WhoWinsCard({
           <span className="font-data text-floodlight/60">{drawPct}</span>
         </div>
         <div className="flex flex-col items-center gap-1.5">
-          <img src={awayLogo} alt="" className="w-9 h-9" />
+          <Logo src={awayLogo} alt="" className="w-9 h-9" />
           <span className="font-data font-bold text-floodlight/90">{awayPct}</span>
         </div>
       </div>

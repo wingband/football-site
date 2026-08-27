@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { matchHref } from "@/lib/slug"
+import Logo from "@/components/Logo"
 
 type RelatedFixture = {
   fixture: { id: number; date: string; status: { short: string } }
@@ -39,7 +40,7 @@ export default function RelatedMatches({
   return (
     <section className="mt-10 pt-8 border-t border-turf-line/40">
       <div className="flex items-center gap-2 mb-4">
-        <img src={leagueLogo} alt="" className="w-5 h-5 shrink-0" />
+        <Logo src={leagueLogo} alt="" className="w-5 h-5 shrink-0" />
         <h2 className="font-display uppercase text-sm tracking-wide text-floodlight/90">
           같은 리그 다른 경기
         </h2>
@@ -67,7 +68,7 @@ export default function RelatedMatches({
 
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2">
-                  <img src={fx.teams.home.logo} alt="" className="w-4 h-4 shrink-0" />
+                  <Logo src={fx.teams.home.logo} alt="" className="w-4 h-4 shrink-0" />
                   <span className="text-sm truncate flex-1 group-hover:text-score-amber transition-colors">
                     {fx.teams.home.name}
                   </span>
@@ -76,7 +77,7 @@ export default function RelatedMatches({
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <img src={fx.teams.away.logo} alt="" className="w-4 h-4 shrink-0" />
+                  <Logo src={fx.teams.away.logo} alt="" className="w-4 h-4 shrink-0" />
                   <span className="text-sm truncate flex-1 group-hover:text-score-amber transition-colors">
                     {fx.teams.away.name}
                   </span>

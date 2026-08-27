@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 
 export default function PlayerAvatar({
   src,
@@ -16,7 +17,7 @@ export default function PlayerAvatar({
   if (!src || failed) {
     return (
       <div
-        className={`${className} flex items-center justify-center bg-turf-line text-floodlight/50 font-data`}
+        className={`${className} relative flex items-center justify-center bg-turf-line text-floodlight/50 font-data`}
       >
         {alt ? alt.slice(0, 1) : "?"}
       </div>
@@ -24,11 +25,15 @@ export default function PlayerAvatar({
   }
 
   return (
-    <img
-      src={src}
-      alt={alt}
-      className={className}
-      onError={() => setFailed(true)}
-    />
+    <div className={`${className} relative overflow-hidden`}>
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        sizes="80px"
+        className="object-cover"
+        onError={() => setFailed(true)}
+      />
+    </div>
   )
 }

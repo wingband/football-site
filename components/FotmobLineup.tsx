@@ -1,4 +1,5 @@
 import PlayerAvatar from "@/components/PlayerAvatar"
+import Logo from "@/components/Logo"
 
 type LineupPlayer = {
   player: { id: number; name: string; number: number; pos: string; grid: string | null }
@@ -305,14 +306,14 @@ export default function FotmobLineup({
               {homeAvg}
             </span>
           )}
-          <img src={home.team.logo} alt="" className="w-5 h-5 shrink-0" />
+          <Logo src={home.team.logo} alt="" className="w-5 h-5 shrink-0" />
           <span className="truncate font-medium">{home.team.name}</span>
           <span className="text-floodlight/40 font-data text-xs shrink-0">{home.formation}</span>
         </div>
         <div className="flex items-center gap-2 min-w-0 justify-end">
           <span className="text-floodlight/40 font-data text-xs shrink-0">{away.formation}</span>
           <span className="truncate font-medium">{away.team.name}</span>
-          <img src={away.team.logo} alt="" className="w-5 h-5 shrink-0" />
+          <Logo src={away.team.logo} alt="" className="w-5 h-5 shrink-0" />
           {awayAvg && (
             <span className={`px-1.5 py-0.5 rounded-full text-[11px] font-data font-bold ${Number(awayAvg) >= 7 ? "bg-green-600" : "bg-orange-500"} text-white`}>
               {awayAvg}

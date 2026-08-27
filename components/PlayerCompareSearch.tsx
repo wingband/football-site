@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import type { PlayerSearchResult } from "@/app/api/player-search/route"
+import PlayerAvatar from "@/components/PlayerAvatar"
 
 type Slot = "player1" | "player2"
 
@@ -90,9 +91,9 @@ function SearchBox({
                 }}
                 className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-score-amber/10 border-b border-turf-line/30 last:border-b-0 disabled:opacity-40 disabled:hover:bg-transparent transition-colors"
               >
-                <img
+                <PlayerAvatar
                   src={p.photo}
-                  alt=""
+                  alt={p.name}
                   className="w-8 h-8 rounded-full object-cover bg-turf-line shrink-0"
                 />
                 <span className="min-w-0 flex-1">

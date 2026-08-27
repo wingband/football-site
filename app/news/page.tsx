@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import type { Metadata } from "next"
 import AdSlot from "@/components/AdSlot"
 import Link from "next/link"
+import Logo from "@/components/Logo"
 
 export const metadata: Metadata = {
   title: "축구 뉴스 — GoalLine",
@@ -121,7 +122,7 @@ function LeagueSection({ label, logo, articles }: { label: string; logo: string;
     <div className="bg-turf/20 border border-turf-line/30 overflow-hidden mb-6">
       {/* 섹션 헤더 */}
       <div className="flex items-center gap-2.5 px-5 py-3 border-b border-turf-line/30">
-        <img src={logo} alt="" className="w-6 h-6" />
+        <Logo src={logo} alt="" className="w-6 h-6" />
         <h2 className="font-display uppercase text-sm text-floodlight/90 font-bold tracking-wide">{label}</h2>
       </div>
 

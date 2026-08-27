@@ -2,6 +2,7 @@ import Link from "next/link"
 import type { Metadata } from "next"
 import { getTeamInfo, getTeamCurrentLeague, getTeamSeasonStats } from "@/lib/teamData"
 import { getLeagueStandings } from "@/lib/leagueData"
+import Logo from "@/components/Logo"
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params
@@ -24,7 +25,7 @@ function RankCard({ title, rows, teamId, unit }: { title: string; rows: Row[]; t
           <Link key={r.id} href={`/teams/${r.id}`}
             className={`flex items-center gap-3 py-2 hover:bg-turf-line/20 transition-colors -mx-1 px-1 ${r.id === teamId ? "bg-score-amber/10" : ""}`}>
             <span className="text-xs text-floodlight/40 w-4 text-center shrink-0">{i + 1}</span>
-            <img src={r.logo} alt="" className="w-6 h-6 shrink-0" />
+            <Logo src={r.logo} alt="" className="w-6 h-6 shrink-0" />
             <span className={`text-sm flex-1 truncate ${r.id === teamId ? "font-semibold" : ""}`}>{r.name}</span>
             <span className="font-data font-bold bg-score-amber/15 text-score-amber px-2 py-0.5 rounded-full shrink-0">
               {r.value}{unit}

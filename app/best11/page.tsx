@@ -5,6 +5,7 @@ import Link from "next/link"
 import PlayerAvatar from "@/components/PlayerAvatar"
 import { getLeagueTopScorers, getLeagueTopAssists } from "@/lib/leagueData"
 import { getSeasonYear } from "@/lib/season"
+import Logo from "@/components/Logo"
 
 const LEAGUES = [
   { id: 39,  name: "프리미어리그", nameEn: "Premier League", country: "England",     logo: "/leagues/pl.png" },
@@ -101,7 +102,7 @@ export default async function Best11Page({
                   : "bg-turf-line/30 text-floodlight/60 hover:text-floodlight hover:bg-turf-line/50"
               }`}
             >
-              <img src={l.logo} alt="" className="w-4 h-4" />
+              <Logo src={l.logo} alt="" className="w-4 h-4" />
               {l.name}
             </Link>
           ))}
@@ -145,7 +146,7 @@ export default async function Best11Page({
                         </p>
                       </div>
                       <div className="flex items-center gap-1.5 mt-1">
-                        <img src={stat.team.logo} alt="" className="w-3.5 h-3.5" />
+                        <Logo src={stat.team.logo} alt="" className="w-3.5 h-3.5" />
                         <span className="text-xs text-floodlight/50 truncate">{stat.team.name}</span>
                       </div>
                       <div className="flex items-center gap-3 mt-1.5 text-xs text-floodlight/50">

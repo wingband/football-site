@@ -1,6 +1,8 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
+import Logo from "@/components/Logo"
 
 type LineupPlayer = {
   player: { id: number; name: string; number: number; pos: string; grid: string | null }
@@ -28,11 +30,13 @@ function PlayerAvatar({ id, number }: { id: number; number: number }) {
 
   return (
     <div className="relative w-9 h-9">
-      <img
+      <Image
         src={`https://media.api-sports.io/football/players/${id}.png`}
         alt=""
+        fill
+        sizes="36px"
         onError={() => setFailed(true)}
-        className="w-9 h-9 rounded-full object-cover border-2 border-green-500 bg-gray-800"
+        className="rounded-full object-cover border-2 border-green-500 bg-gray-800"
       />
       <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-gray-900 border border-green-500 text-[8px] font-bold text-green-400 flex items-center justify-center">
         {number}
@@ -61,7 +65,7 @@ export default function PitchFormation({
   return (
     <div>
       <div className="flex items-center gap-2 mb-2">
-        <img src={teamLogo} alt="" className="w-5 h-5" />
+        <Logo src={teamLogo} alt="" className="w-5 h-5" />
         <span className="text-sm font-medium">{teamName}</span>
       </div>
       <p className="text-xs text-gray-500 mb-3">

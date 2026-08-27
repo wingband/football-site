@@ -5,6 +5,7 @@ import AdSlot from "@/components/AdSlot"
 import PlayerAvatar from "@/components/PlayerAvatar"
 import { getAllTransfers } from "@/lib/transfers"
 import type { Metadata } from "next"
+import Logo from "@/components/Logo"
 
 export const metadata: Metadata = {
   title: "이적 센터 — GoalLine",
@@ -122,7 +123,7 @@ export default async function TransfersPage() {
                     >
                       {/* 원래 소속팀 */}
                       <div className="flex items-center gap-2 w-[22%] min-w-0">
-                        <img src={t.teams.out.logo} alt="" className="w-7 h-7 shrink-0" />
+                        <Logo src={t.teams.out.logo} alt="" className="w-7 h-7 shrink-0" />
                         <span className="text-xs text-floodlight/50 truncate hidden sm:block">
                           {t.teams.out.name}
                         </span>
@@ -138,7 +139,7 @@ export default async function TransfersPage() {
                         }`}>
                           {(t.type ?? "").toLowerCase().includes("loan") ? "⇄" : "→"}
                         </span>
-                        <img src={t.teams.in.logo} alt="" className="w-7 h-7 shrink-0" />
+                        <Logo src={t.teams.in.logo} alt="" className="w-7 h-7 shrink-0" />
                         <span className="text-xs text-floodlight/50 truncate hidden sm:block">
                           {t.teams.in.name}
                         </span>
@@ -157,10 +158,10 @@ export default async function TransfersPage() {
                           </p>
                           {/* 모바일: 팀명을 선수 이름 아래 표시 */}
                           <div className="flex items-center gap-1 sm:hidden mt-0.5">
-                            <img src={t.teams.out.logo} alt="" className="w-3 h-3" />
+                            <Logo src={t.teams.out.logo} alt="" className="w-3 h-3" />
                             <span className="text-[10px] text-floodlight/40 truncate">{t.teams.out.name}</span>
                             <span className="text-[10px] text-floodlight/30">→</span>
-                            <img src={t.teams.in.logo} alt="" className="w-3 h-3" />
+                            <Logo src={t.teams.in.logo} alt="" className="w-3 h-3" />
                             <span className="text-[10px] text-floodlight/40 truncate">{t.teams.in.name}</span>
                           </div>
                         </div>

@@ -1,8 +1,10 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { useEffect, useState, useMemo } from "react"
 import type { Article } from "@/lib/articles"
+import Logo from "@/components/Logo"
 
 type ArticleWithLogos = Article & { homeLogo: string | null; awayLogo: string | null }
 
@@ -40,12 +42,16 @@ function TeamBadge({ name, logo, size = "sm" }: { name: string; logo?: string | 
 
   if (logo && !imgError) {
     return (
-      <img
-        src={logo}
-        alt={name}
-        className={`${sz} rounded-full object-contain bg-turf-line/30 shrink-0`}
-        onError={() => setImgError(true)}
-      />
+      <div className={`${sz} relative rounded-full bg-turf-line/30 shrink-0`}>
+        <Image
+          src={logo}
+          alt={name}
+          fill
+          sizes="40px"
+          className="object-contain rounded-full"
+          onError={() => setImgError(true)}
+        />
+      </div>
     )
   }
   const initials = name.split(/[\s-]/).map((w) => w[0]).filter(Boolean).slice(0, 2).join("").toUpperCase()
@@ -143,7 +149,7 @@ export default function StoriesPage() {
                     : "bg-turf-line/30 text-floodlight/60 hover:text-floodlight"
                 }`}
               >
-                <img src={tab.logo} alt="" className="w-4 h-4" />
+                <Logo src={tab.logo} alt="" className="w-4 h-4" />
                 {tab.label}
                 <span className="opacity-60">({count})</span>
               </button>
@@ -193,7 +199,7 @@ export default function StoriesPage() {
                   {/* 리그 정보 */}
                   <div className="flex items-center gap-1.5 mb-3">
                     {leagueLogo
-                      ? <img src={leagueLogo} alt="" className="w-3.5 h-3.5" />
+                      ? <Logo src={leagueLogo} alt="" className="w-3.5 h-3.5" />
                       : <span className="w-3.5 h-3.5 rounded-full bg-turf-line inline-block" />
                     }
                     <span className="text-[10px] text-floodlight/50 font-medium uppercase tracking-wide">{a.leagueName}</span>

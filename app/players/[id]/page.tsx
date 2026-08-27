@@ -7,6 +7,7 @@ import { getSeasonYear } from "@/lib/season"
 import FollowButton from "@/components/FollowButton"
 import AdSlot from "@/components/AdSlot"
 import PlayerAvatar from "@/components/PlayerAvatar"
+import Logo from "@/components/Logo"
 import {
   getPlayerDataWithFallback,
   getPlayerTransfers,
@@ -134,7 +135,7 @@ export default async function PlayerPage({
                   href={`/teams/${stat.team.id}`}
                   className="flex items-center gap-2 mt-2 w-fit bg-turf-line/30 hover:bg-turf-line/50 px-3 py-1.5 rounded-full transition-colors"
                 >
-                  <img src={stat.team.logo} alt="" className="w-5 h-5" />
+                  <Logo src={stat.team.logo} alt="" className="w-5 h-5" />
                   <span className="text-sm font-semibold text-score-amber">{stat.team.name}</span>
                   <span className="text-xs text-floodlight/40">{stat.league.name}</span>
                 </Link>
@@ -158,7 +159,7 @@ export default async function PlayerPage({
         {/* 최신 이적 배너 */}
         {latestTransfer && (
           <div className="flex items-center gap-2 text-xs text-floodlight/50 py-3 border-b border-turf-line/30">
-            <img src={latestTransfer.teams.out.logo} alt="" className="w-4 h-4" />
+            <Logo src={latestTransfer.teams.out.logo} alt="" className="w-4 h-4" />
             <span>{latestTransfer.teams.out.name}에서 이적</span>
             {latestTransfer.type && <span className="text-score-amber">({latestTransfer.type})</span>}
             <span className="ml-auto">
@@ -323,11 +324,11 @@ export default async function PlayerPage({
                   <span className="text-[11px] text-floodlight/40 w-14 shrink-0">
                     {new Date(m.fixture.date).toLocaleDateString("ko-KR", { month: "numeric", day: "numeric" })}
                   </span>
-                  <img src={m.teams.home.logo} alt="" className="w-4 h-4 shrink-0" />
+                  <Logo src={m.teams.home.logo} alt="" className="w-4 h-4 shrink-0" />
                   <span className="text-xs flex-1 truncate">
                     {m.teams.home.name} {m.goals.home}-{m.goals.away} {m.teams.away.name}
                   </span>
-                  <img src={m.teams.away.logo} alt="" className="w-4 h-4 shrink-0" />
+                  <Logo src={m.teams.away.logo} alt="" className="w-4 h-4 shrink-0" />
                   <span className="text-[11px] text-floodlight/40 w-8 text-right shrink-0">
                     {m.stat.games.minutes ?? "-"}&apos;
                   </span>
@@ -358,7 +359,7 @@ export default async function PlayerPage({
                       href={`/teams/${c.teamId}`}
                       className="flex items-center gap-3 py-2 hover:bg-turf-line/20 transition-colors -mx-1 px-1"
                     >
-                      <img src={c.teamLogo} alt="" className="w-6 h-6 shrink-0" />
+                      <Logo src={c.teamLogo} alt="" className="w-6 h-6 shrink-0" />
                       <span className="text-sm flex-1 truncate">{c.teamName}</span>
                       {/* 시즌 범위 */}
                       <span className="text-xs text-floodlight/40 font-data shrink-0 w-20 text-right">
@@ -379,7 +380,7 @@ export default async function PlayerPage({
                 <div className="divide-y divide-turf-line/20">
                   {nationalCareer.map((c) => (
                     <div key={c.teamId} className="flex items-center gap-3 py-2">
-                      <img src={c.teamLogo} alt="" className="w-6 h-6 shrink-0" />
+                      <Logo src={c.teamLogo} alt="" className="w-6 h-6 shrink-0" />
                       <span className="text-sm flex-1 truncate">{c.teamName}</span>
                       <span className="text-xs text-floodlight/30 font-data shrink-0 w-24 text-right">
                         {c.apps}경기 {c.goals}골

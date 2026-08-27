@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import type { StandingRow, TeamSplit } from "@/lib/leagueData"
+import Logo from "@/components/Logo"
 
 type Mode = "all" | "home" | "away"
 const MODES: { key: Mode; label: string }[] = [
@@ -137,7 +138,7 @@ export default function StandingsWithFilter({
                           href={`/teams/${row.team.id}`}
                           className="flex items-center gap-2 hover:text-score-amber"
                         >
-                          <img src={row.team.logo} alt="" className="w-5 h-5 shrink-0" />
+                          <Logo src={row.team.logo} alt="" className="w-5 h-5 shrink-0" />
                           <span className={`truncate ${highlighted ? "font-semibold text-floodlight" : ""}`}>
                             {row.team.name}
                           </span>
@@ -158,7 +159,7 @@ export default function StandingsWithFilter({
                         <td className="px-1 py-2.5">
                           <span className="flex justify-center">
                             {nextOpponent[row.team.id] ? (
-                              <img src={nextOpponent[row.team.id]} alt="" className="w-4 h-4" />
+                              <Logo src={nextOpponent[row.team.id]} alt="" className="w-4 h-4" />
                             ) : null}
                           </span>
                         </td>
