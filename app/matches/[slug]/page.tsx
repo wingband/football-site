@@ -497,7 +497,7 @@ export default async function MatchDetailPage({
         </div>
 
         {/* 경기 메타 정보 */}
-        <div className="flex items-center justify-center gap-4 flex-wrap text-xs text-floodlight/40 px-4 py-3 border-b border-turf-line/40">
+        <div className="flex items-center justify-center gap-4 flex-wrap text-xs text-floodlight/70 px-4 py-3 border-b border-turf-line/40">
           <span className="flex items-center gap-1.5">📅 {dateText}</span>
           {match.fixture.venue?.name && (
             <span className="flex items-center gap-1.5">🏟️ {match.fixture.venue.name}</span>
