@@ -87,7 +87,7 @@ export async function getStandings(leagueId: number, season: number): Promise<St
     `https://v3.football.api-sports.io/standings?league=${leagueId}&season=${season}`,
     {
       headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      next: { revalidate: 3600 },
+      next: { revalidate: 10800 },
     }
   )
   const data = await res.json()
@@ -145,7 +145,7 @@ export async function getRoundFixtures(
     `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${season}&round=${encodeURIComponent(round)}`,
     {
       headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      next: { revalidate: 3600 },
+      next: { revalidate: 10800 },
     }
   )
   const data = await res.json()

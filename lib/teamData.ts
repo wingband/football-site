@@ -75,7 +75,8 @@ export async function getTeamInfo(teamId: string): Promise<TeamInfo | null> {
 
   const res = await fetch(`https://v3.football.api-sports.io/teams?id=${teamId}`, {
     headers: HEADERS(),
-    next: { revalidate: 3600 },
+    // 팀 이름/로고/창단연도 같은 기본 정보는 사실상 안 바뀌어서 24시간으로 크게 늘림
+    next: { revalidate: 86400 },
   })
   const data = await res.json()
   return data.response?.[0] ?? null
@@ -86,7 +87,8 @@ export async function getTeamSquad(teamId: string): Promise<SquadPlayer[]> {
 
   const res = await fetch(`https://v3.football.api-sports.io/players/squads?team=${teamId}`, {
     headers: HEADERS(),
-    next: { revalidate: 3600 },
+    // 스쿼드는 이적시장 기간 외엔 거의 안 바뀌어서 6시간으로 늘림
+    next: { revalidate: 21600 },
   })
   const data = await res.json()
   const rawPlayers: {
@@ -110,7 +112,8 @@ export async function getTeamSeasonFixtures(teamId: string, season: number): Pro
 
   const res = await fetch(
     `https://v3.football.api-sports.io/fixtures?team=${teamId}&season=${season}`,
-    { headers: HEADERS(), next: { revalidate: 3600 } }
+    // 시즌 전체 일정은 자주 안 바뀌어서 6시간으로 늘림
+    { headers: HEADERS(), next: { revalidate: 21600 } }
   )
   const data = await res.json()
   return data.response ?? []
@@ -121,7 +124,8 @@ export async function getTeamInjuries(teamId: string, season: number): Promise<I
 
   const res = await fetch(
     `https://v3.football.api-sports.io/injuries?team=${teamId}&season=${season}`,
-    { headers: HEADERS(), next: { revalidate: 3600 } }
+    // 부상자 명단은 하루에도 여러 번 안 바뀌어서 3시간으로 늘림
+    { headers: HEADERS(), next: { revalidate: 10800 } }
   )
   const data = await res.json()
   return data.response ?? []
@@ -132,7 +136,8 @@ export async function getTeamCoach(teamId: string, expectedTeamId: number): Prom
 
   const res = await fetch(`https://v3.football.api-sports.io/coachs?team=${teamId}`, {
     headers: HEADERS(),
-    next: { revalidate: 3600 },
+    // 감독 교체는 자주 있는 일이 아니라서 24시간으로 늘림
+    next: { revalidate: 86400 },
   })
   const data = await res.json()
   const coaches: Coach[] = data.response ?? []
@@ -218,7 +223,8 @@ export async function getTeamPlayerStats(teamId: string, season: number): Promis
   // API-Football players 엔드포인트는 페이지당 20명까지만 반환 (1페이지만 조회 — 대부분 주전급은 커버됨)
   const res = await fetch(
     `https://v3.football.api-sports.io/players?team=${teamId}&season=${season}`,
-    { headers: HEADERS(), next: { revalidate: 3600 } }
+    // 시즌 통계는 경기 하나 끝난다고 바로바로 볼 필요는 없어서 3시간으로 늘림
+    { headers: HEADERS(), next: { revalidate: 10800 } }
   )
   const data = await res.json()
   return data.response ?? []
@@ -277,7 +283,8 @@ export async function getTeamSeasonStats(teamId: string, leagueId: number, seaso
   try {
     const res = await fetch(
       `https://v3.football.api-sports.io/teams/statistics?team=${teamId}&league=${leagueId}&season=${season}`,
-      { headers: HEADERS(), next: { revalidate: 3600 } }
+      // 팀 시즌 종합 통계도 3시간으로 늘림
+      { headers: HEADERS(), next: { revalidate: 10800 } }
     )
     const data = await res.json()
     return data.response ?? null

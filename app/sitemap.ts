@@ -80,6 +80,11 @@ async function getSitemapFixtures(): Promise<SitemapFixture[]> {
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date()
+  // 사이트맵이 1시간마다 재생성되는데 lastModified를 매번 now로 찍으면,
+  // 실제로는 안 바뀐 팀/리그/비교 페이지도 구글한테 "방금 바뀌었다"고 매시간
+  // 알리는 꼴이 돼서 불필요한 재크롤을 유발한다. 날짜 단위로 끊어서
+  // 하루에 한 번만 값이 바뀌게 한다 (실제로 hourly인 홈/경기 목록 페이지는 now 그대로 사용)
+  const dailyStamp = new Date(now.toISOString().slice(0, 10))
 
   // 항상 존재하는 페이지. /search는 쿼리 기반이라 색인 가치가 없어서 제외 (robots에서도 차단)
   const staticRoutes: { path: string; priority: number; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"] }[] = [
@@ -110,7 +115,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const leagueEntries: MetadataRoute.Sitemap = SITEMAP_LEAGUES.map((league) => ({
     url: `${SITE_URL}/leagues/${league.id}`,
-    lastModified: now,
+    lastModified: dailyStamp,
     changeFrequency: "daily",
     priority: 0.7,
   }))
@@ -124,7 +129,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const teamEntries: MetadataRoute.Sitemap = [...teamIds].map((teamId) => ({
     url: `${SITE_URL}/teams/${teamId}`,
-    lastModified: now,
+    lastModified: dailyStamp,
     changeFrequency: "daily",
     priority: 0.6,
   }))
@@ -133,7 +138,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 정규 URL(id 오름차순) 한 쪽만 넣는다 — 13명이면 78개
   const compareEntries: MetadataRoute.Sitemap = koreanComparePairs().map(([a, b]) => ({
     url: `${SITE_URL}${compareSitemapPath(a, b)}`,
-    lastModified: now,
+    lastModified: dailyStamp,
     changeFrequency: "weekly",
     priority: 0.5,
   }))
@@ -141,7 +146,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     ...staticRoutes.map(({ path, priority, changeFrequency }) => ({
       url: `${SITE_URL}${path}`,
-      lastModified: now,
+      // hourly인 페이지(홈/경기 목록/스토리)만 now, 나머지(daily 이하)는 dailyStamp
+      lastModified: changeFrequency === "hourly" ? now : dailyStamp,
       changeFrequency,
       priority,
     })),

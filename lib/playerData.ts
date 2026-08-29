@@ -79,7 +79,8 @@ export async function getPlayerData(playerId: string, season: number): Promise<P
 
   const res = await fetch(
     `https://v3.football.api-sports.io/players?id=${playerId}&season=${season}`,
-    { headers: HEADERS(), next: { revalidate: 3600 } }
+    // 선수 시즌 스탯은 3시간으로 늘림 (이 함수는 폴백 로직에서 최대 4번까지 불릴 수 있어서 영향이 큼)
+    { headers: HEADERS(), next: { revalidate: 10800 } }
   )
   const data = await res.json()
   return data.response?.[0] ?? null
@@ -132,7 +133,8 @@ export async function getTrophies(playerId: string): Promise<Trophy[]> {
 
   const res = await fetch(`https://v3.football.api-sports.io/trophies?player=${playerId}`, {
     headers: HEADERS(),
-    next: { revalidate: 3600 },
+    // 트로피 목록은 사실상 거의 안 바뀌어서 24시간으로 늘림
+    next: { revalidate: 86400 },
   })
   const data = await res.json()
   return data.response ?? []
@@ -201,7 +203,7 @@ export async function getPlayerRecentMatches(
 
   const fixturesRes = await fetch(
     `https://v3.football.api-sports.io/fixtures?team=${teamId}&last=${count}`,
-    { headers: HEADERS(), next: { revalidate: 3600 } }
+    { headers: HEADERS(), next: { revalidate: 10800 } }
   )
   const fixturesData = await fixturesRes.json()
   const fixtures: { fixture: { id: number; date: string }; teams: { home: { name: string; logo: string }; away: { name: string; logo: string } }; goals: { home: number | null; away: number | null } }[] =
@@ -249,7 +251,7 @@ export async function getSidelined(playerId: string): Promise<SidelinedEntry[]> 
   try {
     const res = await fetch(
       `https://v3.football.api-sports.io/sidelined?player=${playerId}`,
-      { headers: HEADERS(), next: { revalidate: 3600 } }
+      { headers: HEADERS(), next: { revalidate: 10800 } }
     )
     const data = await res.json()
     return (data.response ?? []).map((s: { type: string; start: string | null; end: string | null }) => ({

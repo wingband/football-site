@@ -2,6 +2,7 @@ import { Suspense } from "react"
 import Link from "next/link"
 import { permanentRedirect } from "next/navigation"
 import { apiFetch } from "@/lib/matchApi"
+import { getCachedMatchDetail, saveCachedMatchDetail } from "@/lib/matchDetailCache"
 import PlayerAvatar from "@/components/PlayerAvatar"
 import FotmobLineup from "@/components/FotmobLineup"
 import Section from "@/components/Section"
@@ -91,22 +92,42 @@ type Lineup = {
 const LIVE_CODES = ["1H", "HT", "2H", "ET", "BT", "P", "SUSP", "INT", "LIVE"]
 const FINISHED_CODES = ["FT", "AET", "PEN"]
 
-// 경기 상세 페이지 전용 fixture fetch — mock 모드와 실제 모드를 분리
-async function fetchFixture(fixtureId: number, revalidate?: number): Promise<FixtureDetail[]> {
+// 경기 상세 페이지 전용 fixture fetch — mock 모드와 실제 모드를 분리.
+// 킥오프로부터 2일 넘은 경기는 Neon DB 캐시를 먼저 확인해서, 있으면 API를
+// 아예 안 부른다. Next.js의 fetch 캐시는 배포/콜드스타트마다 초기화되지만
+// DB 캐시는 영구적이라 재배포가 반복돼도 API 호출이 다시 늘지 않는다.
+async function fetchFixture(
+  fixtureId: number,
+  revalidate: number | undefined,
+  useDbCache: boolean
+): Promise<FixtureDetail[]> {
   if (process.env.USE_MOCK_DATA === "true") {
     return MOCK_MATCH_DETAIL.fixture as FixtureDetail[]
   }
-  return apiFetch(`/fixtures?id=${fixtureId}`, revalidate) as Promise<FixtureDetail[]>
+
+  if (useDbCache) {
+    const cached = await getCachedMatchDetail<FixtureDetail[]>(fixtureId)
+    if (cached) return cached
+  }
+
+  const result = (await apiFetch(`/fixtures?id=${fixtureId}`, revalidate)) as FixtureDetail[]
+
+  if (useDbCache && FINISHED_CODES.includes(result?.[0]?.fixture?.status?.short ?? "")) {
+    // await 안 하고 흘려보냄 — 페이지 응답을 DB 쓰기 때문에 늦출 필요 없음
+    saveCachedMatchDetail(fixtureId, result)
+  }
+
+  return result
 }
 
 // slug에 박힌 날짜만으로 (아직 API를 부르기 전에) 캐시 시간을 정한다.
-// 킥오프로부터 이틀 넘게 지났으면 사실상 결과가 안 바뀌는 경기이므로 24시간,
-// 아니면 라이브/예정 상태가 계속 바뀔 수 있으니 기존처럼 60초로 짧게 잡는다.
-function identityRevalidateFromSlug(slug: string): number {
+// 킥오프로부터 이틀 넘게 지났으면 사실상 결과가 안 바뀌는 경기이므로 24시간 +
+// DB 영구 캐시, 아니면 라이브/예정 상태가 계속 바뀔 수 있으니 기존처럼 60초로 짧게 잡는다.
+function identityRevalidateFromSlug(slug: string): { revalidate: number; useDbCache: boolean } {
   const kickoff = parseSlugDate(slug)
-  if (!kickoff) return 60
+  if (!kickoff) return { revalidate: 60, useDbCache: false }
   const daysSince = (Date.now() - kickoff.getTime()) / (1000 * 60 * 60 * 24)
-  return daysSince > 2 ? 86400 : 60
+  return daysSince > 2 ? { revalidate: 86400, useDbCache: true } : { revalidate: 60, useDbCache: false }
 }
 
 function getTopRatedPlayers(playerStats: PlayerStat[], count: number) {
@@ -139,7 +160,8 @@ export async function generateMetadata({
     return { title: "경기 정보를 찾을 수 없습니다" }
   }
 
-  const matchArr = await fetchFixture(fixtureId, identityRevalidateFromSlug(slug))
+  const { revalidate: idRevalidate, useDbCache } = identityRevalidateFromSlug(slug)
+  const matchArr = await fetchFixture(fixtureId, idRevalidate, useDbCache)
   const match = matchArr?.[0] ?? null
 
   if (!match) {
@@ -192,7 +214,8 @@ export default async function MatchDetailPage({
     return notFoundView
   }
 
-  const matchArr = await fetchFixture(fixtureId, identityRevalidateFromSlug(slug))
+  const { revalidate: idRevalidate2, useDbCache: useDbCache2 } = identityRevalidateFromSlug(slug)
+  const matchArr = await fetchFixture(fixtureId, idRevalidate2, useDbCache2)
   const match = matchArr?.[0] ?? null
 
   if (!match) {
