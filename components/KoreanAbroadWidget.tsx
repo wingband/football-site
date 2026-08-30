@@ -108,7 +108,7 @@ export default function KoreanAbroadWidget() {
       {/* 클릭해서 열고 닫는 헤더 */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-turf-line/20 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-turf-line/20 transition-colors group"
       >
         <div className="flex items-center gap-2.5">
           <span className="text-lg">🇰🇷</span>
@@ -141,8 +141,9 @@ export default function KoreanAbroadWidget() {
               )}
             </div>
           )}
-          <span className="text-score-amber text-sm bg-score-amber/30 border border-score-amber/60 rounded px-2">
-            {open ? "▲" : "▼"}
+          <span className="flex items-center gap-1 text-score-amber text-xs font-medium bg-score-amber/15 border border-score-amber/50 rounded-full px-3 py-1 group-hover:bg-score-amber/25 transition-colors">
+            {open ? "접기" : "펼치기"}
+            <span className="text-[10px]">{open ? "▲" : "▼"}</span>
           </span>
         </div>
       </button>
