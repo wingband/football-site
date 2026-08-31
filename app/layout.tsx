@@ -50,6 +50,11 @@ export const metadata: Metadata = {
       "dHUEnfghtcC90rFALLbmNhtyBzcT9034n9AcTiKBTAE",
       "QvrjeTaJdEjRFF8PJ2mKx2Q6WbM-J7SEkYlo6NeqiVc",
     ],
+    // 네이버 서치어드바이저 소유확인. Next.js Metadata 타입에 naver 전용
+    // 필드가 없어서 other로 임의 메타태그를 추가한다
+    other: {
+      "naver-site-verification": "3836c5a9753c3db89b2e8c1f994b93231c889147",
+    },
   },
 };
 
