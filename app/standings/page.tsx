@@ -1,5 +1,3 @@
-export const dynamic = 'force-dynamic'
-
 import type { Metadata } from "next"
 import Link from "next/link"
 import { getSeasonYear, formatSeasonLabel } from "@/lib/season"
