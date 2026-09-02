@@ -24,11 +24,15 @@ const POSITION_KR: Record<string, string> = {
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ season?: string }>
 }): Promise<Metadata> {
   const { id } = await params
-  const data = await getPlayerDataWithFallback(id, getSeasonYear("England"))
+  const sp = await searchParams
+  const season = sp.season ? parseInt(sp.season) : getSeasonYear("England")
+  const data = await getPlayerDataWithFallback(id, season)
   if (!data) return { title: "선수 정보를 찾을 수 없습니다" }
   return {
     title: `${data.player.name} 선수 정보 및 통계`,

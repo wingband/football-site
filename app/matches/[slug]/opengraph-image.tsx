@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og"
-import { parseFixtureId } from "@/lib/slug"
+import { parseFixtureId, parseSlugDate } from "@/lib/slug"
 import { MOCK_MATCH_DETAIL } from "@/lib/mockData"
 
 export const alt = "경기 스코어 — GoalLine"
@@ -26,7 +26,7 @@ type OgFixture = {
   league: { name: string }
 }
 
-async function getFixture(fixtureId: number): Promise<OgFixture | null> {
+async function getFixture(fixtureId: number, revalidate: number): Promise<OgFixture | null> {
   if (process.env.USE_MOCK_DATA === "true") {
     return MOCK_MATCH_DETAIL.fixture?.[0] ?? null
   }
@@ -34,7 +34,7 @@ async function getFixture(fixtureId: number): Promise<OgFixture | null> {
   try {
     const res = await fetch(`https://v3.football.api-sports.io/fixtures?id=${fixtureId}`, {
       headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      next: { revalidate: 600 },
+      next: { revalidate },
     })
     if (!res.ok) return null
     const data = await res.json()
@@ -133,7 +133,13 @@ export default async function Image({ params }: { params: Promise<{ slug: string
   const fixtureId = parseFixtureId(slug)
   if (fixtureId === null) return fallbackImage()
 
-  const match = await getFixture(fixtureId)
+  // 킥오프로부터 이틀 넘게 지난 경기는 스코어가 다시는 안 바뀌므로 24시간 캐시,
+  // 최근 경기는 라이브 스코어 반영을 위해 기존처럼 10분 캐시
+  const kickoff = parseSlugDate(slug)
+  const daysSince = kickoff ? (Date.now() - kickoff.getTime()) / (1000 * 60 * 60 * 24) : 0
+  const ogRevalidate = daysSince > 2 ? 86400 : 600
+
+  const match = await getFixture(fixtureId, ogRevalidate)
   if (!match) return fallbackImage()
 
   // 시작 전 경기는 "- - -"가 깨진 스코어처럼 보여서 VS로 대체

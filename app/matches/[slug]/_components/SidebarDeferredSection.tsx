@@ -1,5 +1,5 @@
 import { apiFetch, getVenueInfo, getRoundFixtures, buildInsights } from "@/lib/matchApi"
-import type { TeamFixture, H2HMatch } from "@/lib/matchApi"
+import type { TeamFixture } from "@/lib/matchApi"
 import MatchSidebar from "@/components/MatchSidebar"
 import MatchVote from "@/components/MatchVote"
 import MatchComments from "@/components/MatchComments"
@@ -46,7 +46,7 @@ export default async function SidebarDeferredSection({
   venueCity: string
   isFinished: boolean
 }) {
-  const [venueInfo, roundFixtures, predictions, homeRecent, awayRecent, h2h] = await Promise.all([
+  const [venueInfo, roundFixtures, predictions, homeRecent, awayRecent] = await Promise.all([
     getVenueInfo(venueId, venueName, venueCity),
     round
       ? getRoundFixtures(leagueId, season, round)
@@ -54,15 +54,13 @@ export default async function SidebarDeferredSection({
     apiFetch(`/predictions?fixture=${fixtureId}`, 86400) as Promise<Prediction[]>,
     apiFetch(`/fixtures?team=${homeTeamId}&last=6`, 21600) as Promise<TeamFixture[]>,
     apiFetch(`/fixtures?team=${awayTeamId}&last=6`, 21600) as Promise<TeamFixture[]>,
-    apiFetch(
-      `/fixtures/headtohead?h2h=${homeTeamId}-${awayTeamId}&last=20`,
-      86400
-    ) as Promise<H2HMatch[]>,
   ])
 
   const prediction = predictions?.[0]?.predictions
+  // h2h 기반 인사이트 한 줄은 뺐다 — 역대전적 탭에서 탭 클릭 시에만 따로 불러오도록
+  // 옮겼는데, 정작 여기서 매번 무조건 다시 불러오면 그 절감 효과가 없어지기 때문
   const insights = buildInsights(
-    h2h ?? [],
+    [],
     homeTeamName,
     awayTeamName,
     homeTeamId,
