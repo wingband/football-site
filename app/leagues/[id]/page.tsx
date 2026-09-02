@@ -167,13 +167,26 @@ function toRatingRows(scorers: ScorerEntry[], assists: ScorerEntry[]): StarPlaye
     }))
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ season?: string }>
+}): Promise<Metadata> {
   const { id } = await params
+  const sp = await searchParams
   const euroSeason = getSeasonYear("England")
   const thisYear = new Date().getFullYear()
-  let data = await getLeagueStandings(id, euroSeason)
-  if (!data && thisYear !== euroSeason) data = await getLeagueStandings(id, thisYear)
-  if (!data) data = await getLeagueStandings(id, euroSeason - 1)
+
+  let data
+  if (sp.season) {
+    data = await getLeagueStandings(id, parseInt(sp.season))
+  } else {
+    data = await getLeagueStandings(id, euroSeason)
+    if (!data && thisYear !== euroSeason) data = await getLeagueStandings(id, thisYear)
+    if (!data) data = await getLeagueStandings(id, euroSeason - 1)
+  }
   if (!data) return { title: "리그 정보를 찾을 수 없습니다" }
   return {
     title: `${data.league.name} 팀 개요`,
