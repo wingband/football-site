@@ -67,16 +67,22 @@ async function fetchFixturesFromApi(date: string): Promise<Fixture[] | null> {
   yesterday.setDate(yesterday.getDate() - 1)
   const yesterdayStr = yesterday.toISOString().slice(0, 10)
 
+  // 오늘/어제 화살표나 날짜 드롭다운으로 과거 날짜를 볼 때도 30분~1시간짜리
+  // 짧은 캐시가 그대로 적용돼서, 몇 달 전 날짜를 봐도 API가 계속 재호출되고
+  // 있었다. 조회하는 날짜가 오늘이 아니면(=과거, 이미 다 끝난 경기) 24시간으로
+  // 늘린다. 오늘 날짜 자체만 라이브 스코어를 위해 기존처럼 짧게 유지한다
+  const isToday = date === getTodayStr()
+  const dateRevalidate = isToday ? 1800 : 86400
+  const yesterdayRevalidate = isToday ? 3600 : 86400
+
   const [todayRes, yesterdayRes] = await Promise.all([
     fetch(`https://v3.football.api-sports.io/fixtures?date=${date}`, {
       headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      // 5분(300s)이면 방문자 수와 무관하게 하루 최대 288번씩 재호출돼서
-      // 일일 쿼터를 순식간에 다 먹는다. 30분으로 늘려서 호출 빈도를 낮춘다
-      next: { revalidate: 1800 },
+      next: { revalidate: dateRevalidate },
     }),
     fetch(`https://v3.football.api-sports.io/fixtures?date=${yesterdayStr}`, {
       headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      next: { revalidate: 3600 },
+      next: { revalidate: yesterdayRevalidate },
     }),
   ])
 
