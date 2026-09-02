@@ -17,8 +17,6 @@ import RelatedMatches from "@/components/RelatedMatches"
 import StorySection from "./_components/StorySection"
 import NewsSection from "./_components/NewsSection"
 import RecentFormSection from "./_components/RecentFormSection"
-import StandingsSection from "./_components/StandingsSection"
-import H2HSection from "./_components/H2HSection"
 import SidebarDeferredSection from "./_components/SidebarDeferredSection"
 import { getSeasonYear } from "@/lib/season"
 import { buildMatchSlug, matchHref, parseFixtureId, parseSlugDate } from "@/lib/slug"
@@ -444,18 +442,6 @@ export default async function MatchDetailPage({
       <p className="text-floodlight/40 text-sm py-6 text-center">라인업 정보가 없습니다.</p>
     )
 
-  // 순위 탭 — 사용자가 탭을 클릭하기 전까지 보이지 않으므로 지연 로딩 적합
-  const standingsContent = (
-    <Suspense fallback={standingsSkeleton}>
-      <StandingsSection
-        leagueId={match.league.id}
-        season={season}
-        homeTeamId={match.teams.home.id}
-        awayTeamId={match.teams.away.id}
-      />
-    </Suspense>
-  )
-
   const statsContent =
     stats.length === 2 ? (
       <>
@@ -493,21 +479,6 @@ export default async function MatchDetailPage({
         )}
       </div>
     )
-
-  // 역대전적 탭 — 사용자가 탭을 클릭하기 전까지 보이지 않으므로 지연 로딩 적합
-  const h2hContent = (
-    <Suspense fallback={standingsSkeleton}>
-      <H2HSection
-        homeId={match.teams.home.id}
-        awayId={match.teams.away.id}
-        currentFixtureId={match.fixture.id}
-        homeTeamName={match.teams.home.name}
-        awayTeamName={match.teams.away.name}
-        homeTeamLogo={match.teams.home.logo}
-        awayTeamLogo={match.teams.away.logo}
-      />
-    </Suspense>
-  )
 
   return (
     <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
@@ -590,9 +561,16 @@ export default async function MatchDetailPage({
           facts={factsContent}
           ticker={tickerContent}
           lineup={lineupContent}
-          standings={standingsContent}
           stats={statsContent}
-          h2h={h2hContent}
+          leagueId={match.league.id}
+          season={season}
+          homeTeamId={match.teams.home.id}
+          awayTeamId={match.teams.away.id}
+          currentFixtureId={match.fixture.id}
+          homeTeamName={match.teams.home.name}
+          awayTeamName={match.teams.away.name}
+          homeTeamLogo={match.teams.home.logo}
+          awayTeamLogo={match.teams.away.logo}
         />
       </div>
 
