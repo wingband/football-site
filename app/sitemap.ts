@@ -18,10 +18,20 @@ const SITEMAP_LEAGUES = [
   { id: 61,  name: "Ligue 1" },
   { id: 2,   name: "UEFA Champions League" },
   { id: 3,   name: "UEFA Europa League" },
+  { id: 4,   name: "UEFA Europa Conference League" },
   { id: 292, name: "K League 1" },
+  { id: 98,  name: "J1 League" },
 ]
 
 const SITEMAP_LEAGUE_IDS = new Set(SITEMAP_LEAGUES.map((l) => l.id))
+
+// 국가대표 경기는 대륙별 예선마다 리그 ID가 달라서 리그 목록으로는 못 잡는다.
+// /matches 페이지 필터와 동일한 팀 이름 목록을 그대로 쓴다
+const MAJOR_NATIONAL_TEAMS = new Set([
+  "South Korea", "Brazil", "Argentina", "England", "France", "Germany",
+  "Spain", "Portugal", "Netherlands", "Italy", "Belgium", "Japan", "Croatia",
+])
+
 const FINISHED_CODES = ["FT", "AET", "PEN", "AWD", "WO"]
 
 type SitemapFixture = {
@@ -71,7 +81,10 @@ async function getSitemapFixtures(): Promise<SitemapFixture[]> {
 
   const seen = new Set<number>()
   return fixtures.filter((f) => {
-    if (!SITEMAP_LEAGUE_IDS.has(f.league?.id)) return false
+    const isRelevantLeague = SITEMAP_LEAGUE_IDS.has(f.league?.id)
+    const isNationalTeamMatch =
+      MAJOR_NATIONAL_TEAMS.has(f.teams.home.name) || MAJOR_NATIONAL_TEAMS.has(f.teams.away.name)
+    if (!isRelevantLeague && !isNationalTeamMatch) return false
     if (seen.has(f.fixture.id)) return false
     seen.add(f.fixture.id)
     return true

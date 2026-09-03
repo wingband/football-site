@@ -60,6 +60,48 @@ type FixturesResult = {
   cachedAt: Date | null
 }
 
+// 관심 리그만 노출한다. 이걸 안 걸러두면 전세계 모든 리그(카자흐스탄, 아르메니아
+// 등)의 팀/경기 링크가 화면에 그대로 걸려서, 크롤러가 그 링크를 따라가며 안 볼
+// 팀/경기 페이지를 계속 새로 발견해 API 호출을 늘리는 원인이 된다
+const RELEVANT_LEAGUE_IDS = new Set([
+  39,  // Premier League
+  140, // La Liga
+  78,  // Bundesliga
+  135, // Serie A
+  61,  // Ligue 1
+  2,   // UEFA Champions League
+  3,   // UEFA Europa League
+  4,   // UEFA Conference League
+  292, // K League 1
+  98,  // J1 League
+])
+
+// 국가대표 경기는 리그 하나로 안 잡힌다 (대륙별 예선이 리그 ID가 다 다름).
+// 팀 이름으로 잡는 게 더 안전해서, 축구 강호 국가대표팀 이름을 직접 나열한다
+const MAJOR_NATIONAL_TEAMS = new Set([
+  "South Korea",
+  "Brazil",
+  "Argentina",
+  "England",
+  "France",
+  "Germany",
+  "Spain",
+  "Portugal",
+  "Netherlands",
+  "Italy",
+  "Belgium",
+  "Japan",
+  "Croatia",
+])
+
+function isRelevantFixture(fx: Fixture): boolean {
+  return (
+    RELEVANT_LEAGUE_IDS.has(fx.league.id) ||
+    MAJOR_NATIONAL_TEAMS.has(fx.teams.home.name) ||
+    MAJOR_NATIONAL_TEAMS.has(fx.teams.away.name)
+  )
+}
+
 async function fetchFixturesFromApi(date: string): Promise<Fixture[] | null> {
   // 오늘 + 어제 경기를 같이 가져옴
   // 이유: PL 등 유럽 리그는 한국 기준 전날 밤 경기 → "오늘" 탭에서 안 보이는 문제 방지
@@ -142,7 +184,7 @@ async function fetchFixturesFromApi(date: string): Promise<Fixture[] | null> {
 
 async function getFixturesByDate(date: string): Promise<FixturesResult> {
   if (process.env.USE_MOCK_DATA === "true") {
-    return { fixtures: MOCK_FIXTURES, fromCache: false, cachedAt: null }
+    return { fixtures: MOCK_FIXTURES.filter(isRelevantFixture), fromCache: false, cachedAt: null }
   }
 
   let fixtures: Fixture[] | null = null
@@ -154,17 +196,21 @@ async function getFixturesByDate(date: string): Promise<FixturesResult> {
     fixtures = null
   }
 
-  // 성공했으면 다음 실패를 위해 저장해두고 그대로 사용
+  // 성공했으면 관심 리그/국가대표만 추려서 저장 (전세계 리그를 다 저장하면
+  // DB 용량도 아깝고, 폴백 시에도 어차피 안 보여줄 데이터라 의미 없음)
   if (fixtures && fixtures.length > 0) {
-    await saveCachedFixtures(date, fixtures)
-    return { fixtures, fromCache: false, cachedAt: null }
+    const relevant = fixtures.filter(isRelevantFixture)
+    await saveCachedFixtures(date, relevant)
+    return { fixtures: relevant, fromCache: false, cachedAt: null }
   }
 
   // 실패(null) 또는 빈 응답 → 마지막으로 성공한 데이터로 폴백
   const cached = await getCachedFixtures<Fixture>(date)
   if (cached) {
     console.log(`경기 목록 DB 캐시 사용 (date=${date}, updated_at=${cached.updatedAt?.toISOString()})`)
-    return { fixtures: cached.data, fromCache: true, cachedAt: cached.updatedAt }
+    // 이 필터가 배포되기 전에 저장된 예전 캐시 항목은 전세계 리그가 다 들어있을
+    // 수 있어서, 폴백 시에도 한 번 더 걸러준다
+    return { fixtures: cached.data.filter(isRelevantFixture), fromCache: true, cachedAt: cached.updatedAt }
   }
 
   // 캐시도 없으면 빈 목록 (그 날짜에 정말 경기가 없는 경우도 여기로 옴)
