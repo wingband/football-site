@@ -117,13 +117,28 @@ export async function GET(req: NextRequest) {
         // 경우가 있었다. 팀명과 그 시점의 스코어까지 미리 계산해서 넘겨준다
         let homeGoals = 0
         let awayGoals = 0
+        // "전반에만 N골을 몰아넣으며" 같은 요약 문장을 쓰다가, 상대팀이 그 전반에
+        // 넣은 골까지 우리 팀 걸로 합산해버리는 사례가 있었다. 전/후반 팀별 득점
+        // 개수를 미리 계산해서 요약 문장의 숫자를 검증할 수 있게 한다
+        let homeFirstHalfGoals = 0
+        let awayFirstHalfGoals = 0
+        let homeSecondHalfGoals = 0
+        let awaySecondHalfGoals = 0
         const goalLines: string[] = []
         eventsSummary = events
           .map((e) => {
             let scoreLabel = ""
             if (e.type === "Goal") {
-              if (e.team.name === match.teams.home.name) homeGoals++
+              const isHome = e.team.name === match.teams.home.name
+              if (isHome) homeGoals++
               else if (e.team.name === match.teams.away.name) awayGoals++
+              if (e.time.elapsed <= 45) {
+                if (isHome) homeFirstHalfGoals++
+                else awayFirstHalfGoals++
+              } else {
+                if (isHome) homeSecondHalfGoals++
+                else awaySecondHalfGoals++
+              }
               scoreLabel = ` (스코어 ${homeGoals}-${awayGoals})`
               goalLines.push(
                 `${goalLines.length + 1}번째 골 — ${formatHalfMinute(e.time.elapsed)} [${e.team.name}] ${e.player.name}` +
@@ -139,6 +154,10 @@ export async function GET(req: NextRequest) {
         // 카드/교체 이벤트들 사이에 골이 묻히면 GPT가 득점 순서·소속팀·스코어를
         // 잘못 재구성하는 경우가 많아서, 가장 중요한 사실만 별도 블록으로 뺀다
         goalsSummary = goalLines.length ? goalLines.join("\n") : "이 경기에는 골이 없었다"
+        goalsSummary +=
+          `\n\n[전/후반 팀별 득점 개수 — "전반에 N골" 같은 요약 문장을 쓸 때 이 숫자와 반드시 일치해야 함]\n` +
+          `${match.teams.home.name} 전반 ${homeFirstHalfGoals}골, 후반 ${homeSecondHalfGoals}골\n` +
+          `${match.teams.away.name} 전반 ${awayFirstHalfGoals}골, 후반 ${awaySecondHalfGoals}골`
 
         // 태그용: 득점/어시스트 선수를 먼저, 그다음 카드 받은 선수를 등장 순서대로
         // 중복 없이 모은다 (태그 개수를 늘리기 위해 카드도 포함)
