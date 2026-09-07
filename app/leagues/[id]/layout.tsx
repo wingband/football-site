@@ -1,8 +1,10 @@
+import { notFound } from "next/navigation"
 import LeagueHeader from "@/components/LeagueHeader"
 import AdSlot from "@/components/AdSlot"
 import { getSeasonYear } from "@/lib/season"
 import { getLeagueStandings } from "@/lib/leagueData"
 import { checkApiFootballStatus } from "@/lib/apiFootballStatus"
+import { SCOPE_LEAGUE_IDS } from "@/lib/scope"
 
 // 리그 페이지 전체(개요/순위/경기/득점순위/뉴스)가 공유하는 레이아웃.
 // 헤더+탭을 한 번만 렌더링해서 탭 이동 시 메뉴가 흔들리던 문제를 해결
@@ -14,6 +16,13 @@ export default async function LeagueLayout({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
+
+  // 리그 ID는 URL 파라미터 자체가 곧 스코프 판단 기준이라, API 호출 없이 즉시 체크 가능.
+  // 스코프 밖 리그(예: league=281)는 순위표/득점왕/도움왕/예정경기까지 4콜 이상 나가던
+  // 것을 여기서 0콜로 차단한다 (2026-09-07, /teams와 동일한 문제 유형으로 확인)
+  if (!SCOPE_LEAGUE_IDS.has(Number(id))) {
+    notFound()
+  }
 
   const euroSeason = getSeasonYear("England")
   const thisYear = new Date().getFullYear()

@@ -1,6 +1,6 @@
 import { Suspense } from "react"
 import Link from "next/link"
-import { permanentRedirect } from "next/navigation"
+import { permanentRedirect, notFound } from "next/navigation"
 import { apiFetch } from "@/lib/matchApi"
 import { getCachedMatchDetail, saveCachedMatchDetail } from "@/lib/matchDetailCache"
 import PlayerAvatar from "@/components/PlayerAvatar"
@@ -22,6 +22,7 @@ import { getSeasonYear } from "@/lib/season"
 import { buildMatchSlug, matchHref, parseFixtureId, parseSlugDate } from "@/lib/slug"
 import { MOCK_MATCH_DETAIL } from "@/lib/mockData"
 import { getArticleByMatchId } from "@/lib/articles"
+import { SCOPE_LEAGUE_IDS, MAJOR_NATIONAL_TEAMS } from "@/lib/scope"
 import type { Metadata } from "next"
 import Logo from "@/components/Logo"
 
@@ -224,6 +225,17 @@ export default async function MatchDetailPage({
   const canonicalSlug = buildMatchSlug(match)
   if (slug !== canonicalSlug) {
     permanentRedirect(`/matches/${canonicalSlug}${fromReview ? "?from=review" : ""}`)
+  }
+
+  // 스코프 밖(관심 리그도 아니고 국가대표팀 경기도 아닌) 경기는 여기서 즉시 404.
+  // fetchFixture 1콜만 쓰고, 이후 통계/이벤트/라인업/최근폼/예측 등 나머지 9콜 안팎을
+  // 건너뛴다 — /teams, /leagues와 같은 유형의 쿼터 누수 (2026-09-07 확인)
+  const matchInScope =
+    SCOPE_LEAGUE_IDS.has(match.league.id) ||
+    MAJOR_NATIONAL_TEAMS.has(match.teams.home.name) ||
+    MAJOR_NATIONAL_TEAMS.has(match.teams.away.name)
+  if (!matchInScope) {
+    notFound()
   }
 
   const season = getSeasonYear(match.league.country)
