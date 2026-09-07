@@ -140,11 +140,13 @@ export async function getTrophies(playerId: string): Promise<Trophy[]> {
   return data.response ?? []
 }
 
-// 경력(소속팀 이력): 최근 5개 시즌을 각각 조회해서 팀별로 합침 (전용 "경력" 엔드포인트가 없어서 이렇게 재구성)
+// 경력(소속팀 이력): 최근 3개 시즌을 각각 조회해서 팀별로 합침 (전용 "경력" 엔드포인트가 없어서 이렇게 재구성)
+// 원래 5시즌이었는데, ?season= 파라미터를 돌며 스크래핑당할 때 시즌당 5콜씩 나가던
+// 비용을 줄이려고 3으로 낮춤 (2026-09-07) — "최근 경력" 표시 목적엔 3개로도 충분
 export async function getPlayerCareer(
   playerId: string,
   currentSeason: number,
-  seasonsBack = 5
+  seasonsBack = 3
 ): Promise<{ teamId: number; teamName: string; teamLogo: string; seasons: number[]; apps: number; goals: number }[]> {
   if (process.env.USE_MOCK_DATA === "true") {
     return [

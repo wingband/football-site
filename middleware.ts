@@ -1,4 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server"
+import { NextResponse } from "next/server"
 
 const isPublicRoute = createRouteMatcher([
   "/",
@@ -29,7 +30,40 @@ const isPublicRoute = createRouteMatcher([
   "/sign-up(.*)",
 ])
 
+// 비용이 큰 라우트(선수/비교/팀/리그/경기 상세)를 짧은 시간에 대량으로 두드리는
+// 스크래퍼를 완화하기 위한 인메모리 레이트리밋.
+// 서버리스 인스턴스별로 카운터가 따로 도는 거라 전역적으로 완벽하진 않지만,
+// 같은 워밍 인스턴스로 몰리는 반복 스크래핑 트래픽은 실제로 상당 부분 걸러진다.
+// (2026-09-07: /players, /compare가 ?season= 값을 돌아가며 여러 IP에서
+// 대량 스크래핑당해 선수 하나당 API 호출이 20콜 안팎씩 나갔던 것 확인)
+const RATE_LIMIT_ROUTES = [/^\/players\//, /^\/compare/, /^\/teams\//, /^\/leagues\//, /^\/matches\//]
+const RATE_LIMIT_WINDOW_MS = 60_000
+// 실제 사용자가 1분 안에 이 라우트들을 40번 넘게 볼 일은 없음
+const RATE_LIMIT_MAX = 40
+
+const hitCounts = new Map<string, { count: number; resetAt: number }>()
+
+function isRateLimited(ip: string, pathname: string): boolean {
+  if (!RATE_LIMIT_ROUTES.some((re) => re.test(pathname))) return false
+
+  const now = Date.now()
+  const entry = hitCounts.get(ip)
+
+  if (!entry || now > entry.resetAt) {
+    hitCounts.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS })
+    return false
+  }
+
+  entry.count += 1
+  return entry.count > RATE_LIMIT_MAX
+}
+
 export default clerkMiddleware(async (auth, req) => {
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown"
+  if (isRateLimited(ip, req.nextUrl.pathname)) {
+    return new NextResponse("Too Many Requests", { status: 429 })
+  }
+
   if (!isPublicRoute(req)) {
     await auth.protect()
   }
