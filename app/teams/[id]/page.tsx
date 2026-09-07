@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { notFound } from "next/navigation"
 import { matchHref } from "@/lib/slug"
 import type { Metadata } from "next"
 import PlayerAvatar from "@/components/PlayerAvatar"
@@ -13,6 +14,7 @@ import {
   type TeamFixture,
 } from "@/lib/teamData"
 import { getLeagueStandings, getLeagueFixturesByMode, buildNextOpponentMap } from "@/lib/leagueData"
+import { isTeamInScope } from "@/lib/scope"
 import Logo from "@/components/Logo"
 
 const FINISHED_CODES = ["FT", "AET", "PEN"]
@@ -85,6 +87,14 @@ export default async function TeamOverviewPage({
   }
 
   const teamLeague = await getTeamCurrentLeague(id)
+
+  // 스코프 밖(관심 리그·국가대표팀이 아닌) 팀은 여기서 즉시 404 처리.
+  // 봇/스크래퍼가 순차적인 팀 ID를 훑을 때 팀당 API 5~6콜씩 나가던 문제의
+  // 근본 원인이라 여기서 막는다 — teamLeague는 24시간 캐시라 반복 요청도 저렴함
+  if (!isTeamInScope(teamLeague?.id, info.team.name)) {
+    notFound()
+  }
+
   const season = teamLeague?.season ?? new Date().getFullYear()
 
   const [fixtures, injuries, coach, news, standingsData, leagueUpcoming] = await Promise.all([
