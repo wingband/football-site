@@ -53,6 +53,21 @@ export type NewsArticle = {
   description: string | null
 }
 
+// API-Football/외부 API가 쿼터 소진·혼잡 등으로 응답을 늦게 주거나 안 줄 때
+// 기본 fetch는 타임아웃이 없어 함수가 몇 분씩 붙잡혀 있게 된다 (Vercel 함수 지속시간
+// 낭비 + 동시성 점유의 핵심 원인으로 확인됨, 2026-09-07). AbortController로 강제 컷오프.
+const API_TIMEOUT_MS = 8000
+
+async function fetchWithTimeout(url: string, init: RequestInit): Promise<Response> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), API_TIMEOUT_MS)
+  try {
+    return await fetch(url, { ...init, signal: controller.signal })
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 export async function apiFetch(path: string, revalidate?: number): Promise<unknown> {
   if (process.env.USE_MOCK_DATA === "true") {
     if (path.startsWith("/fixtures?id=")) return MOCK_MATCH_DETAIL.fixture
@@ -71,44 +86,66 @@ export async function apiFetch(path: string, revalidate?: number): Promise<unkno
   // 캐시를 완전히 우회했다. /matches/[slug]가 사이트 최고 트래픽 페이지라
   // 방문마다 무조건 실시간 API 호출이 나가는 셈이었다 — 60초 캐시로 바꿔서
   // (라이브 경기 갱신에는 충분히 짧고, 나머지 경우엔 캐시가 대부분 흡수한다)
-  const res = await fetch(`https://v3.football.api-sports.io${path}`, {
-    headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-    next: { revalidate: revalidate ?? 60 },
-  })
-  const data = await res.json()
-  return data.response
+  try {
+    const res = await fetchWithTimeout(`https://v3.football.api-sports.io${path}`, {
+      headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
+      next: { revalidate: revalidate ?? 60 },
+    })
+    if (!res.ok) {
+      console.error(`API-Football 응답 오류 (${res.status}): ${path}`)
+      return []
+    }
+    const data = await res.json()
+    return data.response
+  } catch (err) {
+    // 타임아웃(AbortError) 포함 모든 네트워크 실패를 여기서 흡수해서
+    // 페이지가 몇 분씩 붙잡히는 대신 빈 배열로 즉시 폴백하게 한다.
+    console.error(`API-Football fetch 실패/타임아웃: ${path}`, err instanceof Error ? err.message : err)
+    return []
+  }
 }
 
 export async function getStandings(leagueId: number, season: number): Promise<StandingRow[][]> {
   if (process.env.USE_MOCK_DATA === "true") {
     return MOCK_STANDINGS.league.standings
   }
-  const res = await fetch(
-    `https://v3.football.api-sports.io/standings?league=${leagueId}&season=${season}`,
-    {
-      headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      next: { revalidate: 10800 },
-    }
-  )
-  const data = await res.json()
-  return data.response?.[0]?.league?.standings ?? []
+  try {
+    const res = await fetchWithTimeout(
+      `https://v3.football.api-sports.io/standings?league=${leagueId}&season=${season}`,
+      {
+        headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
+        next: { revalidate: 10800 },
+      }
+    )
+    if (!res.ok) return []
+    const data = await res.json()
+    return data.response?.[0]?.league?.standings ?? []
+  } catch (err) {
+    console.error("getStandings fetch 실패/타임아웃:", err instanceof Error ? err.message : err)
+    return []
+  }
 }
 
 export async function getMatchNews(homeTeam: string, awayTeam: string): Promise<NewsArticle[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_NEWS
 
   const query = encodeURIComponent(`"${homeTeam}" AND "${awayTeam}"`)
-  const res = await fetch(
-    `https://newsdata.io/api/1/news?apikey=${process.env.NEWSDATA_API_KEY}&q=${query}&language=en&category=sports`,
-    { next: { revalidate: 3600 } }
-  )
-  const data = await res.json()
+  try {
+    const res = await fetchWithTimeout(
+      `https://newsdata.io/api/1/news?apikey=${process.env.NEWSDATA_API_KEY}&q=${query}&language=en&category=sports`,
+      { next: { revalidate: 3600 } }
+    )
+    const data = await res.json()
 
-  if (!Array.isArray(data.results)) {
-    console.error("NewsData.io 에러 (경기 관련 뉴스):", data)
+    if (!Array.isArray(data.results)) {
+      console.error("NewsData.io 에러 (경기 관련 뉴스):", data)
+      return []
+    }
+    return data.results ?? []
+  } catch (err) {
+    console.error("getMatchNews fetch 실패/타임아웃:", err instanceof Error ? err.message : err)
     return []
   }
-  return data.results ?? []
 }
 
 export async function getVenueInfo(
@@ -119,19 +156,26 @@ export async function getVenueInfo(
   if (!venueId || process.env.USE_MOCK_DATA === "true") {
     return { name: fallbackName, city: fallbackCity, capacity: null, surface: null, image: null }
   }
-  const res = await fetch(`https://v3.football.api-sports.io/venues?id=${venueId}`, {
-    headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-    next: { revalidate: 86400 },
-  })
-  const data = await res.json()
-  const v = data.response?.[0]
-  if (!v) return { name: fallbackName, city: fallbackCity, capacity: null, surface: null, image: null }
-  return {
-    name: v.name ?? fallbackName,
-    city: v.city ?? fallbackCity,
-    capacity: v.capacity ?? null,
-    surface: v.surface ?? null,
-    image: v.image ?? null,
+  const fallback = { name: fallbackName, city: fallbackCity, capacity: null, surface: null, image: null }
+  try {
+    const res = await fetchWithTimeout(`https://v3.football.api-sports.io/venues?id=${venueId}`, {
+      headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
+      next: { revalidate: 86400 },
+    })
+    if (!res.ok) return fallback
+    const data = await res.json()
+    const v = data.response?.[0]
+    if (!v) return fallback
+    return {
+      name: v.name ?? fallbackName,
+      city: v.city ?? fallbackCity,
+      capacity: v.capacity ?? null,
+      surface: v.surface ?? null,
+      image: v.image ?? null,
+    }
+  } catch (err) {
+    console.error("getVenueInfo fetch 실패/타임아웃:", err instanceof Error ? err.message : err)
+    return fallback
   }
 }
 
@@ -141,15 +185,21 @@ export async function getRoundFixtures(
   round: string
 ): Promise<TeamFixture[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_TEAM_RECENT_FIXTURES as TeamFixture[]
-  const res = await fetch(
-    `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${season}&round=${encodeURIComponent(round)}`,
-    {
-      headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      next: { revalidate: 10800 },
-    }
-  )
-  const data = await res.json()
-  return data.response ?? []
+  try {
+    const res = await fetchWithTimeout(
+      `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${season}&round=${encodeURIComponent(round)}`,
+      {
+        headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
+        next: { revalidate: 10800 },
+      }
+    )
+    if (!res.ok) return []
+    const data = await res.json()
+    return data.response ?? []
+  } catch (err) {
+    console.error("getRoundFixtures fetch 실패/타임아웃:", err instanceof Error ? err.message : err)
+    return []
+  }
 }
 
 export function buildInsights(
