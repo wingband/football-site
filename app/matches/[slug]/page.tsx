@@ -23,6 +23,7 @@ import { buildMatchSlug, matchHref, parseFixtureId, parseSlugDate } from "@/lib/
 import { MOCK_MATCH_DETAIL } from "@/lib/mockData"
 import { getArticleByMatchId } from "@/lib/articles"
 import { SCOPE_LEAGUE_IDS, MAJOR_NATIONAL_TEAMS } from "@/lib/scope"
+import { SITE_URL } from "@/lib/siteConfig"
 import type { Metadata } from "next"
 import Logo from "@/components/Logo"
 
@@ -492,8 +493,54 @@ export default async function MatchDetailPage({
       </div>
     )
 
+  // 구조화 데이터(SportsEvent) — 구글이 경기를 "이벤트"로 인식하게 도와준다.
+  // 실시간 스코어 리치 스니펫이 뜨는 건 구글의 공식 스포츠 데이터 파트너에만 열려있어서
+  // 이것만으로 보장되진 않지만, 정석적인 엔티티/이벤트 마크업이라 안 넣을 이유가 없다
+  const sportsEventJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SportsEvent",
+    name: `${match.teams.home.name} vs ${match.teams.away.name}`,
+    startDate: match.fixture.date,
+    eventStatus: isFinished
+      ? "https://schema.org/EventCompleted"
+      : "https://schema.org/EventScheduled",
+    eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+    sport: "Soccer",
+    url: `${SITE_URL}${matchHref(match)}`,
+    location: match.fixture.venue?.name
+      ? {
+          "@type": "Place",
+          name: match.fixture.venue.name,
+          address: match.fixture.venue.city || undefined,
+        }
+      : undefined,
+    homeTeam: {
+      "@type": "SportsTeam",
+      name: match.teams.home.name,
+      logo: match.teams.home.logo,
+    },
+    awayTeam: {
+      "@type": "SportsTeam",
+      name: match.teams.away.name,
+      logo: match.teams.away.logo,
+    },
+    // schema.org엔 공식 "score" 속성이 없어 PropertyValue로 부가 정보 형태로만 제공
+    ...(isFinished && match.goals.home !== null && match.goals.away !== null
+      ? {
+          additionalProperty: [
+            { "@type": "PropertyValue", name: "homeScore", value: match.goals.home },
+            { "@type": "PropertyValue", name: "awayScore", value: match.goals.away },
+          ],
+        }
+      : {}),
+  }
+
   return (
     <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(sportsEventJsonLd) }}
+      />
       <div className="max-w-5xl mx-auto pb-16 lg:grid lg:grid-cols-[1fr_320px] lg:gap-6 lg:items-start lg:px-4">
       <div className="max-w-2xl mx-auto lg:mx-0 lg:max-w-none">
         {/* 상단 바 */}

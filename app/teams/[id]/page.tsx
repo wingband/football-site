@@ -16,6 +16,7 @@ import {
 } from "@/lib/teamData"
 import { getLeagueStandings, getLeagueFixturesByMode, buildNextOpponentMap } from "@/lib/leagueData"
 import { isTeamInScope } from "@/lib/scope"
+import { SITE_URL } from "@/lib/siteConfig"
 import Logo from "@/components/Logo"
 
 const FINISHED_CODES = ["FT", "AET", "PEN"]
@@ -118,8 +119,25 @@ export default async function TeamOverviewPage({
   // 부상 명단 중복 제거 (같은 선수가 여러 건으로 잡히는 경우)
   const uniqueInjuries = [...new Map(injuries.map((i) => [i.player.id, i])).values()]
 
+  const sportsTeamJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SportsTeam",
+    name: info.team.name,
+    logo: info.team.logo,
+    sport: "Soccer",
+    url: `${SITE_URL}/teams/${id}`,
+    ...(coach?.name ? { coach: { "@type": "Person", name: coach.name } } : {}),
+    ...(teamLeague?.name
+      ? { memberOf: { "@type": "SportsOrganization", name: teamLeague.name } }
+      : {}),
+  }
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(sportsTeamJsonLd) }}
+      />
         {/* 상단: 팀 기록 + 다음 경기 */}
         <div className="grid sm:grid-cols-2 gap-4 mb-6">
           <div className="bg-turf/40 border border-turf-line/40 rounded-md p-4">
