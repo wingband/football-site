@@ -4,6 +4,7 @@ import type { Metadata } from "next"
 import PlayerAvatar from "@/components/PlayerAvatar"
 import { getSeasonYear } from "@/lib/season"
 import StandingsWithFilter from "@/components/StandingsWithFilter"
+import { LEAGUE_NAME_KO } from "@/lib/koreanNames"
 import {
   getLeagueStandings,
   getLeagueFixturesByMode,
@@ -188,9 +189,10 @@ export async function generateMetadata({
     if (!data) data = await getLeagueStandings(id, euroSeason - 1)
   }
   if (!data) return { title: "리그 정보를 찾을 수 없습니다" }
+  const leagueNameKo = LEAGUE_NAME_KO[data.league.name] ?? data.league.name
   return {
-    title: `${data.league.name} 팀 개요`,
-    description: `${data.league.name} ${data.league.season} 시즌 순위표, 예정 경기, 득점 순위를 확인하세요.`,
+    title: `${leagueNameKo} 순위 · ${data.league.season} 시즌 일정 · 득점 순위`,
+    description: `${leagueNameKo} ${data.league.season} 시즌 실시간 순위표, 예정 경기 일정, 득점 순위, 도움 순위를 확인하세요.`,
   }
 }
 

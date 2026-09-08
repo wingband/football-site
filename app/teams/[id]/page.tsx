@@ -4,6 +4,7 @@ import { matchHref } from "@/lib/slug"
 import type { Metadata } from "next"
 import PlayerAvatar from "@/components/PlayerAvatar"
 import StandingsWithFilter from "@/components/StandingsWithFilter"
+import { TEAM_NAME_KO } from "@/lib/koreanNames"
 import {
   getTeamInfo,
   getTeamSeasonFixtures,
@@ -27,9 +28,10 @@ export async function generateMetadata({
   const { id } = await params
   const info = await getTeamInfo(id)
   if (!info) return { title: "팀 정보를 찾을 수 없습니다" }
+  const teamNameKo = TEAM_NAME_KO[info.team.name] ?? info.team.name
   return {
-    title: `${info.team.name} 팀 개요`,
-    description: `${info.team.name}의 최근 경기, 다음 경기, 리그 순위, 감독, 부상 명단, 뉴스를 확인하세요.`,
+    title: `${teamNameKo} 다음경기 일정 · 순위 · 최근 경기 결과`,
+    description: `${teamNameKo}의 다음 경기 일정, 최근 경기 결과, 리그 순위, 감독, 부상 선수 명단, 이적 소식을 확인하세요.`,
   }
 }
 

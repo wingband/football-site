@@ -6,12 +6,16 @@ import AdSlot from "@/components/AdSlot"
 import PlayerAvatar from "@/components/PlayerAvatar"
 import Logo from "@/components/Logo"
 import PlayerCareerRecent from "@/components/PlayerCareerRecent"
+import { KOREAN_PLAYERS_ABROAD } from "@/lib/koreanPlayersAbroad"
+import { TEAM_NAME_KO } from "@/lib/koreanNames"
 import {
   getPlayerDataWithFallback,
   getPlayerTransfers,
   getTrophies,
   getSidelined,
 } from "@/lib/playerData"
+
+const NATIONAL_KEYWORDS_META = ["World Cup", "AFC", "Asian", "Olympic", "Friendlies", "Qualification", "Nations"]
 
 const POSITION_KR: Record<string, string> = {
   Goalkeeper: "골키퍼",
@@ -32,9 +36,26 @@ export async function generateMetadata({
   const season = sp.season ? parseInt(sp.season) : getSeasonYear("England")
   const data = await getPlayerDataWithFallback(id, season)
   if (!data) return { title: "선수 정보를 찾을 수 없습니다" }
+
+  // 한국인 해외파 트래커에 등록된 선수면 한국어 이름 사용 (API는 로마자 표기만 줌)
+  // "손흥민 다음경기", "이강인 오늘 경기" 같은 검색어를 겨냥한 타이틀/설명 구성
+  const koreanEntry = KOREAN_PLAYERS_ABROAD.find((p) => p.id === Number(id))
+  const displayName = koreanEntry?.name ?? data.player.name
+
+  const clubStats = data.statistics.filter(
+    (s) => !NATIONAL_KEYWORDS_META.some((kw) => s.league.name.includes(kw))
+  )
+  const primaryStat = (clubStats.length > 0 ? clubStats : data.statistics)[0]
+  const teamNameRaw = primaryStat?.team?.name ?? ""
+  const teamNameKo = TEAM_NAME_KO[teamNameRaw] ?? teamNameRaw
+
   return {
-    title: `${data.player.name} 선수 정보 및 통계`,
-    description: `${data.player.name}(${data.player.nationality})의 출전 기록, 골, 도움, 평점 등 시즌 통계를 확인하세요.`,
+    title: teamNameKo
+      ? `${displayName} 다음경기 일정 · 최근 스탯 - ${teamNameKo}`
+      : `${displayName} 다음경기 일정 및 최근 스탯`,
+    description: `${displayName}의 다음 경기 일정, 최근 출전 기록, 골, 도움, 평점 등 시즌 스탯을 확인하세요.${
+      teamNameKo ? ` 현재 소속팀: ${teamNameKo}.` : ""
+    }`,
   }
 }
 

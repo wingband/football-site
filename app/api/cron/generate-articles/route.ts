@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { generateMatchArticle } from "@/lib/generateArticle"
 import { saveArticle, slugify, getArticleByMatchId, backfillArticleLogos } from "@/lib/articles"
 import { MOCK_FIXTURES } from "@/lib/mockData"
+import { TEAM_NAME_KO } from "@/lib/koreanNames"
 
 // API 호출/AI 비용을 아끼기 위해, 기사를 만들 대상은 이 리그들의 "종료된 경기"로만 제한
 const TARGET_LEAGUE_IDS = [39, 140, 78, 292, 135, 61]
@@ -184,9 +185,15 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // AI 프롬프트/제목/본문엔 한국어 팀명을 넘긴다 — "손흥민 토트넘 경기" 같은 한국어
+    // 롱테일 검색어를 타겟팅하려는 것. 슬러그/DB 저장값은 API 원본 영문명을 그대로 써서
+    // 기존 URL 형식과 admin cleanup(?homeTeam=&awayTeam=) 부분일치 매칭이 안 깨지게 한다
+    const homeTeamKo = TEAM_NAME_KO[match.teams.home.name] ?? match.teams.home.name
+    const awayTeamKo = TEAM_NAME_KO[match.teams.away.name] ?? match.teams.away.name
+
     const result = await generateMatchArticle({
-      homeTeam: match.teams.home.name,
-      awayTeam: match.teams.away.name,
+      homeTeam: homeTeamKo,
+      awayTeam: awayTeamKo,
       homeScore: match.goals.home,
       awayScore: match.goals.away,
       leagueName: match.league.name,
