@@ -45,7 +45,9 @@ export async function generateMetadata({
   const clubStats = data.statistics.filter(
     (s) => !NATIONAL_KEYWORDS_META.some((kw) => s.league.name.includes(kw))
   )
-  const primaryStat = (clubStats.length > 0 ? clubStats : data.statistics)[0]
+  // 국가대표 스탯으로는 폴백하지 않는다 — 이적 직후라 클럽 스탯이 아직 없으면
+  // 그냥 팀명 없이 제목을 구성한다 (국가대표팀을 소속팀처럼 잘못 보여주는 것 방지)
+  const primaryStat = clubStats[0]
   const teamNameRaw = primaryStat?.team?.name ?? ""
   const teamNameKo = TEAM_NAME_KO[teamNameRaw] ?? teamNameRaw
 
@@ -98,9 +100,23 @@ export default async function PlayerPage({
   const clubStats = data.statistics.filter(
     (s) => !NATIONAL_KEYWORDS.some((kw) => s.league.name.includes(kw))
   )
-  const stat = (clubStats.length > 0 ? clubStats : data.statistics).sort(
+  let stat = clubStats.sort(
     (a, b) => (b.games.appearences ?? 0) - (a.games.appearences ?? 0)
   )[0]
+
+  // 막 이적/임대 복귀한 직후라 이번 시즌 클럽 스탯이 아직 API에 없는 경우를 위한 대비.
+  // 예전엔 이럴 때 국가대표 스탯(월드컵 예선 등)을 "현재 소속팀"인 것처럼 잘못 보여줬다
+  // (2026-09-08, 김지수·황희찬 페이지에서 국가대표팀이 소속팀으로 잘못 뜨던 것 확인).
+  // 국가대표 스탯으로는 절대 폴백하지 않고, 지난 시즌 클럽 스탯을 대신 찾아본다
+  if (!stat) {
+    const prevData = await getPlayerDataWithFallback(id, season - 1)
+    const prevClubStats = prevData?.statistics.filter(
+      (s) => !NATIONAL_KEYWORDS.some((kw) => s.league.name.includes(kw))
+    ) ?? []
+    stat = prevClubStats.sort(
+      (a, b) => (b.games.appearences ?? 0) - (a.games.appearences ?? 0)
+    )[0]
+  }
 
   const [transfers, trophies, sidelined] = await Promise.all([
     getPlayerTransfers(id),
