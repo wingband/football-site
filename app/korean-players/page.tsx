@@ -29,7 +29,7 @@ const PLAYER_INTRO: Record<number, { nameKo: string; nameEn: string; desc: strin
   357286:{ nameKo: "배준호", nameEn: "Bae Jun-Ho", desc: "잉글랜드 챔피언십 스토크 시티에서 활약 중인 차세대 기대주" },
   2909:  { nameKo: "백승호", nameEn: "Paik Seung-Ho", desc: "잉글랜드 챔피언십 버밍엄 시티 소속 미드필더" },
   237050:{ nameKo: "엄지성", nameEn: "Eom Ji-Sung", desc: "잉글랜드 챔피언십 스완지 시티 소속 공격수" },
-  423708:{ nameKo: "양민혁", nameEn: "Yang Min-Hyeok", desc: "토트넘 핫스퍼 소속으로 포츠머스에 임대 중인 신예" },
+  423708:{ nameKo: "양민혁", nameEn: "Yang Min-Hyeok", desc: "토트넘 핫스퍼 소속으로 벨기에 KVC 베스털로에 임대 중인 신예" },
   356237:{ nameKo: "김지수", nameEn: "Kim Ji-Soo", desc: "잉글랜드 프리미어리그 브렌트퍼드 소속 수비수" },
   26519: { nameKo: "홍현석", nameEn: "Hong Hyun-Seok", desc: "마인츠 소속으로 벨기에 겐트에 임대 중인 미드필더" },
   186:   { nameKo: "손흥민", nameEn: "Son Heung-Min", desc: "토트넘 레전드, 현재 MLS LAFC에서 활약 중인 한국 축구 역대 최고 스타" },

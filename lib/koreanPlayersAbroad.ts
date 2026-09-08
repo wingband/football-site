@@ -111,12 +111,14 @@ export const KOREAN_PLAYERS_ABROAD: KoreanPlayer[] = [
     tier: 2,
   },
   {
-    id: 423708,  // ✅ 확인됨 (Portsmouth 임대 중)
+    id: 423708,  // ✅ 확인됨 (2026-08-11 Portsmouth 임대 종료 → KVC Westerlo 재임대, Tottenham 소속)
     name: "양민혁",
-    teamName: "Portsmouth",
-    teamLogo: `${CDN}/teams/743.png`,
-    league: "Championship",
-    leagueLogo: `${CDN}/leagues/40.png`,
+    // TODO: teamLogo 정확한 API-Football 팀 ID 확인 필요
+    // https://v3.football.api-sports.io/teams?search=Westerlo
+    teamName: "KVC Westerlo",
+    teamLogo: `${CDN}/leagues/144.png`, // 임시로 벨기에 주필러 프로리그 로고 사용
+    league: "Belgian Pro League",
+    leagueLogo: `${CDN}/leagues/144.png`,
     tier: 2,
   },
 
