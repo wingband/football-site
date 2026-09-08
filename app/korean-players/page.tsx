@@ -4,6 +4,14 @@ import { KOREAN_PLAYERS_ABROAD } from "@/lib/koreanPlayersAbroad"
 import Logo from "@/components/Logo"
 import PlayerAvatar from "@/components/PlayerAvatar"
 
+// API-Football CDN의 리그 로고는 어두운 배경에서 잘 안 보이는 것들이 있어서(특히 프리미어리그),
+// 다크 테마에 맞게 준비된 로컬 흰색/고대비 에셋이 있으면 그걸 우선 쓴다
+const LEAGUE_LOGO_LOCAL: Record<string, string> = {
+  "Premier League": "/leagues/pl.png",
+  "La Liga": "/leagues/laliga.png",
+  "Bundesliga": "/leagues/bundesliga.png",
+}
+
 export const metadata: Metadata = {
   title: "해외파 한국 축구 선수 — 황희찬, 이강인, 김민재, 손흥민 | GoalLine",
   description: "황희찬(샬케04), 이강인(아틀레티코), 김민재(바이에른), 손흥민(LAFC) 등 해외에서 활약 중인 한국 축구 선수들의 최신 시즌 성적과 소속팀 정보를 한눈에 확인하세요.",
@@ -71,7 +79,7 @@ export default function KoreanPlayersPage() {
           {sorted.map(({ league, players }) => (
             <section key={league}>
               <div className="flex items-center gap-2 mb-4">
-                <Logo src={players[0].leagueLogo} alt="" className="w-5 h-5 shrink-0" />
+                <Logo src={LEAGUE_LOGO_LOCAL[league] ?? players[0].leagueLogo} alt="" className="w-5 h-5 shrink-0" />
                 <h2 className="font-display uppercase text-base text-floodlight/80 tracking-wide">
                   {league}
                 </h2>
@@ -108,7 +116,7 @@ export default function KoreanPlayersPage() {
                           <Logo src={p.teamLogo} alt="" className="w-4 h-4 shrink-0" />
                           <span className="text-sm font-semibold text-score-amber">{p.teamName}</span>
                           <span className="text-floodlight/30 text-xs">·</span>
-                          <Logo src={p.leagueLogo} alt="" className="w-3.5 h-3.5 shrink-0" />
+                          <Logo src={LEAGUE_LOGO_LOCAL[p.league] ?? p.leagueLogo} alt="" className="w-3.5 h-3.5 shrink-0" />
                           <span className="text-xs text-floodlight/50">{p.league}</span>
                         </div>
 
