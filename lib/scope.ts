@@ -13,6 +13,13 @@ export const SCOPE_LEAGUES = [
   { id: 4, name: "UEFA Europa Conference League" },
   { id: 292, name: "K League 1" },
   { id: 98, name: "J1 League" },
+  // 아래 3개는 5대리그는 아니지만, 해외파 트래커에서 이미 콘텐츠로 다루는 리그라
+  // (배준호/백승호/엄지성=챔피언십, 김지수 등=2.분데스리가, 홍현석/양민혁=벨기에) 정식 스코프에 포함.
+  // 안 넣으면 선수 페이지 -> 소속팀 페이지 링크가 스코프 밖으로 처리돼 404가 떴다
+  // (2026-09-08, 김지수 소속팀 카이저슬라우테른 링크 404 확인)
+  { id: 40, name: "Championship" },
+  { id: 79, name: "2. Bundesliga" },
+  { id: 144, name: "Belgian Pro League" },
 ]
 
 export const SCOPE_LEAGUE_IDS = new Set(SCOPE_LEAGUES.map((l) => l.id))
