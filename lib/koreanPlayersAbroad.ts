@@ -22,10 +22,14 @@ export const KOREAN_PLAYERS_ABROAD: KoreanPlayer[] = [
   {
     id: 24888,
     name: "황희찬",
-    teamName: "Wolverhampton",
-    teamLogo: `${CDN}/teams/39.png`,
-    league: "Premier League",
-    leagueLogo: `${CDN}/leagues/39.png`,
+    // 2026-09-02 울버햄튼 → 샬케04 임대 이적 확정 (완전 영입 옵션 포함), 등번호 7번.
+    // 샬케는 25/26시즌 2.분데스리가 우승으로 분데스리가(1부) 승격 — 리그명은 확정이지만
+    // teamLogo/leagueLogo의 정확한 API-Football ID는 아래 URL로 재확인 후 교체 필요:
+    // https://v3.football.api-sports.io/teams?search=Schalke
+    teamName: "Schalke 04",
+    teamLogo: `${CDN}/leagues/78.png`, // TODO: 정확한 팀 ID로 교체 (임시로 분데스리가 로고 사용)
+    league: "Bundesliga",
+    leagueLogo: `${CDN}/leagues/78.png`,
     tier: 1,
   },
 

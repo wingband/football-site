@@ -162,3 +162,11 @@ export const TEAM_NAME_KO: Record<string, string> = {
   "FC Anyang": "FC 안양",
   "Bucheon FC 1995": "부천 FC 1995",
 }
+
+// API-Football의 국가대표팀 감독 데이터가 실제보다 뒤처지는 경우를 위한 수동 오버라이드.
+// (2026-09-08: 홍명보 감독 사퇴 후 API 데이터가 아직 갱신 안 돼 계속 "홍명보"로 나오던 것 확인.
+// 확정 안 된 정보를 잘못 보여주는 것보단 "확인 중"이라고 정직하게 표시하는 게 낫다고 판단)
+// 새 감독이 공식 확정되면 이 값을 실제 이름으로 바꿔주면 된다.
+export const NATIONAL_TEAM_COACH_OVERRIDE: Record<string, string> = {
+  "South Korea": "감독 선임 절차 진행 중 (임시 체제, 확정 시 업데이트 예정)",
+}

@@ -6,13 +6,13 @@ import PlayerAvatar from "@/components/PlayerAvatar"
 
 export const metadata: Metadata = {
   title: "해외파 한국 축구 선수 — 황희찬, 이강인, 김민재, 손흥민 | GoalLine",
-  description: "황희찬(울버햄튼), 이강인(아틀레티코), 김민재(바이에른), 손흥민(LAFC) 등 해외에서 활약 중인 한국 축구 선수들의 최신 시즌 성적과 소속팀 정보를 한눈에 확인하세요.",
+  description: "황희찬(샬케04), 이강인(아틀레티코), 김민재(바이에른), 손흥민(LAFC) 등 해외에서 활약 중인 한국 축구 선수들의 최신 시즌 성적과 소속팀 정보를 한눈에 확인하세요.",
   keywords: ["황희찬", "이강인", "김민재", "손흥민", "정우영", "이재성", "한국 축구 해외파", "해외 한국선수"],
 }
 
 // 한국 선수별 한줄 소개 (SEO용)
 const PLAYER_INTRO: Record<number, { nameKo: string; nameEn: string; desc: string }> = {
-  24888: { nameKo: "황희찬", nameEn: "Hwang Hee-Chan", desc: "잉글랜드 프리미어리그 울버햄튼에서 활약 중인 공격형 미드필더" },
+  24888: { nameKo: "황희찬", nameEn: "Hwang Hee-Chan", desc: "독일 분데스리가 샬케04에 임대 중인 공격형 미드필더 (울버햄튼 소속)" },
   927:   { nameKo: "이강인", nameEn: "Lee Kang-In", desc: "스페인 라리가 아틀레티코 마드리드 소속의 창의적인 미드필더" },
   2897:  { nameKo: "김민재", nameEn: "Kim Min-Jae", desc: "독일 분데스리가 바이에른 뮌헨의 수비 핵심, 세계 최고 센터백 중 한 명" },
   2906:  { nameKo: "이재성", nameEn: "Lee Jae-Sung", desc: "독일 분데스리가 마인츠 05의 공격형 미드필더·윙어" },
@@ -22,21 +22,12 @@ const PLAYER_INTRO: Record<number, { nameKo: string; nameEn: string; desc: strin
   2909:  { nameKo: "백승호", nameEn: "Paik Seung-Ho", desc: "잉글랜드 챔피언십 버밍엄 시티 소속 미드필더" },
   237050:{ nameKo: "엄지성", nameEn: "Eom Ji-Sung", desc: "잉글랜드 챔피언십 스완지 시티 소속 공격수" },
   423708:{ nameKo: "양민혁", nameEn: "Yang Min-Hyeok", desc: "토트넘 핫스퍼 소속으로 포츠머스에 임대 중인 신예" },
-  356237:{ nameKo: "김지수", nameEn: "Kim Ji-Soo", desc: "브렌트퍼드 소속으로 독일 카이저슬라우테른에 임대 중인 수비수" },
+  356237:{ nameKo: "김지수", nameEn: "Kim Ji-Soo", desc: "잉글랜드 프리미어리그 브렌트퍼드 소속 수비수" },
   26519: { nameKo: "홍현석", nameEn: "Hong Hyun-Seok", desc: "마인츠 소속으로 벨기에 겐트에 임대 중인 미드필더" },
   186:   { nameKo: "손흥민", nameEn: "Son Heung-Min", desc: "토트넘 레전드, 현재 MLS LAFC에서 활약 중인 한국 축구 역대 최고 스타" },
 }
 
 const LEAGUE_ORDER = ["Premier League", "La Liga", "Bundesliga", "Championship", "2. Bundesliga", "Belgian Pro League", "MLS"]
-
-function getLeagueFlag(league: string) {
-  if (league.includes("Premier") || league.includes("Championship") || league.includes("FA Cup")) return "🏴󠁧󠁢󠁥󠁮󠁧󠁿"
-  if (league.includes("La Liga")) return "🇪🇸"
-  if (league.includes("Bundesliga")) return "🇩🇪"
-  if (league.includes("Belgian")) return "🇧🇪"
-  if (league === "MLS") return "🇺🇸"
-  return "🌍"
-}
 
 export default function KoreanPlayersPage() {
   const byLeague = new Map<string, typeof KOREAN_PLAYERS_ABROAD>()
@@ -80,7 +71,7 @@ export default function KoreanPlayersPage() {
           {sorted.map(({ league, players }) => (
             <section key={league}>
               <div className="flex items-center gap-2 mb-4">
-                <span>{getLeagueFlag(league)}</span>
+                <Logo src={players[0].leagueLogo} alt="" className="w-5 h-5 shrink-0" />
                 <h2 className="font-display uppercase text-base text-floodlight/80 tracking-wide">
                   {league}
                 </h2>

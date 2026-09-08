@@ -4,7 +4,7 @@ import { matchHref } from "@/lib/slug"
 import type { Metadata } from "next"
 import PlayerAvatar from "@/components/PlayerAvatar"
 import StandingsWithFilter from "@/components/StandingsWithFilter"
-import { TEAM_NAME_KO } from "@/lib/koreanNames"
+import { TEAM_NAME_KO, NATIONAL_TEAM_COACH_OVERRIDE } from "@/lib/koreanNames"
 import {
   getTeamInfo,
   getTeamSeasonFixtures,
@@ -119,6 +119,10 @@ export default async function TeamOverviewPage({
   // 부상 명단 중복 제거 (같은 선수가 여러 건으로 잡히는 경우)
   const uniqueInjuries = [...new Map(injuries.map((i) => [i.player.id, i])).values()]
 
+  // API-Football의 국가대표팀 감독 데이터가 실제보다 뒤처지는 경우를 위한 오버라이드
+  // (예: 감독 사퇴 후 후임 미확정 상태). 확정 안 된 정보는 구조화 데이터에 아예 안 넣는다
+  const coachOverrideNote = NATIONAL_TEAM_COACH_OVERRIDE[info.team.name]
+
   const sportsTeamJsonLd = {
     "@context": "https://schema.org",
     "@type": "SportsTeam",
@@ -126,7 +130,7 @@ export default async function TeamOverviewPage({
     logo: info.team.logo,
     sport: "Soccer",
     url: `${SITE_URL}/teams/${id}`,
-    ...(coach?.name ? { coach: { "@type": "Person", name: coach.name } } : {}),
+    ...(coach?.name && !coachOverrideNote ? { coach: { "@type": "Person", name: coach.name } } : {}),
     ...(teamLeague?.name
       ? { memberOf: { "@type": "SportsOrganization", name: teamLeague.name } }
       : {}),
@@ -200,21 +204,28 @@ export default async function TeamOverviewPage({
 
           {/* 우측: 감독 / 부상 / 경기장 */}
           <div className="space-y-4">
-            {coach && (
+            {coachOverrideNote ? (
               <div className="bg-turf/40 border border-turf-line/40 rounded-md p-4">
                 <p className="text-sm font-medium mb-3">감독</p>
-                <div className="flex items-center gap-3">
-                  <PlayerAvatar
-                    src={coach.photo}
-                    alt={coach.name}
-                    className="w-11 h-11 rounded-full object-cover bg-turf-line text-sm shrink-0"
-                  />
-                  <div>
-                    <p className="text-sm">{coach.name}</p>
-                    <p className="text-xs text-floodlight/40">{coach.nationality}</p>
+                <p className="text-xs text-floodlight/50 leading-relaxed">{coachOverrideNote}</p>
+              </div>
+            ) : (
+              coach && (
+                <div className="bg-turf/40 border border-turf-line/40 rounded-md p-4">
+                  <p className="text-sm font-medium mb-3">감독</p>
+                  <div className="flex items-center gap-3">
+                    <PlayerAvatar
+                      src={coach.photo}
+                      alt={coach.name}
+                      className="w-11 h-11 rounded-full object-cover bg-turf-line text-sm shrink-0"
+                    />
+                    <div>
+                      <p className="text-sm">{coach.name}</p>
+                      <p className="text-xs text-floodlight/40">{coach.nationality}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )
             )}
 
             {uniqueInjuries.length > 0 && (

@@ -4,7 +4,7 @@ import { saveCachedPlayerStat, getCachedPlayerStat } from "@/lib/playerStatCache
 
 const NATIONAL_KW = ["World Cup", "AFC", "Asian", "Olympic", "Friendlies", "Qualification", "Nations", "Copa", "EURO"]
 
-function getClubStat(statistics: { league: { name: string }; games: { appearences: number | null; minutes: number | null; rating: string | null }; goals: { total: number | null; assists: number | null }; shots?: { total: number | null; on: number | null }; passes?: { accuracy: number | null } }[]) {
+function getClubStat(statistics: { team: { name: string; logo: string }; league: { name: string; logo?: string }; games: { appearences: number | null; minutes: number | null; rating: string | null }; goals: { total: number | null; assists: number | null }; shots?: { total: number | null; on: number | null }; passes?: { accuracy: number | null } }[]) {
   return statistics.find((s) => !NATIONAL_KW.some((kw) => s.league.name.includes(kw))) ?? null
 }
 
@@ -47,10 +47,14 @@ export async function GET() {
         return {
           id: player.id,
           name: player.name,
-          teamName: player.teamName,
-          teamLogo: player.teamLogo,
-          league: player.league,
-          leagueLogo: player.leagueLogo,
+          // 팀/리그는 라이브 스탯에 있으면 그걸 우선 쓴다 — 하드코딩된 값은 이적 직후처럼
+          // 아직 API에 새 시즌 스탯이 안 잡힌 경우에만 쓰는 폴백이다. 이렇게 해야 앞으로
+          // 이적이 생겨도 이 목록을 수동으로 안 고쳐도 자동으로 따라잡는다
+          // (2026-09-08, 황희찬 울버햄튼→샬케 이적이 반영 안 됐던 것 계기로 수정)
+          teamName: stat?.team?.name ?? player.teamName,
+          teamLogo: stat?.team?.logo ?? player.teamLogo,
+          league: stat?.league?.name ?? player.league,
+          leagueLogo: stat?.league?.logo ?? player.leagueLogo,
           tier: player.tier,
           goals: stat?.goals.total ?? 0,
           assists: stat?.goals.assists ?? 0,

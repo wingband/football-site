@@ -60,6 +60,9 @@ const LEAGUES = [
   { id: 78,  name: "분데스리가",   nameEn: "Bundesliga",     country: "Germany", logo: "/leagues/bundesliga.png" },
   { id: 135, name: "세리에A",      nameEn: "Serie A",        country: "Italy",   logo: "/leagues/seriea.png" },
   { id: 61,  name: "리그1",        nameEn: "Ligue 1",        country: "France",  logo: "/leagues/ligue1.png" },
+  { id: 292, name: "K리그1",       nameEn: "K League 1",     country: "South Korea", logo: "/leagues/kleague.png" },
+  // J리그는 로컬 에셋이 없어 API-Football CDN 로고를 직접 사용 (next.config.ts에 이미 허용된 도메인)
+  { id: 98,  name: "J리그",        nameEn: "J1 League",      country: "Japan",   logo: "https://media.api-sports.io/football/leagues/98.png" },
 ]
 
 function qualColor(desc: string | null | undefined) {
