@@ -116,15 +116,16 @@ export const KOREAN_PLAYERS_ABROAD: KoreanPlayer[] = [
     tier: 2,
   },
 
-  // ── 🇩🇪 2. Bundesliga 임대 ─────────────────────────────────────
+  // ── 🇬🇧 Premier League 복귀 (2026-06-30 카이저슬라우테른 임대 종료) ──────
   {
-    id: 356237,  // ✅ 확인됨 (Brentford 소속 → Kaiserslautern 임대)
+    id: 356237,  // ✅ 확인됨 (2026-06-30 Kaiserslautern 임대 종료 → Brentford 복귀)
     name: "김지수",
-    teamName: "Kaiserslautern",
-    teamLogo: `${CDN}/teams/176.png`,
-    league: "2. Bundesliga",
-    leagueLogo: `${CDN}/leagues/79.png`,
-    tier: 2,
+    // TODO: teamLogo 정확한 ID 확인 필요 https://v3.football.api-sports.io/teams?search=Brentford
+    teamName: "Brentford",
+    teamLogo: `${CDN}/leagues/39.png`, // 임시로 프리미어리그 로고 사용
+    league: "Premier League",
+    leagueLogo: `${CDN}/leagues/39.png`,
+    tier: 1,
   },
 
   // ── 🇧🇪 벨기에 Pro League ──────────────────────────────────────
