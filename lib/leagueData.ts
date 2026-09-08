@@ -95,11 +95,12 @@ async function apiFootballFetch(path: string, revalidate = DEFAULT_REVALIDATE): 
 // 같으면 실제 fetch 없이 이전 결과를 그대로 재사용한다
 export const getLeagueStandings = cache(async function getLeagueStandings(
   leagueId: string,
-  season: number
+  season: number,
+  revalidate?: number
 ): Promise<LeagueResponse | null> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_STANDINGS as unknown as LeagueResponse
 
-  const data = await apiFootballFetch(`/standings?league=${leagueId}&season=${season}`) as { response?: LeagueResponse[] }
+  const data = await apiFootballFetch(`/standings?league=${leagueId}&season=${season}`, revalidate) as { response?: LeagueResponse[] }
   return data.response?.[0] ?? null
 })
 
@@ -107,13 +108,14 @@ export async function getLeagueFixturesByMode(
   leagueId: string,
   season: number,
   mode: "last" | "next",
-  count: number
+  count: number,
+  revalidate?: number
 ): Promise<LeagueFixture[]> {
   if (process.env.USE_MOCK_DATA === "true") {
     return MOCK_SEASON_FIXTURES.slice(0, count) as unknown as LeagueFixture[]
   }
 
-  const data = await apiFootballFetch(`/fixtures?league=${leagueId}&season=${season}&${mode}=${count}`) as { response?: LeagueFixture[] }
+  const data = await apiFootballFetch(`/fixtures?league=${leagueId}&season=${season}&${mode}=${count}`, revalidate) as { response?: LeagueFixture[] }
   return data.response ?? []
 }
 

@@ -107,25 +107,25 @@ export async function getTeamSquad(teamId: string): Promise<SquadPlayer[]> {
   }))
 }
 
-export async function getTeamSeasonFixtures(teamId: string, season: number): Promise<TeamFixture[]> {
+export async function getTeamSeasonFixtures(teamId: string, season: number, revalidate = 21600): Promise<TeamFixture[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_TEAM_FIXTURES as unknown as TeamFixture[]
 
   const res = await fetch(
     `https://v3.football.api-sports.io/fixtures?team=${teamId}&season=${season}`,
-    // 시즌 전체 일정은 자주 안 바뀌어서 6시간으로 늘림
-    { headers: HEADERS(), next: { revalidate: 21600 } }
+    // 시즌 전체 일정은 자주 안 바뀌어서 6시간으로 늘림 (스코프 밖 팀은 호출부에서 더 길게 오버라이드 가능)
+    { headers: HEADERS(), next: { revalidate } }
   )
   const data = await res.json()
   return data.response ?? []
 }
 
-export async function getTeamInjuries(teamId: string, season: number): Promise<Injury[]> {
+export async function getTeamInjuries(teamId: string, season: number, revalidate = 10800): Promise<Injury[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_INJURIES as unknown as Injury[]
 
   const res = await fetch(
     `https://v3.football.api-sports.io/injuries?team=${teamId}&season=${season}`,
-    // 부상자 명단은 하루에도 여러 번 안 바뀌어서 3시간으로 늘림
-    { headers: HEADERS(), next: { revalidate: 10800 } }
+    // 부상자 명단은 하루에도 여러 번 안 바뀌어서 3시간으로 늘림 (스코프 밖 팀은 호출부에서 더 길게 오버라이드 가능)
+    { headers: HEADERS(), next: { revalidate } }
   )
   const data = await res.json()
   return data.response ?? []

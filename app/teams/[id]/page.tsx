@@ -14,6 +14,7 @@ import {
   type TeamFixture,
 } from "@/lib/teamData"
 import { getLeagueStandings, getLeagueFixturesByMode, buildNextOpponentMap } from "@/lib/leagueData"
+import { isTeamInScope } from "@/lib/scope"
 import { SITE_URL } from "@/lib/siteConfig"
 import Logo from "@/components/Logo"
 
@@ -95,15 +96,23 @@ export default async function TeamOverviewPage({
   // 실제 사용자 탐색이 광범위하게 깨지는 문제가 있었다. 팀 페이지 자체가 이미
   // 2콜 수준으로 가벼워졌고, 봇의 대량 스캔은 middleware.ts의 분당 40회
   // 레이트리밋으로 방어하는 걸로 역할을 넘긴다.
+  //
+  // 다만 완전히 무방비는 아니고, 중간 지점으로 스코프 밖 팀은 아래 4개 호출의
+  // 캐시를 24시간으로 늘려서 반복 조회 비용을 낮춘다 (봇이 같은 팀을 몇 번이고
+  // 다시 훑어도 캐시 만료 전까진 API를 다시 안 부른다). isTeamInScope는 더 이상
+  // 차단용이 아니라 이 캐시 길이를 정하는 용도로만 재사용한다
+  const inScope = isTeamInScope(teamLeague?.id, info.team.name)
+  const OUT_OF_SCOPE_REVALIDATE = 86400 // 24시간
+
   const season = teamLeague?.season ?? new Date().getFullYear()
 
   const [fixtures, injuries, coach, news, standingsData, leagueUpcoming] = await Promise.all([
-    getTeamSeasonFixtures(id, season),
-    getTeamInjuries(id, season),
+    getTeamSeasonFixtures(id, season, inScope ? undefined : OUT_OF_SCOPE_REVALIDATE),
+    getTeamInjuries(id, season, inScope ? undefined : OUT_OF_SCOPE_REVALIDATE),
     getTeamCoach(id, info.team.id),
     getTeamNews(info.team.name),
-    teamLeague ? getLeagueStandings(String(teamLeague.id), season) : Promise.resolve(null),
-    teamLeague ? getLeagueFixturesByMode(String(teamLeague.id), season, "next", 10) : Promise.resolve([]),
+    teamLeague ? getLeagueStandings(String(teamLeague.id), season, inScope ? undefined : OUT_OF_SCOPE_REVALIDATE) : Promise.resolve(null),
+    teamLeague ? getLeagueFixturesByMode(String(teamLeague.id), season, "next", 10, inScope ? undefined : OUT_OF_SCOPE_REVALIDATE) : Promise.resolve([]),
   ])
 
   const nextOpponent = buildNextOpponentMap(leagueUpcoming)
