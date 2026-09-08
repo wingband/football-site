@@ -29,7 +29,17 @@ export default function VisitorCount() {
       } catch {}
     }
 
-    fetch("/api/pageview", { method: alreadyCounted ? "GET" : "POST" })
+    // 커뮤니티 홍보 링크(?utm_source=fmkorea 등)로 들어왔으면 채널별 통계에도 반영.
+    // 오늘 이미 카운트된 방문(alreadyCounted)이면 GET만 보내므로 이번 방문의 소스는
+    // 못 잡는다 — 완벽한 어트리뷰션보다 "대략 어느 채널이 먹히는지" 파악이 목적이라 이 정도로 충분
+    const source = alreadyCounted ? null : new URLSearchParams(window.location.search).get("utm_source")
+
+    fetch("/api/pageview", {
+      method: alreadyCounted ? "GET" : "POST",
+      ...(source && !alreadyCounted
+        ? { headers: { "Content-Type": "application/json" }, body: JSON.stringify({ source }) }
+        : {}),
+    })
       .then((r) => r.json())
       .then((d) => {
         if (typeof d?.count === "number") setCount(d.count)
