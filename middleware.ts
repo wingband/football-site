@@ -36,7 +36,7 @@ const isPublicRoute = createRouteMatcher([
 // 같은 워밍 인스턴스로 몰리는 반복 스크래핑 트래픽은 실제로 상당 부분 걸러진다.
 // (2026-09-07: /players, /compare가 ?season= 값을 돌아가며 여러 IP에서
 // 대량 스크래핑당해 선수 하나당 API 호출이 20콜 안팎씩 나갔던 것 확인)
-const RATE_LIMIT_ROUTES = [/^\/players\//, /^\/compare/, /^\/teams\//, /^\/leagues\//, /^\/matches\//]
+const RATE_LIMIT_ROUTES = [/^\/players\//, /^\/compare/, /^\/teams\//, /^\/leagues\//, /^\/matches/, /^\/transfers/]
 const RATE_LIMIT_WINDOW_MS = 60_000
 // 실제 사용자가 1분 안에 이 라우트들을 40번 넘게 볼 일은 없음
 const RATE_LIMIT_MAX = 40
