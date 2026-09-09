@@ -37,26 +37,41 @@ const isPublicRoute = createRouteMatcher([
 // 같은 워밍 인스턴스로 몰리는 반복 스크래핑 트래픽은 실제로 상당 부분 걸러진다.
 // (2026-09-07: /players, /compare가 ?season= 값을 돌아가며 여러 IP에서
 // 대량 스크래핑당해 선수 하나당 API 호출이 20콜 안팎씩 나갔던 것 확인)
-const RATE_LIMIT_ROUTES = [/^\/players\//, /^\/compare/, /^\/teams\//, /^\/leagues\//, /^\/matches/, /^\/transfers/, /^\/api\/players\//]
+//
+// /matches/[slug]는 따로 더 엄격한 한도를 둔다. 경기 상세 하나 보는 데 내부적으로
+// (스탯+이벤트+라인업+선수+예측+최근폼 2팀) API 콜이 8~9개씩 나가서, 40/분 기준으로도
+// 봇이 분당 최대 360콜까지 뽑아갈 수 있었다. 실제 사용자가 분당 경기 15개 넘게
+// 볼 일은 없다 (2026-09-09, 시즌 전체를 라운드별로 순회하며 훑는 크롤러 확인)
+const RATE_LIMIT_RULES: { pattern: RegExp; max: number }[] = [
+  { pattern: /^\/matches\//, max: 15 },
+  { pattern: /^\/players\//, max: 40 },
+  { pattern: /^\/compare/, max: 40 },
+  { pattern: /^\/teams\//, max: 40 },
+  { pattern: /^\/leagues\//, max: 40 },
+  { pattern: /^\/matches/, max: 40 },
+  { pattern: /^\/transfers/, max: 40 },
+  { pattern: /^\/api\/players\//, max: 40 },
+]
 const RATE_LIMIT_WINDOW_MS = 60_000
-// 실제 사용자가 1분 안에 이 라우트들을 40번 넘게 볼 일은 없음
-const RATE_LIMIT_MAX = 40
 
 const hitCounts = new Map<string, { count: number; resetAt: number }>()
 
 function isRateLimited(ip: string, pathname: string): boolean {
-  if (!RATE_LIMIT_ROUTES.some((re) => re.test(pathname))) return false
+  const rule = RATE_LIMIT_RULES.find((r) => r.pattern.test(pathname))
+  if (!rule) return false
 
+  // 규칙마다 카운터를 따로 둬야 /matches/(15/분)와 다른 라우트(40/분)가 서로 안 섞인다
+  const key = `${ip}:${rule.pattern.source}`
   const now = Date.now()
-  const entry = hitCounts.get(ip)
+  const entry = hitCounts.get(key)
 
   if (!entry || now > entry.resetAt) {
-    hitCounts.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS })
+    hitCounts.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS })
     return false
   }
 
   entry.count += 1
-  return entry.count > RATE_LIMIT_MAX
+  return entry.count > rule.max
 }
 
 export default clerkMiddleware(async (auth, req) => {

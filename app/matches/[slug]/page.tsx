@@ -245,7 +245,11 @@ export default async function MatchDetailPage({
   const isLive = LIVE_CODES.includes(match.fixture.status.short ?? "")
 
   // 종료/진행/예정에 따라 캐시 전략 분기
-  const matchDataRevalidate = isFinished ? 86400 : isLive ? 60 : 3600
+  // 종료된 경기의 스탯/라인업/이벤트/선수 기록은 절대 안 바뀌므로 7일로 늘림.
+  // (2026-09-09) 봇이 여러 리그의 시즌 전체 경기를 라운드별로 순회하며 훑는 게
+  // 확인됐다 — 캐시 기간을 늘려도 "처음 훑는" 비용 자체는 못 막지만, 같은 경기를
+  // 반복해서(예: 다음날 또) 훑을 때의 비용은 크게 줄어든다
+  const matchDataRevalidate = isFinished ? 604800 : isLive ? 60 : 3600
 
   // ── 빠른 경로: 즉시 렌더링에 필요한 4개 병렬 호출 ──────────────────
   const [stats, events, playerStats, lineups] = await Promise.all([

@@ -46,14 +46,20 @@ export default async function SidebarDeferredSection({
   venueCity: string
   isFinished: boolean
 }) {
+  // 종료된 경기는 예측/최근폼/라운드 정보도 다시 바뀔 일이 없으므로 7일로 늘림
+  // (2026-09-09, 스탯/라인업 등과 같은 이유)
+  const staticDataRevalidate = isFinished ? 604800 : 86400
+  const recentFormRevalidate = isFinished ? 604800 : 21600
+  const roundFixturesRevalidate = isFinished ? 604800 : undefined
+
   const [venueInfo, roundFixtures, predictions, homeRecent, awayRecent] = await Promise.all([
     getVenueInfo(venueId, venueName, venueCity),
     round
-      ? getRoundFixtures(leagueId, season, round)
+      ? getRoundFixtures(leagueId, season, round, roundFixturesRevalidate)
       : Promise.resolve([] as TeamFixture[]),
-    apiFetch(`/predictions?fixture=${fixtureId}`, 86400) as Promise<Prediction[]>,
-    apiFetch(`/fixtures?team=${homeTeamId}&last=6`, 21600) as Promise<TeamFixture[]>,
-    apiFetch(`/fixtures?team=${awayTeamId}&last=6`, 21600) as Promise<TeamFixture[]>,
+    apiFetch(`/predictions?fixture=${fixtureId}`, staticDataRevalidate) as Promise<Prediction[]>,
+    apiFetch(`/fixtures?team=${homeTeamId}&last=6`, recentFormRevalidate) as Promise<TeamFixture[]>,
+    apiFetch(`/fixtures?team=${awayTeamId}&last=6`, recentFormRevalidate) as Promise<TeamFixture[]>,
   ])
 
   const prediction = predictions?.[0]?.predictions

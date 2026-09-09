@@ -182,7 +182,8 @@ export async function getVenueInfo(
 export async function getRoundFixtures(
   leagueId: number,
   season: number,
-  round: string
+  round: string,
+  revalidate = 10800
 ): Promise<TeamFixture[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_TEAM_RECENT_FIXTURES as TeamFixture[]
   try {
@@ -190,7 +191,7 @@ export async function getRoundFixtures(
       `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${season}&round=${encodeURIComponent(round)}`,
       {
         headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-        next: { revalidate: 10800 },
+        next: { revalidate },
       }
     )
     if (!res.ok) return []
