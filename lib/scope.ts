@@ -39,3 +39,21 @@ export function isTeamInScope(teamLeagueId: number | null | undefined, teamName:
   if (MAJOR_NATIONAL_TEAMS.has(teamName)) return true
   return false
 }
+
+// 요청이 우리 사이트 안에서 클릭해 들어온 건지(Referer가 goalline.me) 확인.
+// (2026-09-09) 스코프 밖 팀의 404를 완전히 없앴더니, 그 다음날 바로 팀 ID를
+// 순차적으로(83, 84, 89, 90, 91...) 훑는 스캐너가 나타나 팀당 5콜씩,
+// 심지어 스쿼드/팀통계까지 파고들며 API를 소진하는 게 확인됐다.
+// 그렇다고 전면 재차단하면 실제 사용자의 선수 페이지 -> 팀 페이지 링크가 다시 깨지므로,
+// "우리 사이트에서 클릭해서 온 요청인지"를 기준으로 나눈다 — 봇은 보통 Referer 없이
+// URL을 직접 두드리기 때문에 이 구분으로 대부분 걸러진다
+export function isInternalReferer(referer: string | null | undefined): boolean {
+  if (!referer) return false
+  try {
+    const refererHost = new URL(referer).hostname
+    const siteHost = new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://goalline.me").hostname
+    return refererHost === siteHost || refererHost.endsWith(`.${siteHost}`)
+  } catch {
+    return false
+  }
+}

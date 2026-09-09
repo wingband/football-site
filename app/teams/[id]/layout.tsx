@@ -1,15 +1,19 @@
+import { notFound } from "next/navigation"
+import { headers } from "next/headers"
 import TeamHeader from "@/components/TeamHeader"
 import AdSlot from "@/components/AdSlot"
-import { getTeamInfo } from "@/lib/teamData"
+import { getTeamInfo, getTeamCurrentLeague } from "@/lib/teamData"
+import { isTeamInScope, isInternalReferer } from "@/lib/scope"
 
 // 팀 페이지 전체(개요/순위/경기/스쿼드/...)가 공유하는 레이아웃.
 // 헤더+탭을 여기서 한 번만 렌더링해서, 탭 클릭할 때마다 메뉴 위치가 흔들리던 문제를 근본적으로 해결
 //
-// (2026-09-08) 스코프 기반 404 차단을 제거함. 유명하지 않은 팀(Willem II 등)이
-// 정상적인 내부 링크를 통해 접근돼도 여기서 막혀버려 실제 사용자 탐색이 광범위하게
-// 깨지는 문제가 있었다. 봇의 대량 스캔 방어는 middleware.ts의 분당 40회
-// 레이트리밋으로 넘긴다 (app/teams/[id]/page.tsx와 동일한 조치, 원래 이중 방어로
-// 여기도 같이 넣어뒀던 걸 그때는 놓쳤었음)
+// (2026-09-08) 스코프 기반 404 차단을 한 번 완전히 제거했었는데, 바로 다음 날
+// 팀 ID를 순차적으로 훑는 스캐너가 나타나 팀당 5콜씩(심지어 스쿼드/팀통계까지)
+// API를 소진하는 게 확인됐다 (2026-09-09). 그렇다고 완전 재차단하면 실제 사용자의
+// 선수 페이지 -> 팀 페이지 링크가 다시 깨지므로, "우리 사이트에서 클릭해서 온 요청인지"
+// (Referer가 goalline.me)로 나눈다: 내부 링크로 들어온 스코프 밖 팀은 통과,
+// Referer 없이 URL을 직접 두드리는 건(대부분 봇) 막는다
 export default async function TeamLayout({
   children,
   params,
@@ -28,6 +32,16 @@ export default async function TeamLayout({
         </div>
       </main>
     )
+  }
+
+  const teamLeague = await getTeamCurrentLeague(id)
+  const inScope = isTeamInScope(teamLeague?.id, info.team.name)
+
+  if (!inScope) {
+    const referer = (await headers()).get("referer")
+    if (!isInternalReferer(referer)) {
+      notFound()
+    }
   }
 
   return (
