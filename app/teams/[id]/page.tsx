@@ -276,7 +276,7 @@ export default async function TeamOverviewPage({
           <section className="mt-8">
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-display uppercase tracking-wide text-sm text-floodlight/70">뉴스</h2>
-              <Link href={`/teams/${id}/news`} className="text-xs text-floodlight/40 hover:text-score-amber">
+              <Link href={`/teams/${id}/news?ref=internal`} className="text-xs text-floodlight/40 hover:text-score-amber">
                 전체 보기 →
               </Link>
             </div>

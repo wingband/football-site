@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import { teamHref } from "@/lib/slug"
 import { getSeasonYear } from "@/lib/season"
 import FollowButton from "@/components/FollowButton"
 import AdSlot from "@/components/AdSlot"
@@ -165,7 +166,7 @@ export default async function PlayerPage({
               {/* 현재 소속팀 — 눈에 띄게 */}
               {stat && (
                 <Link
-                  href={`/teams/${stat.team.id}`}
+                  href={teamHref(stat.team.id)}
                   className="flex items-center gap-2 mt-2 w-fit bg-turf-line/30 hover:bg-turf-line/50 px-3 py-1.5 rounded-full transition-colors"
                 >
                   <Logo src={stat.team.logo} alt="" className="w-5 h-5" />

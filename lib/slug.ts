@@ -46,6 +46,17 @@ export function matchHref(match: MatchSlugSource): string {
   return `/matches/${buildMatchSlug(match)}`
 }
 
+// 팀 페이지 링크 전용 헬퍼. ?ref=internal을 자동으로 붙여서,
+// "우리 사이트 안에서 클릭해 들어온 링크"라는 걸 표시한다.
+// (2026-09-09) Referer 헤더로 이걸 판단하려 했는데, Next.js의 클라이언트 사이드
+// 라우팅(fetch 기반)에서 Referer가 기대대로 안 잡히는 경우가 있어서 신뢰할 수 없었다.
+// 쿼리 파라미터는 브라우저 동작에 안 휘둘리는 확실한 방법이라 이걸로 대체한다.
+// 스코프 밖 팀(챔피언십 밖 하위리그 등)으로 링크를 걸 때는 항상 이 함수를 써야 한다 —
+// 그래야 app/teams/[id]/layout.tsx의 스코프 체크를 통과한다
+export function teamHref(teamId: string | number): string {
+  return `/teams/${teamId}?ref=internal`
+}
+
 // slug → 킥오프 날짜(UTC). "team-vs-team-YYYYMMDD-fixtureId" 형식에서 날짜만 뽑아낸다.
 // API를 부르기 전에 "이 경기가 며칠 전 거라 사실상 안 바뀐다"를 미리 판단해서
 // 캐시 시간을 정하는 데 쓴다 (finished 여부를 알려면 원래 fetch가 필요한데,

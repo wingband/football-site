@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import { teamHref } from "@/lib/slug"
 import { getSeasonYear, formatSeasonLabel } from "@/lib/season"
 import { getLeagueStandings } from "@/lib/leagueData"
 import SeasonSelect from "@/components/SeasonSelect"
@@ -206,7 +207,7 @@ export default async function StandingsPage({
                         const form = (row.form ?? "").split("").slice(-5)
 
                         return (
-                          <Link key={row.team.id} href={`/teams/${row.team.id}`}
+                          <Link key={row.team.id} href={teamHref(row.team.id)}
                             className={`grid grid-cols-[24px_1fr_32px_32px_32px_32px_40px_48px_80px] gap-1 px-3 py-2.5 items-center text-sm border-b border-turf-line/20 last:border-b-0 hover:bg-turf-line/20 transition-colors ${idx < 3 ? "bg-turf/20" : ""}`}>
 
                             {/* 순위 */}

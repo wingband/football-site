@@ -59,7 +59,7 @@ export default function TeamHeader({
           ) : (
             <Link
               key={tab.key}
-              href={`${base}${tab.path}`}
+              href={`${base}${tab.path}?ref=internal`}
               className="shrink-0 px-4 py-3 text-floodlight/40 hover:text-floodlight/70"
             >
               {tab.label}

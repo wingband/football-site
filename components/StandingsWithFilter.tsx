@@ -4,6 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import type { StandingRow, TeamSplit } from "@/lib/leagueData"
 import Logo from "@/components/Logo"
+import { teamHref } from "@/lib/slug"
 
 type Mode = "all" | "home" | "away"
 const MODES: { key: Mode; label: string }[] = [
@@ -135,7 +136,7 @@ export default function StandingsWithFilter({
                       </td>
                       <td className="px-1 py-2.5 font-sans">
                         <Link
-                          href={`/teams/${row.team.id}`}
+                          href={teamHref(row.team.id)}
                           className="flex items-center gap-2 hover:text-score-amber"
                         >
                           <Logo src={row.team.logo} alt="" className="w-5 h-5 shrink-0" />

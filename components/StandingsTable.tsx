@@ -1,5 +1,6 @@
 import Link from "next/link"
 import Logo from "@/components/Logo"
+import { teamHref } from "@/lib/slug"
 
 type StandingRow = {
   rank: number
@@ -91,7 +92,7 @@ export default function StandingsTable({
                       </td>
                       <td className="px-1 py-2.5 font-sans">
                         <Link
-                          href={`/teams/${row.team.id}`}
+                          href={teamHref(row.team.id)}
                           className="flex items-center gap-2 hover:text-score-amber"
                         >
                           <Logo src={row.team.logo} alt="" className="w-5 h-5 shrink-0" />

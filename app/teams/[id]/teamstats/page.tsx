@@ -1,5 +1,6 @@
 import Link from "next/link"
 import type { Metadata } from "next"
+import { teamHref } from "@/lib/slug"
 import { getTeamInfo, getTeamCurrentLeague, getTeamSeasonStats } from "@/lib/teamData"
 import { getLeagueStandings } from "@/lib/leagueData"
 import Logo from "@/components/Logo"
@@ -22,7 +23,7 @@ function RankCard({ title, rows, teamId, unit }: { title: string; rows: Row[]; t
       <p className="text-sm font-medium mb-3">{title}</p>
       <div className="divide-y divide-turf-line/30">
         {rows.map((r, i) => (
-          <Link key={r.id} href={`/teams/${r.id}`}
+          <Link key={r.id} href={teamHref(r.id)}
             className={`flex items-center gap-3 py-2 hover:bg-turf-line/20 transition-colors -mx-1 px-1 ${r.id === teamId ? "bg-score-amber/10" : ""}`}>
             <span className="text-xs text-floodlight/40 w-4 text-center shrink-0">{i + 1}</span>
             <Logo src={r.logo} alt="" className="w-6 h-6 shrink-0" />

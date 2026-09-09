@@ -3,6 +3,7 @@ import AdSlot from "@/components/AdSlot"
 import { MOCK_SEARCH_RESULTS } from "@/lib/mockData"
 import Logo from "@/components/Logo"
 import PlayerAvatar from "@/components/PlayerAvatar"
+import { teamHref } from "@/lib/slug"
 
 type TeamResult = { team: { id: number; name: string; logo: string; country: string } }
 type PlayerResult = { player: { id: number; name: string; photo: string; nationality: string } }
@@ -101,7 +102,7 @@ export default async function SearchPage({
               {teams.map((t) => (
                 <Link
                   key={t.team.id}
-                  href={`/teams/${t.team.id}`}
+                  href={teamHref(t.team.id)}
                   className="flex items-center gap-3 px-4 py-3 hover:bg-turf-line/40 border-b border-turf-line/40 last:border-b-0"
                 >
                   <Logo src={t.team.logo} alt="" className="w-6 h-6" />

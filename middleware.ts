@@ -68,6 +68,18 @@ export default clerkMiddleware(async (auth, req) => {
   if (!isPublicRoute(req)) {
     await auth.protect()
   }
+
+  // 팀 페이지 링크의 ?ref=internal을 커스텀 헤더로 넘겨준다.
+  // app/teams/[id]/layout.tsx가 이 헤더를 보고 "우리 사이트 안에서 클릭해 들어온
+  // 요청인지"를 판단해서 스코프 밖 팀도 통과시킬지 정한다. layout.tsx는 Next.js
+  // 구조상 searchParams를 직접 못 읽어서(페이지 컴포넌트만 받을 수 있음)
+  // 미들웨어에서 한 번 읽어 헤더로 대신 전달하는 방식을 쓴다
+  // (2026-09-09, Referer 헤더만으로는 클라이언트 사이드 라우팅에서 신뢰할 수 없어서 추가)
+  if (/^\/teams\//.test(req.nextUrl.pathname) && req.nextUrl.searchParams.get("ref") === "internal") {
+    const forwardedHeaders = new Headers(req.headers)
+    forwardedHeaders.set("x-team-ref-internal", "1")
+    return NextResponse.next({ request: { headers: forwardedHeaders } })
+  }
 })
 
 export const config = {
