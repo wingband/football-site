@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { matchHref } from "@/lib/slug"
+import { matchLinkHref } from "@/lib/slug"
 import Logo from "@/components/Logo"
 
 type TeamFixture = {
@@ -29,7 +29,7 @@ function NextMatchColumn({ teamId, fixture }: { teamId: number; fixture: TeamFix
 
   return (
     <Link
-      href={matchHref(fixture)}
+      href={matchLinkHref(fixture)}
       className="flex flex-col items-center gap-2 hover:bg-turf-line/20 transition-colors py-2 px-1"
     >
       <span className="flex items-center gap-1.5 text-[10px] text-floodlight/40">

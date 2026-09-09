@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 import Link from "next/link"
-import { matchHref } from "@/lib/slug"
+import { matchLinkHref } from "@/lib/slug"
 import { getMatchPhase } from "@/lib/matchStatus"
 import { useFavorites } from "@/lib/useFavorites"
 import { deriveFavoriteLeagues } from "@/lib/leagueFavorites"
@@ -102,7 +102,7 @@ function MatchRow({ match }: { match: Fixture }) {
 
   return (
     <Link
-      href={matchHref(match)}
+      href={matchLinkHref(match)}
       className="flex items-center gap-3 px-4 py-3 hover:bg-turf-line/40 transition-colors border-b border-turf-line/40 last:border-b-0"
     >
       <div className="w-12 shrink-0 text-center">

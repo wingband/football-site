@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import Logo from "@/components/Logo"
-import { matchHref, teamHref } from "@/lib/slug"
+import { matchLinkHref, teamHref } from "@/lib/slug"
 import type { PlayerRecentMatch } from "@/lib/playerData"
 
 type CareerEntry = {
@@ -76,7 +76,7 @@ export default function PlayerCareerRecent({
             {recentMatches.map((m) => (
               <Link
                 key={m.fixture.id}
-                href={matchHref(m)}
+                href={matchLinkHref(m)}
                 className="flex items-center gap-3 py-2.5 hover:bg-turf-line/20 transition-colors -mx-1 px-1"
               >
                 <span className="text-[11px] text-floodlight/40 w-14 shrink-0">

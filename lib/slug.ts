@@ -46,6 +46,17 @@ export function matchHref(match: MatchSlugSource): string {
   return `/matches/${buildMatchSlug(match)}`
 }
 
+// 실제 클릭 링크(Link href)에서만 쓰는 버전. ?ref=internal을 붙여서
+// "우리 사이트 안에서 클릭해 들어온 링크"라는 걸 표시한다.
+// canonical/JSON-LD의 url 필드는 이 쿼리파라미터가 섞이면 안 되니 그쪽은
+// matchHref를 그대로 쓰고, 실제 <Link href={...}>에만 이 함수를 쓴다.
+// (2026-09-09) Referer 헤더로 판단하려 했는데 클라이언트 사이드 라우팅에서
+// 신뢰할 수 없어서, 팀 링크와 같은 방식(쿼리파라미터)으로 통일한다 —
+// 오래된 과거 경기를 시즌 전체 순회하며 훑는 크롤러를 막기 위함
+export function matchLinkHref(match: MatchSlugSource): string {
+  return `${matchHref(match)}?ref=internal`
+}
+
 // 팀 페이지 링크 전용 헬퍼. ?ref=internal을 자동으로 붙여서,
 // "우리 사이트 안에서 클릭해 들어온 링크"라는 걸 표시한다.
 // (2026-09-09) Referer 헤더로 이걸 판단하려 했는데, Next.js의 클라이언트 사이드

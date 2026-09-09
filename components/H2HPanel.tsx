@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { matchHref } from "@/lib/slug"
+import { matchLinkHref } from "@/lib/slug"
 import Logo from "@/components/Logo"
 
 type H2HMatch = {
@@ -122,7 +122,7 @@ export default function H2HPanel({
           ) : (
             <Link
               key={m.fixture.id}
-              href={matchHref(m)}
+              href={matchLinkHref(m)}
               className="block hover:bg-turf-line/20 transition-colors"
             >
               {row}

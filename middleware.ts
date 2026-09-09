@@ -84,15 +84,22 @@ export default clerkMiddleware(async (auth, req) => {
     await auth.protect()
   }
 
-  // 팀 페이지 링크의 ?ref=internal을 커스텀 헤더로 넘겨준다.
-  // app/teams/[id]/layout.tsx가 이 헤더를 보고 "우리 사이트 안에서 클릭해 들어온
-  // 요청인지"를 판단해서 스코프 밖 팀도 통과시킬지 정한다. layout.tsx는 Next.js
-  // 구조상 searchParams를 직접 못 읽어서(페이지 컴포넌트만 받을 수 있음)
-  // 미들웨어에서 한 번 읽어 헤더로 대신 전달하는 방식을 쓴다
-  // (2026-09-09, Referer 헤더만으로는 클라이언트 사이드 라우팅에서 신뢰할 수 없어서 추가)
-  if (/^\/teams\//.test(req.nextUrl.pathname) && req.nextUrl.searchParams.get("ref") === "internal") {
+  // 팀/경기 페이지 링크의 ?ref=internal을 커스텀 헤더로 넘겨준다.
+  // app/teams/[id]/layout.tsx, app/matches/[slug]/page.tsx가 이 헤더를 보고
+  // "우리 사이트 안에서 클릭해 들어온 요청인지"를 판단해서 스코프 밖 팀/오래된
+  // 과거 경기도 통과시킬지 정한다. 이 컴포넌트들은 Next.js 구조상 searchParams를
+  // 직접 못 읽어서(page.tsx만 받을 수 있고 layout.tsx는 아예 못 받음) 미들웨어에서
+  // 한 번 읽어 헤더로 대신 전달하는 방식을 쓴다
+  // (2026-09-09, Referer 헤더만으로는 클라이언트 사이드 라우팅에서 신뢰할 수 없어서 추가.
+  // /matches/는 시즌 전체를 라운드별로 순회하며 훑는 크롤러 대응으로 같은 날 추가)
+  const isInternalRefRequest = req.nextUrl.searchParams.get("ref") === "internal"
+  const isTeamPath = /^\/teams\//.test(req.nextUrl.pathname)
+  const isMatchPath = /^\/matches\//.test(req.nextUrl.pathname)
+
+  if (isInternalRefRequest && (isTeamPath || isMatchPath)) {
     const forwardedHeaders = new Headers(req.headers)
-    forwardedHeaders.set("x-team-ref-internal", "1")
+    if (isTeamPath) forwardedHeaders.set("x-team-ref-internal", "1")
+    if (isMatchPath) forwardedHeaders.set("x-match-ref-internal", "1")
     return NextResponse.next({ request: { headers: forwardedHeaders } })
   }
 })

@@ -1,7 +1,7 @@
 import type * as React from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { matchHref } from "@/lib/slug"
+import { matchLinkHref } from "@/lib/slug"
 import AdSlot from "@/components/AdSlot"
 import PlayerAvatar from "@/components/PlayerAvatar"
 import Logo from "@/components/Logo"
@@ -139,7 +139,7 @@ function RoundFixturesCard({
         return isCurrent ? (
           <div key={fx.fixture.id}>{inner}</div>
         ) : (
-          <Link key={fx.fixture.id} href={matchHref(fx)} className="block hover:bg-turf-line/20">
+          <Link key={fx.fixture.id} href={matchLinkHref(fx)} className="block hover:bg-turf-line/20">
             {inner}
           </Link>
         )

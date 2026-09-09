@@ -1,6 +1,7 @@
 import { Suspense } from "react"
 import Link from "next/link"
 import { permanentRedirect, notFound } from "next/navigation"
+import { headers } from "next/headers"
 import { apiFetch } from "@/lib/matchApi"
 import { getCachedMatchDetail, saveCachedMatchDetail } from "@/lib/matchDetailCache"
 import PlayerAvatar from "@/components/PlayerAvatar"
@@ -197,7 +198,7 @@ export default async function MatchDetailPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>
-  searchParams: Promise<{ from?: string }>
+  searchParams: Promise<{ from?: string; ref?: string }>
 }) {
   const { slug } = await params
   const sp = await searchParams
@@ -225,7 +226,11 @@ export default async function MatchDetailPage({
   // slug 정규화 — 리다이렉트는 Suspense 경계 앞에서 처리해야 올바른 HTTP 상태코드가 나온다
   const canonicalSlug = buildMatchSlug(match)
   if (slug !== canonicalSlug) {
-    permanentRedirect(`/matches/${canonicalSlug}${fromReview ? "?from=review" : ""}`)
+    const preserved = new URLSearchParams()
+    if (fromReview) preserved.set("from", "review")
+    if (sp.ref === "internal") preserved.set("ref", "internal")
+    const qs = preserved.toString()
+    permanentRedirect(`/matches/${canonicalSlug}${qs ? `?${qs}` : ""}`)
   }
 
   // 스코프 밖(관심 리그도 아니고 국가대표팀 경기도 아닌) 경기는 여기서 즉시 404.
@@ -237,6 +242,21 @@ export default async function MatchDetailPage({
     MAJOR_NATIONAL_TEAMS.has(match.teams.away.name)
   if (!matchInScope) {
     notFound()
+  }
+
+  // 오래된 과거 경기(45일 이상 지남)는 "우리 사이트 안에서 클릭해 들어온 경우"만 통과.
+  // 최근 경기(검색엔진이 색인한 AI 리뷰 기사, SNS 공유 링크 등)는 그대로 열어둬서
+  // SEO/직접 유입에 영향 없게 하고, 시즌 전체를 라운드별로 순회하며 훑는 크롤러만 막는다.
+  // (2026-09-09, 여러 리그의 지난 시즌 전체 경기를 라운드 1부터 46까지 순서대로
+  // 스탯/라인업/이벤트/선수/예측까지 훑어가는 대규모 크롤링 확인)
+  const OLD_MATCH_THRESHOLD_MS = 45 * 24 * 60 * 60 * 1000
+  const matchAgeMs = Date.now() - new Date(match.fixture.date).getTime()
+  const isOldArchiveMatch = matchAgeMs > OLD_MATCH_THRESHOLD_MS
+  if (isOldArchiveMatch) {
+    const hasInternalRef = (await headers()).get("x-match-ref-internal") === "1"
+    if (!hasInternalRef) {
+      notFound()
+    }
   }
 
   const season = getSeasonYear(match.league.country)

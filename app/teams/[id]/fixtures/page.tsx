@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { matchHref } from "@/lib/slug"
+import { matchLinkHref } from "@/lib/slug"
 import type { Metadata } from "next"
 import { getTeamInfo, getTeamCurrentLeague, getTeamSeasonFixtures, type TeamFixture } from "@/lib/teamData"
 import Logo from "@/components/Logo"
@@ -69,7 +69,7 @@ export default async function TeamFixturesPage({ params }: { params: Promise<{ i
               return (
                 <Link
                   key={fx.fixture.id}
-                  href={matchHref(fx)}
+                  href={matchLinkHref(fx)}
                   className="flex items-center justify-center gap-3 px-4 py-4 text-sm hover:bg-turf-line/20 border-b border-turf-line/20 last:border-b-0"
                 >
                   <span className="flex-1 text-right truncate">{fx.teams.home.name}</span>

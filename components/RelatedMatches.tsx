@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { matchHref } from "@/lib/slug"
+import { matchLinkHref } from "@/lib/slug"
 import Logo from "@/components/Logo"
 
 type RelatedFixture = {
@@ -54,7 +54,7 @@ export default function RelatedMatches({
           return (
             <Link
               key={fx.fixture.id}
-              href={matchHref(fx)}
+              href={matchLinkHref(fx)}
               className="block bg-turf/40 border border-turf-line/40 rounded-md px-4 py-3 hover:border-score-amber/60 hover:bg-turf/60 transition-colors group"
             >
               <div className="flex items-center justify-between mb-2.5">
