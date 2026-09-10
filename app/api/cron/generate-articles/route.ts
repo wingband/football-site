@@ -3,6 +3,7 @@ import { generateMatchArticle } from "@/lib/generateArticle"
 import { saveArticle, slugify, getArticleByMatchId, backfillArticleLogos } from "@/lib/articles"
 import { MOCK_FIXTURES } from "@/lib/mockData"
 import { TEAM_NAME_KO } from "@/lib/koreanNames"
+import { KOREAN_PLAYERS_ABROAD } from "@/lib/koreanPlayersAbroad"
 
 // API 호출/AI 비용을 아끼기 위해, 기사를 만들 대상은 이 리그들의 "종료된 경기"로만 제한
 const TARGET_LEAGUE_IDS = [39, 140, 78, 292, 135, 61]
@@ -185,6 +186,49 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // 이 경기에 우리가 추적하는 한국인 해외파 선수가 뛰었는지 확인.
+    // 뛰었으면 그 선수의 실제 매치 스탯(출전시간/평점/골/도움)을 프롬프트에 넘겨서
+    // 기사 분량을 늘리고 그 선수 전용 문단을 추가하게 한다.
+    // (2026-09-10, 한국 선수 출전 경기는 독자 관심이 커서 더 상세하게 요청받음)
+    let koreanPlayerSummary: string | undefined
+
+    if (process.env.USE_MOCK_DATA !== "true") {
+      const fixturePlayers = (await apiFetch(`/fixtures/players?fixture=${match.fixture.id}`)) as
+        | {
+            team: { name: string }
+            players: {
+              player: { id: number; name: string }
+              statistics: {
+                games: { minutes: number | null; rating: string | null; position: string | null }
+                goals: { total: number | null; assists: number | null }
+              }[]
+            }[]
+          }[]
+        | undefined
+
+      if (fixturePlayers?.length) {
+        const summaries: string[] = []
+        for (const teamBlock of fixturePlayers) {
+          for (const p of teamBlock.players ?? []) {
+            const known = KOREAN_PLAYERS_ABROAD.find((kp) => kp.id === p.player.id)
+            if (!known) continue
+            const stat = p.statistics?.[0]
+            const teamKo = TEAM_NAME_KO[teamBlock.team.name] ?? teamBlock.team.name
+            if (!stat || stat.games.minutes == null) {
+              summaries.push(`${known.name} (${teamKo}) — 이 경기 출전 기록 없음(벤치 또는 미출전)`)
+            } else {
+              summaries.push(
+                `${known.name} (${teamKo}) — ${stat.games.position ?? "포지션 미상"}, ` +
+                  `${stat.games.minutes}분 출전, 평점 ${stat.games.rating ?? "기록없음"}, ` +
+                  `골 ${stat.goals.total ?? 0}개, 도움 ${stat.goals.assists ?? 0}개`
+              )
+            }
+          }
+        }
+        if (summaries.length) koreanPlayerSummary = summaries.join("\n")
+      }
+    }
+
     // AI 프롬프트/제목/본문엔 한국어 팀명을 넘긴다 — "손흥민 토트넘 경기" 같은 한국어
     // 롱테일 검색어를 타겟팅하려는 것. 슬러그/DB 저장값은 API 원본 영문명을 그대로 써서
     // 기존 URL 형식과 admin cleanup(?homeTeam=&awayTeam=) 부분일치 매칭이 안 깨지게 한다
@@ -200,6 +244,7 @@ export async function GET(req: NextRequest) {
       statsSummary,
       eventsSummary,
       goalsSummary,
+      koreanPlayerSummary,
     })
 
     if (!result) continue

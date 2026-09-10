@@ -7,6 +7,10 @@ type ArticleInput = {
   statsSummary: string
   eventsSummary: string
   goalsSummary: string
+  // 이 경기에 뛴 한국인 해외파 선수의 실제 매치 스탯 요약(없으면 undefined).
+  // 값이 있으면 프롬프트를 분량 늘리기 모드로 바꾸고, 이 선수 전용 문단을 추가한다
+  // (2026-09-10, 한국 선수 출전 경기는 독자 관심이 커서 더 길고 상세하게 요청받음)
+  koreanPlayerSummary?: string
 }
 
 type ArticleOutput = {
@@ -28,6 +32,22 @@ export async function generateMatchArticle(input: ArticleInput): Promise<Article
     : null
     : null
 
+  const hasKoreanPlayer = Boolean(input.koreanPlayerSummary)
+
+  // 한국 선수가 뛴 경기는 독자 관심이 훨씬 크므로, 분량을 늘리고 그 선수 전용
+  // 문단을 하나 더 넣는다. 없는 경기는 기존 300~500단어 4단락 그대로 유지
+  const lengthGuide = hasKoreanPlayer
+    ? "**2. 경기 리뷰 본문 (700~1000단어, 기승전결+ 한국 선수 파트 총 5~6단락)**"
+    : "**2. 경기 리뷰 본문 (300~500단어, 기승전결 4단락)**"
+
+  const koreanPlayerParagraphGuide = hasKoreanPlayer
+    ? `\n4단락 (한국 선수 집중 조명): 아래 "한국 선수 매치 스탯"에 나온 실제 기록(출전 시간, 평점,\n  골/도움, 포지션 등)을 근거로 이 선수가 경기에서 구체적으로 어떤 활약을 했는지 집중적으로\n  서술한다. 이 문단은 다른 문단보다 조금 더 길게 써서 이 선수에게 확실히 무게를 실어라.\n  주어진 스탯에 없는 장면(예: 특정 드리블, 특정 수비 상황)은 지어내지 말고, 주어진 숫자\n  (평점·출전시간·골·도움 등)를 바탕으로 그 활약상을 설명해라. 이 선수가 아직 교체 출전도\n  안 했거나 벤치에 머물렀다면, 그 사실 그대로(출전 안 함/벤치)를 솔직하게 언급하고\n  무리하게 활약을 지어내지 마라.\n5단락 (결 — 마무리): 왜 이런 결과가 나왔는지 승패 요인을 짧게 정리하고,\n  이 경기가 남긴 의미나 다음 경기에 대한 시사점으로 임팩트 있게 끝맺는다.`
+    : `\n4단락 (결 — 마무리): 왜 이런 결과가 나왔는지 승패 요인을 짧게 정리하고,\n  이 경기가 남긴 의미나 다음 경기에 대한 시사점으로 임팩트 있게 끝맺는다.`
+
+  const koreanPlayerDataBlock = hasKoreanPlayer
+    ? `\n\n한국 선수 매치 스탯 (5단락 작성 시 이 숫자만 사용, 재계산/추측 금지):\n${input.koreanPlayerSummary}`
+    : ""
+
   const prompt = `너는 축구 전문 기자야. 아래 경기 데이터를 바탕으로 두 가지를 작성해줘.
 
 **1. 자극적인 기사 제목 (1줄)**
@@ -38,7 +58,7 @@ export async function generateMatchArticle(input: ArticleInput): Promise<Article
 - 예시: "맨유, 굴욕의 홈패배 — 헐시티에 무릎 꿇으며 최악의 시즌 출발"
 - 한국어로 작성, 30자 내외
 
-**2. 경기 리뷰 본문 (300~500단어, 기승전결 4단락)**
+${lengthGuide}
 너는 20년 경력의 축구 전문 기자다. 술술 읽히는 스포츠 기사를 써야 한다.
 각 단락은 3~5문장으로 짧게 끊어 써라. 한 문장에 정보를 욱여넣지 말고,
 짧고 리듬감 있는 문장과 약간 긴 문장을 섞어서 리듬을 만들어라.
@@ -50,9 +70,7 @@ export async function generateMatchArticle(input: ArticleInput): Promise<Article
   나열하지 말고 문장 속에 한두 개만 자연스럽게 녹여라.
 3단락 (전 — 클라이맥스): 승부를 가른 결정적 장면을 몇 분에 무슨 일이 있었는지
   가장 생생하고 드라마틱하게 묘사한다. 관여한 선수 이름과 그 장면의 임팩트를
-  집중적으로 그려서 이 단락이 기사에서 가장 눈에 띄게 만든다.
-4단락 (결 — 마무리): 왜 이런 결과가 나왔는지 승패 요인을 짧게 정리하고,
-  이 경기가 남긴 의미나 다음 경기에 대한 시사점으로 임팩트 있게 끝맺는다.
+  집중적으로 그려서 이 단락이 기사에서 가장 눈에 띄게 만든다.${koreanPlayerParagraphGuide}
 
 작성 규칙:
 - 반드시 한국어, 신문 기사 문어체(~했다, ~였다)
@@ -105,7 +123,7 @@ ${input.goalsSummary}
 ${input.homeTeam} ${input.homeScore ?? "-"} : ${input.awayScore ?? "-"} ${input.awayTeam}
 ${winner ? `승자: ${winner}` : "무승부"}
 주요 스탯: ${input.statsSummary}
-주요 이벤트(득점/카드/교체 — 참고용, 세부 서술 시 활용): ${input.eventsSummary}
+주요 이벤트(득점/카드/교체 — 참고용, 세부 서술 시 활용): ${input.eventsSummary}${koreanPlayerDataBlock}
 
 아래 형식으로 정확히 출력해:
 TITLE: [제목]
@@ -119,8 +137,9 @@ CONTENT: [본문]`
     },
     body: JSON.stringify({
       model: "gpt-4o-mini",
-      // 한국어 300~500단어는 토큰을 많이 먹어서 1000이면 문장이 잘린다
-      max_tokens: 2500,
+      // 한국어 300~500단어는 토큰을 많이 먹어서 1000이면 문장이 잘린다.
+      // 한국 선수가 있어 700~1000단어로 늘어나는 경우엔 더 넉넉하게 잡는다
+      max_tokens: hasKoreanPlayer ? 4000 : 2500,
       // 기본값(1.0)에서는 경기 시각/스코어 같은 구체적 사실을 "그럴듯하게" 바꿔 쓰는
       // 경향이 있어서 크게 낮춰서 사실 충실도를 높인다 (0.4에서도 득점 순서/스코어를
       // 재구성하며 틀리는 사례가 있어 추가로 낮춤)
