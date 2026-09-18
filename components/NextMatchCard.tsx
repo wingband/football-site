@@ -29,7 +29,7 @@ function NextMatchColumn({ teamId, fixture }: { teamId: number; fixture: TeamFix
 
   return (
     <Link
-      href={matchLinkHref(fixture)}
+      href={matchLinkHref(fixture)} prefetch={false}
       className="flex flex-col items-center gap-2 hover:bg-turf-line/20 transition-colors py-2 px-1"
     >
       <span className="flex items-center gap-1.5 text-[10px] text-floodlight/40">

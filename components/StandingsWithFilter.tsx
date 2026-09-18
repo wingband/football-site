@@ -136,7 +136,7 @@ export default function StandingsWithFilter({
                       </td>
                       <td className="px-1 py-2.5 font-sans">
                         <Link
-                          href={teamHref(row.team.id)}
+                          href={teamHref(row.team.id)} prefetch={false}
                           className="flex items-center gap-2 hover:text-score-amber"
                         >
                           <Logo src={row.team.logo} alt="" className="w-5 h-5 shrink-0" />

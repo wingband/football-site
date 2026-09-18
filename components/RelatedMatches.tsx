@@ -54,7 +54,7 @@ export default function RelatedMatches({
           return (
             <Link
               key={fx.fixture.id}
-              href={matchLinkHref(fx)}
+              href={matchLinkHref(fx)} prefetch={false}
               className="block bg-turf/40 border border-turf-line/40 rounded-md px-4 py-3 hover:border-score-amber/60 hover:bg-turf/60 transition-colors group"
             >
               <div className="flex items-center justify-between mb-2.5">

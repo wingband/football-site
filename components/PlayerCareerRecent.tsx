@@ -76,7 +76,7 @@ export default function PlayerCareerRecent({
             {recentMatches.map((m) => (
               <Link
                 key={m.fixture.id}
-                href={matchLinkHref(m)}
+                href={matchLinkHref(m)} prefetch={false}
                 className="flex items-center gap-3 py-2.5 hover:bg-turf-line/20 transition-colors -mx-1 px-1"
               >
                 <span className="text-[11px] text-floodlight/40 w-14 shrink-0">
@@ -119,7 +119,7 @@ export default function PlayerCareerRecent({
                 {clubCareer.map((c) => (
                   <Link
                     key={c.teamId}
-                    href={teamHref(c.teamId)}
+                    href={teamHref(c.teamId)} prefetch={false}
                     className="flex items-center gap-3 py-2 hover:bg-turf-line/20 transition-colors -mx-1 px-1"
                   >
                     <Logo src={c.teamLogo} alt="" className="w-6 h-6 shrink-0" />

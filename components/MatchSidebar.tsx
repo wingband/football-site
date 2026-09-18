@@ -139,7 +139,7 @@ function RoundFixturesCard({
         return isCurrent ? (
           <div key={fx.fixture.id}>{inner}</div>
         ) : (
-          <Link key={fx.fixture.id} href={matchLinkHref(fx)} className="block hover:bg-turf-line/20">
+          <Link key={fx.fixture.id} href={matchLinkHref(fx)} prefetch={false} className="block hover:bg-turf-line/20">
             {inner}
           </Link>
         )

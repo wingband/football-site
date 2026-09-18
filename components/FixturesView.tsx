@@ -14,7 +14,7 @@ function FixtureRow({ fx }: { fx: LeagueFixture }) {
   const timeText = new Date(fx.fixture.date).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })
   return (
     <Link
-      href={matchLinkHref(fx)}
+      href={matchLinkHref(fx)} prefetch={false}
       className="flex items-center justify-center gap-3 px-4 py-4 text-sm hover:bg-turf-line/20 border-b border-turf-line/20 last:border-b-0"
     >
       <span className="flex-1 text-right truncate">{fx.teams.home.name}</span>

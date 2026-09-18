@@ -82,7 +82,7 @@ function RoundFixturesWidget({ fixtures }: { fixtures: LeagueFixture[] }) {
             const finished = FINISHED_CODES.includes(fx.fixture.status.short)
             const timeText = new Date(fx.fixture.date).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })
             return (
-              <Link key={fx.fixture.id} href={matchLinkHref(fx)}
+              <Link key={fx.fixture.id} href={matchLinkHref(fx)} prefetch={false}
                 className="flex items-center justify-center gap-2 px-4 py-3 text-xs hover:bg-turf-line/20 border-b border-turf-line/20 last:border-b-0">
                 <span className="flex-1 text-right truncate text-floodlight/80">{fx.teams.home.name}</span>
                 <Logo src={fx.teams.home.logo} alt="" className="w-4 h-4 shrink-0" />

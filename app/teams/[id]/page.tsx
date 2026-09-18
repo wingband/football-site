@@ -64,7 +64,7 @@ function RecentFormBadges({ fixtures, teamId }: { fixtures: TeamFixture[]; teamI
                 : "bg-floodlight/30 text-floodlight"
 
         return (
-          <Link key={fx.fixture.id} href={matchLinkHref(fx)} className="flex flex-col items-center gap-2">
+          <Link key={fx.fixture.id} href={matchLinkHref(fx)} prefetch={false} className="flex flex-col items-center gap-2">
             <span className={`px-2.5 py-1 rounded font-data text-sm font-bold ${color}`}>
               {fx.goals.home ?? "-"} - {fx.goals.away ?? "-"}
             </span>
@@ -157,7 +157,7 @@ export default async function TeamOverviewPage({
 
           {nextFixture && (
             <Link
-              href={matchLinkHref(nextFixture)}
+              href={matchLinkHref(nextFixture)} prefetch={false}
               className="bg-turf/40 border border-turf-line/40 rounded-md p-4 hover:bg-turf-line/20 transition-colors"
             >
               <div className="flex items-center justify-between mb-3">

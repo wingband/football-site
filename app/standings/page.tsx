@@ -207,7 +207,7 @@ export default async function StandingsPage({
                         const form = (row.form ?? "").split("").slice(-5)
 
                         return (
-                          <Link key={row.team.id} href={teamHref(row.team.id)}
+                          <Link key={row.team.id} href={teamHref(row.team.id)} prefetch={false}
                             className={`grid grid-cols-[24px_1fr_32px_32px_32px_32px_40px_48px_80px] gap-1 px-3 py-2.5 items-center text-sm border-b border-turf-line/20 last:border-b-0 hover:bg-turf-line/20 transition-colors ${idx < 3 ? "bg-turf/20" : ""}`}>
 
                             {/* 순위 */}

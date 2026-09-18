@@ -102,7 +102,7 @@ export default async function SearchPage({
               {teams.map((t) => (
                 <Link
                   key={t.team.id}
-                  href={teamHref(t.team.id)}
+                  href={teamHref(t.team.id)} prefetch={false}
                   className="flex items-center gap-3 px-4 py-3 hover:bg-turf-line/40 border-b border-turf-line/40 last:border-b-0"
                 >
                   <Logo src={t.team.logo} alt="" className="w-6 h-6" />

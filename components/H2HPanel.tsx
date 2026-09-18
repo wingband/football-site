@@ -122,7 +122,7 @@ export default function H2HPanel({
           ) : (
             <Link
               key={m.fixture.id}
-              href={matchLinkHref(m)}
+              href={matchLinkHref(m)} prefetch={false}
               className="block hover:bg-turf-line/20 transition-colors"
             >
               {row}
