@@ -13,13 +13,20 @@ let tableReady: Promise<unknown> | null = null
 function ensureTable() {
   if (!tableReady) {
     const sql = getSql()
+    // CREATE TABLE IF NOT EXISTS 자체가 원자적이지 않아서, 여러 서버리스 인스턴스가
+    // 동시에 콜드스타트하면 서로 테이블을 만들려다 경합할 수 있다. (2026-09-18,
+    // /teams/116에서 NeonDbError: duplicate key value violates unique constraint
+    // "pg_type_typname_nsp_index" 확인) — 23505(unique_violation)는 이미 다른
+    // 인스턴스가 만들어준 것이니 그냥 무시하고 넘어간다.
     tableReady = sql`
       CREATE TABLE IF NOT EXISTS api_cache (
         cache_key TEXT PRIMARY KEY,
         data JSONB NOT NULL,
         updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
       )
-    `
+    `.catch((err: any) => {
+      if (err?.code !== "23505") throw err
+    })
   }
   return tableReady
 }
