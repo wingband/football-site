@@ -1,5 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server"
 import { NextResponse } from "next/server"
+import { isInternalReferer } from "@/lib/scope"
 
 const isPublicRoute = createRouteMatcher([
   "/",
@@ -84,24 +85,46 @@ export default clerkMiddleware(async (auth, req) => {
     await auth.protect()
   }
 
-  // 팀/경기 페이지 링크의 ?ref=internal을 커스텀 헤더로 넘겨준다.
-  // app/teams/[id]/layout.tsx, app/matches/[slug]/page.tsx가 이 헤더를 보고
-  // "우리 사이트 안에서 클릭해 들어온 요청인지"를 판단해서 스코프 밖 팀/오래된
-  // 과거 경기도 통과시킬지 정한다. 이 컴포넌트들은 Next.js 구조상 searchParams를
-  // 직접 못 읽어서(page.tsx만 받을 수 있고 layout.tsx는 아예 못 받음) 미들웨어에서
-  // 한 번 읽어 헤더로 대신 전달하는 방식을 쓴다
-  // (2026-09-09, Referer 헤더만으로는 클라이언트 사이드 라우팅에서 신뢰할 수 없어서 추가.
-  // /matches/는 시즌 전체를 라운드별로 순회하며 훑는 크롤러 대응으로 같은 날 추가)
-  const isInternalRefRequest = req.nextUrl.searchParams.get("ref") === "internal"
-  const isTeamPath = /^\/teams\//.test(req.nextUrl.pathname)
-  const isMatchPath = /^\/matches\//.test(req.nextUrl.pathname)
+  // "우리 사이트 안에서 들어온 요청인지" 판단해서 스코프 밖 팀/오래된 과거
+  // 경기도 통과시킬지 정한다. app/teams/[id]/layout.tsx, app/matches/[slug]/page.tsx가
+  // 아래 커스텀 헤더를 보고 최종 판단한다.
+  // (2026-09-18) 예전엔 ?ref=internal 쿼리파라미터로 판단했는데, 이 문자열이
+  // 우리 사이트 HTML의 <a href>에 그대로 노출되다 보니 HTML을 파싱해서 링크를
+  // 따라가는 크롤러는 아무 노력 없이 그 문자열을 그대로 복사해갈 수 있었다.
+  // API-Football 대시보드에서 스코프 밖 팀/리그가 계속 라이브로 조회되는 게
+  // 확인되면서 드러남. URL에 찍히는 값이 아니라, HTML에 안 나타나는 쿠키로
+  // 대체한다 — 스코프 게이트가 없는 다른 페이지(순위표/리그/뉴스 등)를 한 번이라도
+  // 봐야 심어지는 쿠키라, 링크만 따라가는 크롤러는 이 쿠키를 절대 못 얻는다.
+  const pathname = req.nextUrl.pathname
+  const isTeamPath = /^\/teams\//.test(pathname)
+  const isMatchDetailPath = /^\/matches\//.test(pathname)
 
-  if (isInternalRefRequest && (isTeamPath || isMatchPath)) {
-    const forwardedHeaders = new Headers(req.headers)
+  const hasInternalCookie = req.cookies.get("sv")?.value === "1"
+  const isInternalRequest = hasInternalCookie || isInternalReferer(req.headers.get("referer"))
+
+  const forwardedHeaders = new Headers(req.headers)
+  if (isInternalRequest) {
     if (isTeamPath) forwardedHeaders.set("x-team-ref-internal", "1")
-    if (isMatchPath) forwardedHeaders.set("x-match-ref-internal", "1")
-    return NextResponse.next({ request: { headers: forwardedHeaders } })
+    if (isMatchDetailPath) forwardedHeaders.set("x-match-ref-internal", "1")
   }
+
+  const response = NextResponse.next({ request: { headers: forwardedHeaders } })
+
+  // 스코프 게이트가 걸리는 페이지 자체를 방문한 것만으론 "사이트를 둘러보다 왔다"는
+  // 증거가 안 되므로 여기선 쿠키를 새로 심지 않는다 (심으면 순차 ID 스캐너가
+  // 쿠키 저장소를 쓸 경우 첫 번째 차단 응답에서 쿠키를 받아 다음 요청부터
+  // 우회하게 된다).
+  if (!isTeamPath && !isMatchDetailPath) {
+    response.cookies.set("sv", "1", {
+      maxAge: 60 * 60 * 24,
+      httpOnly: true,
+      sameSite: "lax",
+      secure: true,
+      path: "/",
+    })
+  }
+
+  return response
 })
 
 export const config = {
