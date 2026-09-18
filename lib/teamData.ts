@@ -249,12 +249,20 @@ export async function getHistoricalRank(
     return Math.floor(Math.random() * 10) + 1
   }
 
-  const res = await fetch(
-    `https://v3.football.api-sports.io/standings?league=${leagueId}&season=${season}`,
-    { headers: HEADERS(), next: { revalidate: 86400 } }
-  )
-  const data = await res.json()
-  const groups = data.response?.[0]?.league?.standings ?? []
+  // 과거 시즌 순위는 한 번 확정되면 절대 안 바뀌는 데이터인데도 DB 캐시 없이
+  // 매번 라이브로 불렀던 유일한 함수였다. "기록" 탭 한 번 열 때마다 시즌별로
+  // 반복 호출되면서 API를 라이브로 소진하고 있었던 것 확인
+  // (2026-09-18, API-Football 대시보드에서 같은 리그 5개 시즌이 동시에
+  // 찍히는 패턴 발견)
+  const path = `/standings?league=${leagueId}&season=${season}`
+  const groups = await getCachedOrFetch<any[]>(path, 2592000, async () => {
+    const res = await fetch(`https://v3.football.api-sports.io${path}`, {
+      headers: HEADERS(),
+      next: { revalidate: 86400 },
+    })
+    const data = await res.json()
+    return data.response?.[0]?.league?.standings ?? []
+  })
   for (const group of groups) {
     const row = group.find((r: { team: { id: number } }) => r.team.id === teamId)
     if (row) return row.rank
