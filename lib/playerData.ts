@@ -1,4 +1,5 @@
 // 선수 개별 프로필 페이지가 쓰는 데이터 fetcher 모음
+import { getCachedOrFetch } from "@/lib/apiCache"
 import {
   MOCK_PLAYER,
   MOCK_PLAYER_TRANSFERS,
@@ -74,16 +75,28 @@ export type Trophy = { league: string; country: string; season: string; place: s
 
 const HEADERS = () => ({ "x-apisports-key": process.env.API_FOOTBALL_KEY! })
 
+// 캐시 키는 API 경로 문자열 그대로 쓴다 — matchApi.ts의 apiFetch와 동일한 관례라,
+// 같은 리소스(예: /fixtures/players?fixture=X)를 경기 페이지 쪽에서 이미 캐시해뒀으면
+// 여기서도 API를 안 부르고 바로 재사용된다. (2026-09-17, DB 우선 캐시 3단계 — 선수 페이지)
+
 export async function getPlayerData(playerId: string, season: number): Promise<PlayerData | null> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_PLAYER as unknown as PlayerData
 
-  const res = await fetch(
-    `https://v3.football.api-sports.io/players?id=${playerId}&season=${season}`,
-    // 선수 시즌 스탯은 3시간으로 늘림 (이 함수는 폴백 로직에서 최대 4번까지 불릴 수 있어서 영향이 큼)
-    { headers: HEADERS(), next: { revalidate: 10800 } }
-  )
-  const data = await res.json()
-  return data.response?.[0] ?? null
+  const path = `/players?id=${playerId}&season=${season}`
+  try {
+    return await getCachedOrFetch<PlayerData | null>(path, 10800, async () => {
+      const res = await fetch(`https://v3.football.api-sports.io${path}`, {
+        headers: HEADERS(),
+        next: { revalidate: 10800 },
+      })
+      if (!res.ok) throw new Error(`선수 데이터 응답 오류 (${res.status})`)
+      const data = await res.json()
+      return data.response?.[0] ?? null
+    })
+  } catch (err) {
+    console.error("getPlayerData fetch 실패:", err instanceof Error ? err.message : err)
+    return null
+  }
 }
 
 // 최근 이적 선수처럼 새 시즌 통계가 아직 안 잡힌 경우를 위한 폴백.
@@ -107,42 +120,71 @@ export async function getPlayerDataWithFallback(
   }
 
   // 시즌 통계를 어디서도 못 찾으면 프로필(기본 정보)만이라도 조회
-  const res = await fetch(`https://v3.football.api-sports.io/players/profiles?player=${playerId}`, {
-    headers: HEADERS(),
-    next: { revalidate: 86400 },
-  })
-  const data = await res.json()
-  const profile = data.response?.[0]?.player
-  if (!profile) return null
-  return { player: profile, statistics: [] }
+  const path = `/players/profiles?player=${playerId}`
+  try {
+    const profile = await getCachedOrFetch<PlayerBio | null>(path, 86400, async () => {
+      const res = await fetch(`https://v3.football.api-sports.io${path}`, {
+        headers: HEADERS(),
+        next: { revalidate: 86400 },
+      })
+      if (!res.ok) throw new Error(`선수 프로필 응답 오류 (${res.status})`)
+      const data = await res.json()
+      return data.response?.[0]?.player ?? null
+    })
+    if (!profile) return null
+    return { player: profile, statistics: [] }
+  } catch (err) {
+    console.error("getPlayerDataWithFallback fetch 실패:", err instanceof Error ? err.message : err)
+    return null
+  }
 }
 
 export async function getPlayerTransfers(playerId: string): Promise<TransferEntry[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_PLAYER_TRANSFERS as unknown as TransferEntry[]
 
-  const res = await fetch(`https://v3.football.api-sports.io/transfers?player=${playerId}`, {
-    headers: HEADERS(),
-    next: { revalidate: 21600 },
-  })
-  const data = await res.json()
-  return data.response ?? []
+  const path = `/transfers?player=${playerId}`
+  try {
+    return await getCachedOrFetch<TransferEntry[]>(path, 21600, async () => {
+      const res = await fetch(`https://v3.football.api-sports.io${path}`, {
+        headers: HEADERS(),
+        next: { revalidate: 21600 },
+      })
+      if (!res.ok) throw new Error(`선수 이적 응답 오류 (${res.status})`)
+      const data = await res.json()
+      return data.response ?? []
+    })
+  } catch (err) {
+    console.error("getPlayerTransfers fetch 실패:", err instanceof Error ? err.message : err)
+    return []
+  }
 }
 
 export async function getTrophies(playerId: string): Promise<Trophy[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_TROPHIES as unknown as Trophy[]
 
-  const res = await fetch(`https://v3.football.api-sports.io/trophies?player=${playerId}`, {
-    headers: HEADERS(),
+  const path = `/trophies?player=${playerId}`
+  try {
     // 트로피 목록은 사실상 거의 안 바뀌어서 24시간으로 늘림
-    next: { revalidate: 86400 },
-  })
-  const data = await res.json()
-  return data.response ?? []
+    return await getCachedOrFetch<Trophy[]>(path, 86400, async () => {
+      const res = await fetch(`https://v3.football.api-sports.io${path}`, {
+        headers: HEADERS(),
+        next: { revalidate: 86400 },
+      })
+      if (!res.ok) throw new Error(`트로피 응답 오류 (${res.status})`)
+      const data = await res.json()
+      return data.response ?? []
+    })
+  } catch (err) {
+    console.error("getTrophies fetch 실패:", err instanceof Error ? err.message : err)
+    return []
+  }
 }
 
 // 경력(소속팀 이력): 최근 3개 시즌을 각각 조회해서 팀별로 합침 (전용 "경력" 엔드포인트가 없어서 이렇게 재구성)
 // 원래 5시즌이었는데, ?season= 파라미터를 돌며 스크래핑당할 때 시즌당 5콜씩 나가던
-// 비용을 줄이려고 3으로 낮춤 (2026-09-07) — "최근 경력" 표시 목적엔 3개로도 충분
+// 비용을 줄이려고 3으로 낮춤 (2026-09-07) — "최근 경력" 표시 목적엔 3개로도 충분.
+// 각 시즌 fetch는 getPlayerData와 똑같은 경로(/players?id=X&season=Y)를 쓰기 때문에
+// 캐시 키가 자동으로 겹쳐서, 선수 페이지에서 이미 조회한 시즌은 여기서 또 안 부른다
 export async function getPlayerCareer(
   playerId: string,
   currentSeason: number,
@@ -158,13 +200,22 @@ export async function getPlayerCareer(
   const years = Array.from({ length: seasonsBack }, (_, i) => currentSeason - (seasonsBack - 1 - i))
   const results = await Promise.all(
     years.map(async (year) => {
-      const res = await fetch(
-        `https://v3.football.api-sports.io/players?id=${playerId}&season=${year}`,
-        { headers: HEADERS(), next: { revalidate: 86400 } }
-      )
-      const data = await res.json()
-      const stats: PlayerSeasonStat[] = data.response?.[0]?.statistics ?? []
-      return { year, stats }
+      const path = `/players?id=${playerId}&season=${year}`
+      try {
+        const stats = await getCachedOrFetch<PlayerSeasonStat[]>(path, 86400, async () => {
+          const res = await fetch(`https://v3.football.api-sports.io${path}`, {
+            headers: HEADERS(),
+            next: { revalidate: 86400 },
+          })
+          if (!res.ok) throw new Error(`선수 경력 응답 오류 (${res.status})`)
+          const data = await res.json()
+          return data.response?.[0]?.statistics ?? []
+        })
+        return { year, stats }
+      } catch (err) {
+        console.error("getPlayerCareer fetch 실패:", err instanceof Error ? err.message : err)
+        return { year, stats: [] as PlayerSeasonStat[] }
+      }
     })
   )
 
@@ -203,22 +254,49 @@ export async function getPlayerRecentMatches(
 ): Promise<PlayerRecentMatch[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_PLAYER_RECENT_MATCHES as unknown as PlayerRecentMatch[]
 
-  const fixturesRes = await fetch(
-    `https://v3.football.api-sports.io/fixtures?team=${teamId}&last=${count}`,
-    { headers: HEADERS(), next: { revalidate: 10800 } }
-  )
-  const fixturesData = await fixturesRes.json()
-  const fixtures: { fixture: { id: number; date: string }; teams: { home: { name: string; logo: string }; away: { name: string; logo: string } }; goals: { home: number | null; away: number | null } }[] =
-    fixturesData.response ?? []
+  type FixtureEntry = {
+    fixture: { id: number; date: string }
+    teams: { home: { name: string; logo: string }; away: { name: string; logo: string } }
+    goals: { home: number | null; away: number | null }
+  }
+
+  const fixturesPath = `/fixtures?team=${teamId}&last=${count}`
+  let fixtures: FixtureEntry[] = []
+  try {
+    fixtures = await getCachedOrFetch<FixtureEntry[]>(fixturesPath, 10800, async () => {
+      const res = await fetch(`https://v3.football.api-sports.io${fixturesPath}`, {
+        headers: HEADERS(),
+        next: { revalidate: 10800 },
+      })
+      if (!res.ok) throw new Error(`최근 경기 응답 오류 (${res.status})`)
+      const data = await res.json()
+      return data.response ?? []
+    })
+  } catch (err) {
+    console.error("getPlayerRecentMatches fixtures fetch 실패:", err instanceof Error ? err.message : err)
+  }
+
+  type FixturePlayersTeam = { players: { player: { id: number }; statistics: PlayerSeasonStat[] }[] }
 
   const withStats = await Promise.all(
     fixtures.map(async (fx) => {
-      const res = await fetch(
-        `https://v3.football.api-sports.io/fixtures/players?fixture=${fx.fixture.id}`,
-        { headers: HEADERS(), next: { revalidate: 86400 } }
-      )
-      const data = await res.json()
-      const teams: { players: { player: { id: number }; statistics: PlayerSeasonStat[] }[] }[] = data.response ?? []
+      const path = `/fixtures/players?fixture=${fx.fixture.id}`
+      let teams: FixturePlayersTeam[] = []
+      try {
+        teams = await getCachedOrFetch<FixturePlayersTeam[]>(path, 86400, async () => {
+          const res = await fetch(`https://v3.football.api-sports.io${path}`, {
+            headers: HEADERS(),
+            next: { revalidate: 86400 },
+          })
+          if (!res.ok) throw new Error(`경기 선수 기록 응답 오류 (${res.status})`)
+          const data = await res.json()
+          return data.response ?? []
+        })
+      } catch (err) {
+        console.error("getPlayerRecentMatches fixture players fetch 실패:", err instanceof Error ? err.message : err)
+        return null
+      }
+
       for (const team of teams) {
         const found = team.players.find((p) => p.player.id === Number(playerId))
         if (found) {
@@ -250,17 +328,22 @@ export type SidelinedEntry = {
 
 export async function getSidelined(playerId: string): Promise<SidelinedEntry[]> {
   if (process.env.USE_MOCK_DATA === "true") return []
+
+  const path = `/sidelined?player=${playerId}`
   try {
-    const res = await fetch(
-      `https://v3.football.api-sports.io/sidelined?player=${playerId}`,
-      { headers: HEADERS(), next: { revalidate: 10800 } }
-    )
-    const data = await res.json()
-    return (data.response ?? []).map((s: { type: string; start: string | null; end: string | null }) => ({
-      type: s.type,
-      start: s.start,
-      end: s.end,
-    }))
+    return await getCachedOrFetch<SidelinedEntry[]>(path, 10800, async () => {
+      const res = await fetch(`https://v3.football.api-sports.io${path}`, {
+        headers: HEADERS(),
+        next: { revalidate: 10800 },
+      })
+      if (!res.ok) throw new Error(`부상 이력 응답 오류 (${res.status})`)
+      const data = await res.json()
+      return (data.response ?? []).map((s: { type: string; start: string | null; end: string | null }) => ({
+        type: s.type,
+        start: s.start,
+        end: s.end,
+      }))
+    })
   } catch {
     return []
   }
