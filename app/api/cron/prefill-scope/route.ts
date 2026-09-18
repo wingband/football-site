@@ -66,7 +66,13 @@ async function processInChunks<T>(items: T[], size: number, fn: (item: T) => Pro
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization")
-  if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const expected = `Bearer ${process.env.CRON_SECRET}`
+  console.log("[cron-auth-debug]", {
+    receivedLen: authHeader?.length ?? 0,
+    expectedLen: expected.length,
+    matches: authHeader === expected,
+  })
+  if (process.env.CRON_SECRET && authHeader !== expected) {
     return NextResponse.json({ error: "인증 실패" }, { status: 401 })
   }
 
