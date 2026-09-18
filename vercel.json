@@ -7,6 +7,10 @@
     {
       "path": "/api/cron/generate-previews",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/prefill-scope",
+      "schedule": "0 */6 * * *"
     }
   ]
 }
