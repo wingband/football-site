@@ -14,7 +14,8 @@ import {
   type TeamFixture,
 } from "@/lib/teamData"
 import { getLeagueStandings, getLeagueFixturesByMode, buildNextOpponentMap } from "@/lib/leagueData"
-import { isTeamInScope } from "@/lib/scope"
+import { headers } from "next/headers"
+import { isTeamInScope, isInternalReferer } from "@/lib/scope"
 import { SITE_URL } from "@/lib/siteConfig"
 import Logo from "@/components/Logo"
 
@@ -90,19 +91,36 @@ export default async function TeamOverviewPage({
 
   const teamLeague = await getTeamCurrentLeague(id)
 
-  // (2026-09-08) 스코프 밖 팀을 여기서 404 처리하던 로직을 제거함.
+  // (2026-09-08) 스코프 밖 팀을 여기서 무조건 404 처리하던 로직을 한 번 제거했었다.
   // 유명하지 않은 팀(예: Willem II, 김지수의 예전 소속 Kaiserslautern 등)이
   // 정상적인 내부 링크(선수 페이지, 매치 라인업 등)를 통해 접근돼도 막혀버려서
-  // 실제 사용자 탐색이 광범위하게 깨지는 문제가 있었다. 팀 페이지 자체가 이미
-  // 2콜 수준으로 가벼워졌고, 봇의 대량 스캔은 middleware.ts의 분당 40회
-  // 레이트리밋으로 방어하는 걸로 역할을 넘긴다.
+  // 실제 사용자 탐색이 광범위하게 깨지는 문제가 있었기 때문.
   //
-  // 다만 완전히 무방비는 아니고, 중간 지점으로 스코프 밖 팀은 아래 4개 호출의
-  // 캐시를 24시간으로 늘려서 반복 조회 비용을 낮춘다 (봇이 같은 팀을 몇 번이고
-  // 다시 훑어도 캐시 만료 전까진 API를 다시 안 부른다). isTeamInScope는 더 이상
-  // 차단용이 아니라 이 캐시 길이를 정하는 용도로만 재사용한다
+  // (2026-09-18) 그런데 layout.tsx가 그 다음 날(09-09) "우리 사이트에서 클릭해
+  // 들어온 요청인지"를 쿠키/Referer로 판별하는 로직을 도입한 뒤로, 이 page.tsx는
+  // 그 판별을 안 따라가고 있었다. Next.js는 같은 세그먼트의 layout과 page를
+  // 병렬로 렌더링하기 때문에, layout이 스코프 밖+비내부요청이라고 판단해
+  // notFound()로 404를 보여줘도, 이 아래 Promise.all 6개는 이미 발사되고 난
+  // 뒤였다 — 최종 화면만 404였지 API 호출은 못 막고 있었던 것. API-Football
+  // 대시보드에서 스코프와 무관한 리그/팀이 라이브로 계속 찍히는 걸 보고 확인함.
+  //
+  // 여기서는 layout.tsx와 완전히 똑같은 판별 기준(쿠키/Referer)을 그대로
+  // 재사용한다 — "링크 타고 들어온 정상 사용자"는 그 기준으로 이미 통과되므로
+  // 예전에 걷어냈던 무조건 차단과는 다르다.
   const inScope = isTeamInScope(teamLeague?.id, info.team.name)
-  const OUT_OF_SCOPE_REVALIDATE = 86400 // 24시간
+
+  if (!inScope) {
+    const hdrs = await headers()
+    const hasInternalRefHeader = hdrs.get("x-team-ref-internal") === "1"
+    const referer = hdrs.get("referer")
+    if (!hasInternalRefHeader && !isInternalReferer(referer)) {
+      // layout.tsx가 곧 notFound()로 404 화면을 대신 보여줄 것이므로, 여기서는
+      // 비싼 API 호출 없이 조용히 빈 내용만 반환한다
+      return null
+    }
+  }
+
+  const OUT_OF_SCOPE_REVALIDATE = 86400 // 24시간 — 내부요청으로 들어온 스코프 밖 팀(예: 선수 페이지 경유)에 적용
 
   const season = teamLeague?.season ?? new Date().getFullYear()
 
