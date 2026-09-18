@@ -1,4 +1,5 @@
 // 팀 관련 페이지들(개요/순위/경기/스쿼드/이적/뉴스)이 공유하는 데이터 fetcher 모음
+import { getCachedOrFetch } from "@/lib/apiCache"
 import {
   MOCK_TEAM_INFO,
   MOCK_TEAM_SQUAD,
@@ -73,13 +74,16 @@ const HEADERS = () => ({ "x-apisports-key": process.env.API_FOOTBALL_KEY! })
 export async function getTeamInfo(teamId: string): Promise<TeamInfo | null> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_TEAM_INFO as unknown as TeamInfo
 
-  const res = await fetch(`https://v3.football.api-sports.io/teams?id=${teamId}`, {
-    headers: HEADERS(),
-    // 팀 이름/로고/창단연도 같은 기본 정보는 사실상 안 바뀌어서 24시간으로 크게 늘림
-    next: { revalidate: 86400 },
+  // 팀 기본 정보(이름/로고/창단연도)는 DB에 7일 이내 값이 있으면 API를 아예 안 부름.
+  // (2026-09-17, 방문자/봇 수와 무관하게 API 소진량을 고정시키기 위한 DB 우선 캐시 1단계)
+  return getCachedOrFetch(`team-info:${teamId}`, 604800, async () => {
+    const res = await fetch(`https://v3.football.api-sports.io/teams?id=${teamId}`, {
+      headers: HEADERS(),
+      next: { revalidate: 86400 },
+    })
+    const data = await res.json()
+    return data.response?.[0] ?? null
   })
-  const data = await res.json()
-  return data.response?.[0] ?? null
 }
 
 export async function getTeamSquad(teamId: string): Promise<SquadPlayer[]> {
@@ -110,37 +114,40 @@ export async function getTeamSquad(teamId: string): Promise<SquadPlayer[]> {
 export async function getTeamSeasonFixtures(teamId: string, season: number, revalidate = 21600): Promise<TeamFixture[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_TEAM_FIXTURES as unknown as TeamFixture[]
 
-  const res = await fetch(
-    `https://v3.football.api-sports.io/fixtures?team=${teamId}&season=${season}`,
-    // 시즌 전체 일정은 자주 안 바뀌어서 6시간으로 늘림 (스코프 밖 팀은 호출부에서 더 길게 오버라이드 가능)
-    { headers: HEADERS(), next: { revalidate } }
-  )
-  const data = await res.json()
-  return data.response ?? []
+  return getCachedOrFetch(`team-fixtures:${teamId}:${season}`, revalidate, async () => {
+    const res = await fetch(
+      `https://v3.football.api-sports.io/fixtures?team=${teamId}&season=${season}`,
+      { headers: HEADERS(), next: { revalidate } }
+    )
+    const data = await res.json()
+    return data.response ?? []
+  })
 }
 
 export async function getTeamInjuries(teamId: string, season: number, revalidate = 10800): Promise<Injury[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_INJURIES as unknown as Injury[]
 
-  const res = await fetch(
-    `https://v3.football.api-sports.io/injuries?team=${teamId}&season=${season}`,
-    // 부상자 명단은 하루에도 여러 번 안 바뀌어서 3시간으로 늘림 (스코프 밖 팀은 호출부에서 더 길게 오버라이드 가능)
-    { headers: HEADERS(), next: { revalidate } }
-  )
-  const data = await res.json()
-  return data.response ?? []
+  return getCachedOrFetch(`team-injuries:${teamId}:${season}`, revalidate, async () => {
+    const res = await fetch(
+      `https://v3.football.api-sports.io/injuries?team=${teamId}&season=${season}`,
+      { headers: HEADERS(), next: { revalidate } }
+    )
+    const data = await res.json()
+    return data.response ?? []
+  })
 }
 
 export async function getTeamCoach(teamId: string, expectedTeamId: number): Promise<Coach | null> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_COACH as unknown as Coach
 
-  const res = await fetch(`https://v3.football.api-sports.io/coachs?team=${teamId}`, {
-    headers: HEADERS(),
-    // 감독 교체는 자주 있는 일이 아니라서 24시간으로 늘림
-    next: { revalidate: 86400 },
+  const coaches: Coach[] = await getCachedOrFetch(`team-coachs:${teamId}`, 604800, async () => {
+    const res = await fetch(`https://v3.football.api-sports.io/coachs?team=${teamId}`, {
+      headers: HEADERS(),
+      next: { revalidate: 86400 },
+    })
+    const data = await res.json()
+    return data.response ?? []
   })
-  const data = await res.json()
-  const coaches: Coach[] = data.response ?? []
 
   // API의 "퇴임일" 필드는 감독이 실제로 떠난 뒤에도 갱신 안 될 때가 많아서 신뢰도가 낮음.
   // 대신 "이 팀 소속으로 가장 최근에 부임한 사람"을 찾는 게 실제 현재 감독일 확률이 훨씬 높음
@@ -173,15 +180,17 @@ export async function getTeamCurrentLeague(teamId: string): Promise<{ id: number
     return { id: MOCK_TEAM_LEAGUE.league.id, name: MOCK_TEAM_LEAGUE.league.name, season: MOCK_TEAM_LEAGUE.league.season }
   }
 
-  const res = await fetch(
-    `https://v3.football.api-sports.io/leagues?team=${teamId}&current=true&type=league`,
-    { headers: HEADERS(), next: { revalidate: 86400 } }
-  )
-  const data = await res.json()
-  const entry = data.response?.[0]
-  if (!entry) return null
-  const season = entry.seasons?.find((s: { current: boolean }) => s.current)?.year ?? entry.seasons?.[0]?.year
-  return { id: entry.league.id, name: entry.league.name, season }
+  return getCachedOrFetch(`team-league:${teamId}`, 86400, async () => {
+    const res = await fetch(
+      `https://v3.football.api-sports.io/leagues?team=${teamId}&current=true&type=league`,
+      { headers: HEADERS(), next: { revalidate: 86400 } }
+    )
+    const data = await res.json()
+    const entry = data.response?.[0]
+    if (!entry) return null
+    const season = entry.seasons?.find((s: { current: boolean }) => s.current)?.year ?? entry.seasons?.[0]?.year
+    return { id: entry.league.id, name: entry.league.name, season }
+  })
 }
 
 export async function getTeamNews(teamName: string): Promise<NewsArticle[]> {
