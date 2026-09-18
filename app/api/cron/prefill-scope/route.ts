@@ -7,6 +7,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getCachedOrFetch } from "@/lib/apiCache"
 import { SCOPE_LEAGUES, MAJOR_NATIONAL_TEAM_IDS } from "@/lib/scope"
+import { KOREAN_PLAYERS_ABROAD } from "@/lib/koreanPlayersAbroad"
+import { getPlayerDataWithFallback, getPlayerTransfers, getTrophies, getSidelined } from "@/lib/playerData"
 import { getStandings } from "@/lib/matchApi"
 import {
   getTeamInfo,
@@ -72,6 +74,19 @@ async function warmTeam(teamId: number, season: number) {
   ])
 }
 
+// 선수 페이지(app/players/[id]/page.tsx)가 SSR에서 실제로 부르는 4개만 예열한다.
+// 경력/최근경기 탭은 클라이언트 마운트 시점에만 지연 로딩되는 별도 API(/api/players/[id]/extra)라
+// 우선순위상 여기선 뺐다 (2026-09-18)
+async function warmPlayer(playerId: number, season: number) {
+  const id = String(playerId)
+  await Promise.allSettled([
+    getPlayerDataWithFallback(id, season),
+    getPlayerTransfers(id),
+    getTrophies(id),
+    getSidelined(id),
+  ])
+}
+
 // 배열을 size 단위로 나눠서, 청크 안에서는 동시에 처리하고 청크끼리는 순서대로 처리.
 // API-Football을 한꺼번에 너무 많이 두드리지 않으면서도 전체 속도를 낸다
 async function processInChunks<T>(items: T[], size: number, fn: (item: T) => Promise<void>) {
@@ -119,6 +134,13 @@ export async function GET(req: NextRequest) {
   const nationalTeamIds = Object.values(MAJOR_NATIONAL_TEAM_IDS)
   await processInChunks(nationalTeamIds, 3, (teamId) => warmTeam(teamId, nationalTeamSeason))
   summary.push({ league: "국가대표팀", season: nationalTeamSeason, teams: nationalTeamIds.length })
+
+  // 한국인 해외파 선수 13명도 같은 방식으로 예열. 페이지 기본 시즌 계산과
+  // 동일하게 getSeasonYear("England")를 쓴다 (app/players/[id]/page.tsx와 일치)
+  const koreanPlayerSeason = getSeasonYear("England")
+  const koreanPlayerIds = KOREAN_PLAYERS_ABROAD.map((p) => p.id)
+  await processInChunks(koreanPlayerIds, 3, (playerId) => warmPlayer(playerId, koreanPlayerSeason))
+  summary.push({ league: "해외파 선수", season: koreanPlayerSeason, teams: koreanPlayerIds.length })
 
   return NextResponse.json({ ok: true, summary })
 }
