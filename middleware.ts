@@ -99,7 +99,19 @@ export default clerkMiddleware(async (auth, req) => {
   const isTeamPath = /^\/teams\//.test(pathname)
   const isMatchDetailPath = /^\/matches\//.test(pathname)
 
-  const hasInternalCookie = req.cookies.get("sv")?.value === "1"
+  // 쿠키만으론 아직 부족하다 — httpOnly라 JS로는 못 훔치지만, requests.Session()/
+  // curl -b처럼 쿠키 저장소를 쓰는 스크립트는 정상 페이지 한 번 방문해서 받은 쿠키를
+  // 그대로 재사용해 이후 요청을 순수 스크립트로 계속 찍어낼 수 있다. 실제 브라우저는
+  // 모든 요청에 Sec-Fetch-Site 헤더(Fetch Metadata)를 자동으로 붙이는데, curl/requests
+  // 같은 단순 HTTP 클라이언트는 개발자가 일부러 안 넣는 한 이 헤더가 아예 없다 — 그래서
+  // 쿠키를 신뢰하는 조건에 "same-origin 또는 직접 진입(none)"까지 같이 요구해서, 쿠키만
+  // 복사해 온 단순 스크립트 재생의 문턱을 하나 더 높인다.
+  // (2026-09-19) 한계: Puppeteer/Playwright 같은 실제 브라우저 엔진 기반 크롤러는 이
+  // 헤더도 정상 브라우저처럼 정확히 보내기 때문에 이 체크로는 못 걸러낸다 — 완벽한
+  // 방어가 아니라 흔한 스크립트 재생 패턴의 문턱을 높이는 추가 방어선일 뿐이다.
+  const secFetchSite = req.headers.get("sec-fetch-site")
+  const looksLikeRealBrowserNav = secFetchSite === "same-origin" || secFetchSite === "none"
+  const hasInternalCookie = req.cookies.get("sv")?.value === "1" && looksLikeRealBrowserNav
   const isInternalRequest = hasInternalCookie || isInternalReferer(req.headers.get("referer"))
 
   const forwardedHeaders = new Headers(req.headers)

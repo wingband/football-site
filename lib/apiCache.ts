@@ -31,6 +31,43 @@ function ensureTable() {
   return tableReady
 }
 
+let usageTableReady: Promise<unknown> | null = null
+
+function ensureUsageTable() {
+  if (!usageTableReady) {
+    const sql = getSql()
+    usageTableReady = sql`
+      CREATE TABLE IF NOT EXISTS api_usage_daily (
+        usage_date DATE PRIMARY KEY,
+        call_count INTEGER NOT NULL DEFAULT 0
+      )
+    `.catch((err: any) => {
+      if (err?.code !== "23505") throw err
+    })
+  }
+  return usageTableReady
+}
+
+// 실제로 API-Football에 라이브 호출이 나간 순간(캐시 미스로 fetcher()가 실행된 순간)마다
+// 날짜별 카운터를 1씩 증가시킨다. API-Football 대시보드를 수동으로 열어봐야만 소진량을
+// 알 수 있던 문제를 없애고, /api/admin/usage로 우리 DB에서 바로 추이를 확인할 수 있게
+// 한다. (2026-09-19) 실패해도 본 캐시 기능에는 영향 주지 않도록 완전히 격리한다.
+async function recordApiUsage() {
+  try {
+    await ensureUsageTable()
+    const sql = getSql()
+    const today = new Date().toISOString().slice(0, 10)
+    await sql`
+      INSERT INTO api_usage_daily (usage_date, call_count)
+      VALUES (${today}, 1)
+      ON CONFLICT (usage_date)
+      DO UPDATE SET call_count = api_usage_daily.call_count + 1
+    `
+  } catch (err) {
+    console.error("api_usage_daily 기록 실패:", err instanceof Error ? err.message : err)
+  }
+}
+
 // cacheKey에 해당하는 값이 DB에 ttlSeconds 이내로 신선하게 있으면 그걸 반환하고
 // API는 아예 안 부른다. 없거나 오래됐으면 fetcher()로 실제 API를 불러서 DB에
 // 저장한 뒤 반환한다. fetcher가 실패하면(레이트리밋 등) 오래된 DB 값이라도
@@ -58,6 +95,7 @@ export async function getCachedOrFetch<T>(
 
   try {
     const result = await fetcher()
+    await recordApiUsage()
     try {
       await sql`
         INSERT INTO api_cache (cache_key, data, updated_at)
