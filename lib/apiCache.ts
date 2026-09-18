@@ -33,7 +33,7 @@ function ensureTable() {
 
 let usageTableReady: Promise<unknown> | null = null
 
-function ensureUsageTable() {
+export function ensureUsageTable() {
   if (!usageTableReady) {
     const sql = getSql()
     usageTableReady = sql`
