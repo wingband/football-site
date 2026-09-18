@@ -209,9 +209,10 @@ export async function getPlayerCareer(
           })
           if (!res.ok) throw new Error(`선수 경력 응답 오류 (${res.status})`)
           const data = await res.json()
-          return data.response?.[0]?.statistics ?? []
+          const s = data.response?.[0]?.statistics
+          return Array.isArray(s) ? s : []
         })
-        return { year, stats }
+        return { year, stats: Array.isArray(stats) ? stats : [] }
       } catch (err) {
         console.error("getPlayerCareer fetch 실패:", err instanceof Error ? err.message : err)
         return { year, stats: [] as PlayerSeasonStat[] }
@@ -221,7 +222,7 @@ export async function getPlayerCareer(
 
   const byTeam = new Map<number, { teamName: string; teamLogo: string; seasons: Set<number>; apps: number; goals: number }>()
   for (const { year, stats } of results) {
-    for (const s of stats) {
+    for (const s of Array.isArray(stats) ? stats : []) {
       if (!s.team?.id) continue
       if (!byTeam.has(s.team.id)) {
         byTeam.set(s.team.id, { teamName: s.team.name, teamLogo: s.team.logo, seasons: new Set(), apps: 0, goals: 0 })
@@ -270,8 +271,9 @@ export async function getPlayerRecentMatches(
       })
       if (!res.ok) throw new Error(`최근 경기 응답 오류 (${res.status})`)
       const data = await res.json()
-      return data.response ?? []
+      return Array.isArray(data.response) ? data.response : []
     })
+    if (!Array.isArray(fixtures)) fixtures = []
   } catch (err) {
     console.error("getPlayerRecentMatches fixtures fetch 실패:", err instanceof Error ? err.message : err)
   }
@@ -290,15 +292,15 @@ export async function getPlayerRecentMatches(
           })
           if (!res.ok) throw new Error(`경기 선수 기록 응답 오류 (${res.status})`)
           const data = await res.json()
-          return data.response ?? []
+          return Array.isArray(data.response) ? data.response : []
         })
       } catch (err) {
         console.error("getPlayerRecentMatches fixture players fetch 실패:", err instanceof Error ? err.message : err)
         return null
       }
 
-      for (const team of teams) {
-        const found = team.players.find((p) => p.player.id === Number(playerId))
+      for (const team of Array.isArray(teams) ? teams : []) {
+        const found = (Array.isArray(team.players) ? team.players : []).find((p) => p.player.id === Number(playerId))
         if (found) {
           const s = found.statistics[0]
           return {
