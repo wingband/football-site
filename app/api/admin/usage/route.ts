@@ -1,14 +1,17 @@
 import { NextResponse } from "next/server"
 import { neon } from "@neondatabase/serverless"
 
+// API-Football Pro 플랜 실제 한도 (api-football.com 공식 페이지 및 RapidAPI 파트너
+// 페이지 확인, 2026-09-19): 하루 7,500회, 분당 300회. 매일 UTC 자정에 리셋된다.
+// 이 상수는 플랜을 바꾸면 같이 바꿔줘야 한다.
+const DAILY_LIMIT = 7500
+
 // 최근 14일간 실제 API-Football 라이브 호출량을 우리 DB에서 바로 조회.
+// 날짜별로 한 줄씩 쌓이는 구조라 이 자체가 히스토리 — 오늘 하루만 있으면 1줄,
+// 내일부터는 자동으로 2줄, 3줄... 늘어난다.
 // /api/admin(.*)는 middleware.ts의 isPublicRoute에 이미 등록돼 있어 인증 없이
 // 열려 있다 — 여기 노출되는 건 날짜별 집계 호출 수뿐이라(민감정보 없음) 기존
 // 관례를 그대로 따른다. (2026-09-19)
-//
-// lib/apiCache.ts의 공유 헬퍼에 의존했더니 원인 불명으로 "relation does not exist"가
-// 계속 나서, 같은 sql 커넥션으로 CREATE TABLE과 SELECT를 이 파일 안에서 순서대로
-// 직접 실행하는 걸로 단순화했다.
 export async function GET() {
   try {
     const sql = neon(process.env.DATABASE_URL!)
@@ -27,7 +30,19 @@ export async function GET() {
       LIMIT 14
     `
 
-    return NextResponse.json({ ok: true, dailyUsage: rows })
+    const history = rows.map((r: any) => {
+      const count = r.call_count as number
+      const percent = Math.round((count / DAILY_LIMIT) * 1000) / 10
+      return {
+        date: new Date(r.usage_date).toISOString().slice(0, 10),
+        calls: count,
+        dailyLimit: DAILY_LIMIT,
+        percentUsed: percent,
+        status: percent >= 80 ? "위험" : percent >= 50 ? "주의" : "안전",
+      }
+    })
+
+    return NextResponse.json({ ok: true, dailyLimit: DAILY_LIMIT, history })
   } catch (err) {
     return NextResponse.json(
       { ok: false, error: err instanceof Error ? err.message : String(err) },
