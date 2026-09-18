@@ -27,22 +27,38 @@ const LEAGUE_COUNTRY: Record<number, string> = {
   98: "japan",       // J1 League
 }
 
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+// 팀 목록 조회는 이후 팀 5개 API(정보/현재리그/일정/부상/감독)의 시작점이라,
+// 여기서 429를 맞으면 리그 하나가 통째로 0팀이 되어버린다. 3초 대기 후 한 번만
+// 재시도한다 (2026-09-18, UCL이 5대리그 직후 처리되며 API 한도를 소진해
+// 이후 7개 리그가 전부 팀 목록 조회부터 실패하는 것 확인).
 async function getLeagueTeamIds(leagueId: number, season: number): Promise<number[]> {
   const path = `/teams?league=${leagueId}&season=${season}`
-  try {
-    const teams = await getCachedOrFetch<{ team: { id: number } }[]>(path, 604800, async () => {
-      const res = await fetch(`https://v3.football.api-sports.io${path}`, {
-        headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const teams = await getCachedOrFetch<{ team: { id: number } }[]>(path, 604800, async () => {
+        const res = await fetch(`https://v3.football.api-sports.io${path}`, {
+          headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
+        })
+        if (!res.ok) throw new Error(`리그 팀 목록 응답 오류 (${res.status})`)
+        const data = await res.json()
+        return data.response ?? []
       })
-      if (!res.ok) throw new Error(`리그 팀 목록 응답 오류 (${res.status})`)
-      const data = await res.json()
-      return data.response ?? []
-    })
-    return teams.map((t) => t.team.id)
-  } catch (err) {
-    console.error(`getLeagueTeamIds 실패 (league=${leagueId}):`, err instanceof Error ? err.message : err)
-    return []
+      return teams.map((t) => t.team.id)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      console.error(`getLeagueTeamIds 실패 (league=${leagueId}, attempt=${attempt + 1}):`, message)
+      if (message.includes("429") && attempt === 0) {
+        await sleep(3000)
+        continue
+      }
+      return []
+    }
   }
+  return []
 }
 
 async function warmTeam(teamId: number, season: number) {
@@ -61,6 +77,7 @@ async function warmTeam(teamId: number, season: number) {
 async function processInChunks<T>(items: T[], size: number, fn: (item: T) => Promise<void>) {
   for (let i = 0; i < items.length; i += size) {
     await Promise.allSettled(items.slice(i, i + size).map(fn))
+    await sleep(200) // API-Football 순간 요청 폭주로 인한 429 방지
   }
 }
 
@@ -83,7 +100,16 @@ export async function GET(req: NextRequest) {
 
   const summary: { league: string; season: number; teams: number }[] = []
 
-  for (const league of SCOPE_LEAGUES) {
+  // 대륙별 컵대회(UCL/UEL/UECL)는 팀 수가 가장 많아 API 할당량을 많이 먹는다.
+  // 5대리그 + 해외파 소속 리그(K리그/J리그/챔피언십/2.분데스리가/벨기에)를
+  // 먼저 채우고, 컵대회는 맨 뒤로 미뤄서 한도를 넘기더라도 더 중요한 리그는
+  // 이미 채워진 상태가 되게 한다.
+  const CONTINENTAL_CUP_IDS = new Set([2, 3, 4])
+  const processOrder = [...SCOPE_LEAGUES].sort(
+    (a, b) => Number(CONTINENTAL_CUP_IDS.has(a.id)) - Number(CONTINENTAL_CUP_IDS.has(b.id))
+  )
+
+  for (const league of processOrder) {
     const country = LEAGUE_COUNTRY[league.id] ?? "england"
     const season = getSeasonYear(country)
 
