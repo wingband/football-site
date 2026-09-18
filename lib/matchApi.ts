@@ -1,3 +1,4 @@
+import { getCachedOrFetch } from "@/lib/apiCache"
 import {
   MOCK_MATCH_DETAIL,
   MOCK_STANDINGS,
@@ -82,24 +83,26 @@ export async function apiFetch(path: string, revalidate?: number): Promise<unkno
     return []
   }
 
-  // revalidate를 안 넘기면 예전엔 /fixtures?id= 호출을 cache:"no-store"로 보내서
-  // 캐시를 완전히 우회했다. /matches/[slug]가 사이트 최고 트래픽 페이지라
-  // 방문마다 무조건 실시간 API 호출이 나가는 셈이었다 — 60초 캐시로 바꿔서
-  // (라이브 경기 갱신에는 충분히 짧고, 나머지 경우엔 캐시가 대부분 흡수한다)
+  // path 자체가 파라미터까지 포함한 고유 식별자라 캐시 키로 그대로 쓸 수 있다.
+  // DB에 신선한 값이 있으면 API를 아예 안 부름 — 같은 경기를 몇 명이 몇 번을 다시 봐도
+  // ttl 안에서는 실시간 호출이 0번. (2026-09-17, 방문자 수와 API 소진량을 분리하는
+  // 2단계 — 팀 데이터에 이어 경기 페이지가 담당하는 대부분의 콜을 여기서 한 번에 처리)
+  const ttl = revalidate ?? 60
   try {
-    const res = await fetchWithTimeout(`https://v3.football.api-sports.io${path}`, {
-      headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      next: { revalidate: revalidate ?? 60 },
+    return await getCachedOrFetch(path, ttl, async () => {
+      const res = await fetchWithTimeout(`https://v3.football.api-sports.io${path}`, {
+        headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
+        next: { revalidate: ttl },
+      })
+      if (!res.ok) {
+        throw new Error(`API-Football 응답 오류 (${res.status}): ${path}`)
+      }
+      const data = await res.json()
+      return data.response
     })
-    if (!res.ok) {
-      console.error(`API-Football 응답 오류 (${res.status}): ${path}`)
-      return []
-    }
-    const data = await res.json()
-    return data.response
   } catch (err) {
-    // 타임아웃(AbortError) 포함 모든 네트워크 실패를 여기서 흡수해서
-    // 페이지가 몇 분씩 붙잡히는 대신 빈 배열로 즉시 폴백하게 한다.
+    // 타임아웃(AbortError) 포함 모든 네트워크 실패, 그리고 DB에 대신 쓸 오래된 값도
+    // 없는 경우에만 여기까지 온다 — 페이지가 몇 분씩 붙잡히는 대신 빈 배열로 즉시 폴백
     console.error(`API-Football fetch 실패/타임아웃: ${path}`, err instanceof Error ? err.message : err)
     return []
   }
@@ -110,16 +113,18 @@ export async function getStandings(leagueId: number, season: number): Promise<St
     return MOCK_STANDINGS.league.standings
   }
   try {
-    const res = await fetchWithTimeout(
-      `https://v3.football.api-sports.io/standings?league=${leagueId}&season=${season}`,
-      {
-        headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-        next: { revalidate: 10800 },
-      }
-    )
-    if (!res.ok) return []
-    const data = await res.json()
-    return data.response?.[0]?.league?.standings ?? []
+    return await getCachedOrFetch(`standings:${leagueId}:${season}`, 10800, async () => {
+      const res = await fetchWithTimeout(
+        `https://v3.football.api-sports.io/standings?league=${leagueId}&season=${season}`,
+        {
+          headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
+          next: { revalidate: 10800 },
+        }
+      )
+      if (!res.ok) throw new Error(`standings 응답 오류 (${res.status}): league=${leagueId}`)
+      const data = await res.json()
+      return data.response?.[0]?.league?.standings ?? []
+    })
   } catch (err) {
     console.error("getStandings fetch 실패/타임아웃:", err instanceof Error ? err.message : err)
     return []
@@ -187,16 +192,18 @@ export async function getRoundFixtures(
 ): Promise<TeamFixture[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_TEAM_RECENT_FIXTURES as TeamFixture[]
   try {
-    const res = await fetchWithTimeout(
-      `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${season}&round=${encodeURIComponent(round)}`,
-      {
-        headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-        next: { revalidate },
-      }
-    )
-    if (!res.ok) return []
-    const data = await res.json()
-    return data.response ?? []
+    return await getCachedOrFetch(`round-fixtures:${leagueId}:${season}:${round}`, revalidate, async () => {
+      const res = await fetchWithTimeout(
+        `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${season}&round=${encodeURIComponent(round)}`,
+        {
+          headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
+          next: { revalidate },
+        }
+      )
+      if (!res.ok) throw new Error(`round fixtures 응답 오류 (${res.status})`)
+      const data = await res.json()
+      return data.response ?? []
+    })
   } catch (err) {
     console.error("getRoundFixtures fetch 실패/타임아웃:", err instanceof Error ? err.message : err)
     return []
