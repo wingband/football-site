@@ -18,7 +18,7 @@ const SITEMAP_LEAGUES = [
   { id: 61,  name: "Ligue 1" },
   { id: 2,   name: "UEFA Champions League" },
   { id: 3,   name: "UEFA Europa League" },
-  { id: 4,   name: "UEFA Europa Conference League" },
+  { id: 848, name: "UEFA Europa Conference League" },
   { id: 292, name: "K League 1" },
   { id: 98,  name: "J1 League" },
 ]

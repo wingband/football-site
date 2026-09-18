@@ -71,7 +71,7 @@ const RELEVANT_LEAGUE_IDS = new Set([
   61,  // Ligue 1
   2,   // UEFA Champions League
   3,   // UEFA Europa League
-  4,   // UEFA Conference League
+  848, // UEFA Conference League
   292, // K League 1
   98,  // J1 League
 ])
@@ -160,7 +160,7 @@ async function fetchFixturesFromApi(date: string): Promise<Fixture[] | null> {
     45,  // FA Cup
     292, // K League 1
     98,  // J1 League
-    4,   // Conference League
+    848, // Conference League
   ])
   const FINISHED = ["FT", "AET", "PEN", "AWD", "WO"]
   const finishedYesterday = yesterdayFixtures.filter(

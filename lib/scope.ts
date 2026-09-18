@@ -10,7 +10,7 @@ export const SCOPE_LEAGUES = [
   { id: 61, name: "Ligue 1" },
   { id: 2, name: "UEFA Champions League" },
   { id: 3, name: "UEFA Europa League" },
-  { id: 4, name: "UEFA Europa Conference League" },
+  { id: 848, name: "UEFA Europa Conference League" }, // (2026-09-18) 기존 id:4는 API-Football에서 "Euro Championship"(유로 본선)이었음 - 잘못된 ID로 인해 실제 컨퍼런스리그 팀들이 스코프 밖으로 처리되던 버그
   { id: 292, name: "K League 1" },
   { id: 98, name: "J1 League" },
   // 아래 3개는 5대리그는 아니지만, 해외파 트래커에서 이미 콘텐츠로 다루는 리그라

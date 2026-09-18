@@ -40,7 +40,7 @@ const FEATURED_LEAGUES = [
   { id: 135, country: "Italy",        name: "Serie A",              displayName: "Serie A" },
   { id: 61,  country: "France",       name: "Ligue 1",              displayName: "Ligue 1" },
   { id: 3,   country: "World",        name: "UEFA Europa League",   displayName: "Europa League" },
-  { id: 4,   country: "World",        name: "UEFA Europa Conference League", displayName: "Conference League" },
+  { id: 848, country: "World",       name: "UEFA Europa Conference League", displayName: "Conference League" },
   { id: 292, country: "South Korea",  name: "K League 1",           displayName: "K League 1" },
   { id: 98,  country: "Japan",        name: "J1 League",            displayName: "J1 League" },
   { id: 45,  country: "England",      name: "FA Cup",               displayName: "FA Cup" },
@@ -57,7 +57,7 @@ const LEAGUE_SORT_ORDER: Record<number, number> = {
   135: 6,  // Serie A
   61:  7,  // Ligue 1
   3:   8,  // Europa League
-  4:   9,  // Conference League
+  848: 9,  // Conference League
   292: 10, // K League 1
   98:  11, // J1 League
   45:  12, // FA Cup
