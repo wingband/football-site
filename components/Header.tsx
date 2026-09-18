@@ -16,9 +16,15 @@ const NAV_LINKS = [
   { href: "/transfers", label: "이적" },
 ]
 
+const INFO_LINKS = [
+  { href: "/company", label: "회사소개" },
+  { href: "/advertise", label: "광고하기" },
+]
+
 export default function Header() {
   const [query, setQuery] = useState("")
   const [menuOpen, setMenuOpen] = useState(false)
+  const [infoOpen, setInfoOpen] = useState(false)
   const router = useRouter()
   const { isSignedIn } = useUser()
 
@@ -44,6 +50,30 @@ export default function Header() {
               {link.label}
             </Link>
           ))}
+          <div className="relative">
+            <button
+              onClick={() => setInfoOpen((v) => !v)}
+              onBlur={() => setTimeout(() => setInfoOpen(false), 150)}
+              className="hover:text-floodlight transition-colors flex items-center gap-1"
+            >
+              정보
+              <span className={`text-[10px] transition-transform ${infoOpen ? "rotate-180" : ""}`}>▾</span>
+            </button>
+            {infoOpen && (
+              <div className="absolute top-full right-0 mt-2 w-32 bg-pitch-night border border-turf-line/60 rounded-lg shadow-lg overflow-hidden">
+                {INFO_LINKS.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setInfoOpen(false)}
+                    className="block px-4 py-2.5 text-sm text-floodlight/70 hover:bg-turf-line/40 hover:text-floodlight transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
         </nav>
 
         {/* 데스크톱 검색창 */}
@@ -145,6 +175,21 @@ export default function Header() {
               </Link>
             ))}
           </nav>
+          <div className="pt-2 border-t border-turf-line/30">
+            <p className="px-2 pb-1 text-[11px] text-floodlight/30 uppercase tracking-wide">정보</p>
+            <nav className="flex flex-col gap-1 text-sm">
+              {INFO_LINKS.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMenuOpen(false)}
+                  className="py-2.5 px-2 rounded text-floodlight/80 hover:bg-turf-line/40 hover:text-floodlight transition-colors"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
         </div>
       )}
     </header>
