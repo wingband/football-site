@@ -31,6 +31,25 @@ export const MAJOR_NATIONAL_TEAMS = new Set([
   "Spain", "Portugal", "Netherlands", "Italy", "Belgium", "Japan", "Croatia",
 ])
 
+// 국가대표팀은 API-Football에서 클럽팀과 같은 teamId 체계를 쓰지만 리그 소속이
+// 없어서 리그 목록 순회로는 찾을 수 없다. prefill-scope 크론이 예열할 수 있게
+// 이름별 팀 ID를 직접 매핑해둔다 (2026-09-18, /teams?search=<국가명>&national으로 확보)
+export const MAJOR_NATIONAL_TEAM_IDS: Record<string, number> = {
+  "South Korea": 17,
+  "Brazil": 6,
+  "Argentina": 26,
+  "England": 10,
+  "France": 2,
+  "Germany": 25,
+  "Spain": 9,
+  "Portugal": 27,
+  "Netherlands": 1118,
+  "Italy": 768,
+  "Belgium": 1,
+  "Japan": 12,
+  "Croatia": 3,
+}
+
 // 팀이 사이트 스코프 안에 있는지 확인.
 // - 현재 속한 리그(teamLeagueId)가 SCOPE_LEAGUE_IDS에 있으면 스코프 안
 // - 또는 팀 이름이 주요 국가대표팀 목록에 있으면 스코프 안

@@ -6,7 +6,7 @@
 // 그냥 호출만 해주면 된다 — 신선하면 API를 안 부르고, 오래됐으면 딱 1번만 갱신한다
 import { NextRequest, NextResponse } from "next/server"
 import { getCachedOrFetch } from "@/lib/apiCache"
-import { SCOPE_LEAGUES } from "@/lib/scope"
+import { SCOPE_LEAGUES, MAJOR_NATIONAL_TEAM_IDS } from "@/lib/scope"
 import { getStandings } from "@/lib/matchApi"
 import {
   getTeamInfo,
@@ -82,19 +82,9 @@ async function processInChunks<T>(items: T[], size: number, fn: (item: T) => Pro
 }
 
 export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get("authorization")
-  const expected = `Bearer ${process.env.CRON_SECRET}`
-  const authHeaderTrimmed = authHeader?.trim()
-  const expectedTrimmed = expected.trim()
-  console.log("[cron-auth-debug-v2]", {
-    receivedLen: authHeader?.length ?? 0,
-    expectedLen: expected.length,
-    receivedTrimmedLen: authHeaderTrimmed?.length ?? 0,
-    expectedTrimmedLen: expectedTrimmed.length,
-    matchesRaw: authHeader === expected,
-    matchesTrimmed: authHeaderTrimmed === expectedTrimmed,
-  })
-  if (process.env.CRON_SECRET && authHeaderTrimmed !== expectedTrimmed) {
+  const authHeader = req.headers.get("authorization")?.trim()
+  const expected = `Bearer ${process.env.CRON_SECRET}`.trim()
+  if (process.env.CRON_SECRET && authHeader !== expected) {
     return NextResponse.json({ error: "인증 실패" }, { status: 401 })
   }
 
@@ -104,7 +94,7 @@ export async function GET(req: NextRequest) {
   // 5대리그 + 해외파 소속 리그(K리그/J리그/챔피언십/2.분데스리가/벨기에)를
   // 먼저 채우고, 컵대회는 맨 뒤로 미뤄서 한도를 넘기더라도 더 중요한 리그는
   // 이미 채워진 상태가 되게 한다.
-  const CONTINENTAL_CUP_IDS = new Set([2, 3, 4])
+  const CONTINENTAL_CUP_IDS = new Set([2, 3, 848]) // 2=UCL, 3=UEL, 848=UECL (구 id:4는 오류였던 Euro Championship)
   const processOrder = [...SCOPE_LEAGUES].sort(
     (a, b) => Number(CONTINENTAL_CUP_IDS.has(a.id)) - Number(CONTINENTAL_CUP_IDS.has(b.id))
   )
@@ -121,6 +111,14 @@ export async function GET(req: NextRequest) {
 
     summary.push({ league: league.name, season, teams: teamIds.length })
   }
+
+  // 국가대표팀은 리그 소속이 없어서 위 루프로는 못 다룬다. 이름별로 미리
+  // 확보해둔 팀 ID로 따로 예열한다. "시즌"은 리그처럼 8월~7월이 아니라
+  // 국가대표 일정은 캘린더 연도 기준이라 그냥 올해를 쓴다.
+  const nationalTeamSeason = new Date().getFullYear()
+  const nationalTeamIds = Object.values(MAJOR_NATIONAL_TEAM_IDS)
+  await processInChunks(nationalTeamIds, 3, (teamId) => warmTeam(teamId, nationalTeamSeason))
+  summary.push({ league: "국가대표팀", season: nationalTeamSeason, teams: nationalTeamIds.length })
 
   return NextResponse.json({ ok: true, summary })
 }
