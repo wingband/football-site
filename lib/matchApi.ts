@@ -97,30 +97,44 @@ export async function apiFetch(path: string, revalidate?: number): Promise<unkno
   // (fetchFixture 등, 이미 DB 폴백 로직이 있는 곳)에서만 하도록 바꾼다.
   const ttl = revalidate ?? 60
   return await getCachedOrFetch(path, ttl, async () => {
-    const res = await fetchWithTimeout(`https://v3.football.api-sports.io${path}`, {
-      headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      next: { revalidate: ttl },
-    })
-    if (!res.ok) {
-      throw new Error(`API-Football 응답 오류 (${res.status}): ${path}`)
+    // (2026-09-19) 방문자가 한 번 실패 화면을 보고 새로고침해야만 정상적으로
+    // 뜨는 문제가 있었다 — 순간적인 레이트리밋/타임아웃 한 번에 바로 실패
+    // 화면까지 가버렸기 때문. 짧게 기다렸다가 한 번만 자체 재시도해서, 웬만한
+    // 일시적 흐림은 첫 로딩 안에서 조용히 해결되게 한다.
+    let lastErr: unknown
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const res = await fetchWithTimeout(`https://v3.football.api-sports.io${path}`, {
+          headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
+          next: { revalidate: ttl },
+        })
+        if (!res.ok) {
+          throw new Error(`API-Football 응답 오류 (${res.status}): ${path}`)
+        }
+        const data = await res.json()
+        // 결정적인 구멍: API-Football은 레이트리밋/쿼터 초과 시에도 HTTP
+        // 상태코드는 200(정상)으로 주고, 대신 JSON의 errors 필드에 에러를 담아
+        // 보낸다. response는 빈 배열([])로 온다. res.ok 체크와 Array.isArray
+        // 체크 둘 다 통과해버려서, 레이트리밋에 걸릴 때마다 빈 배열이 "정상
+        // 성공값"으로 캐시에 영구 저장되고 있었다.
+        const hasApiErrors = data.errors && (
+          Array.isArray(data.errors) ? data.errors.length > 0 : Object.keys(data.errors).length > 0
+        )
+        if (hasApiErrors) {
+          throw new Error(`API-Football 에러 응답: ${JSON.stringify(data.errors)} (${path})`)
+        }
+        if (!Array.isArray(data.response)) {
+          throw new Error(`API-Football 응답이 배열이 아님: ${path}`)
+        }
+        return data.response
+      } catch (err) {
+        lastErr = err
+        if (attempt === 0) {
+          await new Promise((resolve) => setTimeout(resolve, 800))
+        }
+      }
     }
-    const data = await res.json()
-    // (2026-09-19) 결정적인 구멍: API-Football은 레이트리밋/쿼터 초과 시에도
-    // HTTP 상태코드는 200(정상)으로 주고, 대신 JSON의 errors 필드에 에러를 담아
-    // 보낸다. response는 빈 배열([])로 온다. res.ok 체크와 Array.isArray 체크
-    // 둘 다 통과해버려서, 레이트리밋에 걸릴 때마다 빈 배열이 "정상 성공값"으로
-    // 캐시에 영구 저장되고 있었다 (오늘 하루 로그에 여러 번 찍혔던
-    // "API-Football 에러: { status: 200, errors: {...} }" 패턴이 바로 이 경로).
-    const hasApiErrors = data.errors && (
-      Array.isArray(data.errors) ? data.errors.length > 0 : Object.keys(data.errors).length > 0
-    )
-    if (hasApiErrors) {
-      throw new Error(`API-Football 에러 응답: ${JSON.stringify(data.errors)} (${path})`)
-    }
-    if (!Array.isArray(data.response)) {
-      throw new Error(`API-Football 응답이 배열이 아님: ${path}`)
-    }
-    return data.response
+    throw lastErr
   })
 }
 
