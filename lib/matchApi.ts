@@ -105,6 +105,18 @@ export async function apiFetch(path: string, revalidate?: number): Promise<unkno
       throw new Error(`API-Football 응답 오류 (${res.status}): ${path}`)
     }
     const data = await res.json()
+    // (2026-09-19) 결정적인 구멍: API-Football은 레이트리밋/쿼터 초과 시에도
+    // HTTP 상태코드는 200(정상)으로 주고, 대신 JSON의 errors 필드에 에러를 담아
+    // 보낸다. response는 빈 배열([])로 온다. res.ok 체크와 Array.isArray 체크
+    // 둘 다 통과해버려서, 레이트리밋에 걸릴 때마다 빈 배열이 "정상 성공값"으로
+    // 캐시에 영구 저장되고 있었다 (오늘 하루 로그에 여러 번 찍혔던
+    // "API-Football 에러: { status: 200, errors: {...} }" 패턴이 바로 이 경로).
+    const hasApiErrors = data.errors && (
+      Array.isArray(data.errors) ? data.errors.length > 0 : Object.keys(data.errors).length > 0
+    )
+    if (hasApiErrors) {
+      throw new Error(`API-Football 에러 응답: ${JSON.stringify(data.errors)} (${path})`)
+    }
     if (!Array.isArray(data.response)) {
       throw new Error(`API-Football 응답이 배열이 아님: ${path}`)
     }
