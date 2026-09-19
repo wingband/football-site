@@ -118,12 +118,19 @@ export default async function PlayerPage({
 
   const teamNameFromTransfer = mostRecentTransfer?.teams.in?.name ?? null
 
+  // (2026-09-19) "어느 팀인지"는 최근 이적 기록으로 맞게 골랐는데, 그 팀 안에서도
+  // 대회별로 기록이 따로 있어서(리그/챔스/국내컵 등) .find()가 배열의 첫 번째
+  // 매칭 항목을 그냥 집어버리면 하필 컵대회 1경기 0골 기록이 시즌 내내 쌓은
+  // 리그 2골 기록 대신 뽑혔다 (이강인 UCL 1경기 0골 vs 실제 라리가 2골 확인).
+  // 같은 팀 기록이 여러 개면 그 중 출전시간이 가장 긴 대회를 고른다
   let stat = teamNameFromTransfer
-    ? clubStats.find(
-        (s) =>
-          s.team.name.toLowerCase().replace(/\s/g, "") ===
-          teamNameFromTransfer.toLowerCase().replace(/\s/g, "")
-      )
+    ? clubStats
+        .filter(
+          (s) =>
+            s.team.name.toLowerCase().replace(/\s/g, "") ===
+            teamNameFromTransfer.toLowerCase().replace(/\s/g, "")
+        )
+        .sort((a, b) => (b.games.minutes ?? 0) - (a.games.minutes ?? 0))[0]
     : undefined
 
   // 이적 기록이 없거나, 새 팀 시즌 스탯이 API에 아직 하나도 안 잡힌 경우엔
