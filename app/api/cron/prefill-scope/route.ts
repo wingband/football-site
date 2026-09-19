@@ -105,14 +105,16 @@ export async function GET(req: NextRequest) {
 
   const summary: { league: string; season: number; teams: number }[] = []
 
-  // 대륙별 컵대회(UCL/UEL/UECL)는 팀 수가 가장 많아 API 할당량을 많이 먹는다.
-  // 5대리그 + 해외파 소속 리그(K리그/J리그/챔피언십/2.분데스리가/벨기에)를
-  // 먼저 채우고, 컵대회는 맨 뒤로 미뤄서 한도를 넘기더라도 더 중요한 리그는
-  // 이미 채워진 상태가 되게 한다.
+  // (2026-09-19) UEFA 3개 대회(UCL/UEL/UECL)는 예선 탈락팀까지 전부 "참가팀"으로
+  // 잡혀서 322개 팀(UCL 81 + UEL 76 + UECL 165)이나 된다. 팀당 5콜씩 6시간마다
+  // 예열하다 보니 이게 하루 API 한도(7,500) 초과의 핵심 원인이었다
+  // (2026-09-19, 정상적인 하루에도 12,600건 이상 소진되는 것 확인 —
+  // 오늘 반복 테스트 때문이 아니라 매일 구조적으로 초과되고 있었음). 아무도
+  // 안 볼 예선 탈락팀 수백 개를 미리 채워두는 건 낭비이므로, 이 3개 대회는
+  // 팀 예열 대상에서 완전히 제외한다. 실제 방문자가 이 팀 페이지를 클릭하면
+  // 그때 캐시 미스로 정상 조회되고, 그 뒤로는 평소 TTL대로 캐시된다.
   const CONTINENTAL_CUP_IDS = new Set([2, 3, 848]) // 2=UCL, 3=UEL, 848=UECL (구 id:4는 오류였던 Euro Championship)
-  const processOrder = [...SCOPE_LEAGUES].sort(
-    (a, b) => Number(CONTINENTAL_CUP_IDS.has(a.id)) - Number(CONTINENTAL_CUP_IDS.has(b.id))
-  )
+  const processOrder = SCOPE_LEAGUES.filter((l) => !CONTINENTAL_CUP_IDS.has(l.id))
 
   for (const league of processOrder) {
     const country = LEAGUE_COUNTRY[league.id] ?? "england"
