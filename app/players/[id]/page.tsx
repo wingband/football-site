@@ -101,9 +101,38 @@ export default async function PlayerPage({
   const clubStats = data.statistics.filter(
     (s) => !NATIONAL_KEYWORDS.some((kw) => s.league.name.includes(kw))
   )
-  let stat = clubStats.sort(
-    (a, b) => (b.games.appearences ?? 0) - (a.games.appearences ?? 0)
-  )[0]
+  const [transfers, trophies, sidelined] = await Promise.all([
+    getPlayerTransfers(id),
+    getTrophies(id),
+    getSidelined(id),
+  ])
+
+  // (2026-09-19) 시즌 중 이적한 선수는 API 시즌 스탯에 예전 팀 기록이 여전히
+  // 남아있고, 이적 직후라 새 팀 출전 횟수는 아직 적어서 "출전횟수 최다" 기준으로
+  // 고르면 예전 팀이 잘못 뽑혔다 (양민혁이 8/11 포츠머스 임대 종료 → KVC 베스털로
+  // 재임대했는데도 계속 Portsmouth로 표시되던 것 확인). 가장 최근 이적의 도착팀을
+  // "진짜 현재 소속팀"으로 우선 신뢰하고, 그 팀의 클럽 스탯을 찾는다
+  const mostRecentTransfer = [...transfers]
+    .flatMap((t) => t.transfers.map((tr) => ({ ...tr, update: t.update })))
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0] ?? null
+
+  const teamNameFromTransfer = mostRecentTransfer?.teams.in?.name ?? null
+
+  let stat = teamNameFromTransfer
+    ? clubStats.find(
+        (s) =>
+          s.team.name.toLowerCase().replace(/\s/g, "") ===
+          teamNameFromTransfer.toLowerCase().replace(/\s/g, "")
+      )
+    : undefined
+
+  // 이적 기록이 없거나, 새 팀 시즌 스탯이 API에 아직 하나도 안 잡힌 경우엔
+  // 예전 방식(출전횟수 최다)으로 폴백
+  if (!stat) {
+    stat = clubStats.sort(
+      (a, b) => (b.games.appearences ?? 0) - (a.games.appearences ?? 0)
+    )[0]
+  }
 
   // 막 이적/임대 복귀한 직후라 이번 시즌 클럽 스탯이 아직 API에 없는 경우를 위한 대비.
   // 예전엔 이럴 때 국가대표 스탯(월드컵 예선 등)을 "현재 소속팀"인 것처럼 잘못 보여줬다
@@ -119,24 +148,16 @@ export default async function PlayerPage({
     )[0]
   }
 
-  const [transfers, trophies, sidelined] = await Promise.all([
-    getPlayerTransfers(id),
-    getTrophies(id),
-    getSidelined(id),
-  ])
-
   // 현재 팀으로의 이적만 배너 표시
   const currentTeamName = stat?.team?.name ?? ""
-  const latestTransfer = [...transfers]
-    .flatMap((t) => t.transfers.map((tr) => ({ ...tr, update: t.update })))
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .find(
-      (tr) =>
-        tr.teams.in?.name &&
-        currentTeamName &&
-        tr.teams.in.name.toLowerCase().replace(/\s/g, "") ===
-          currentTeamName.toLowerCase().replace(/\s/g, "")
-    ) ?? null
+  const latestTransfer =
+    mostRecentTransfer &&
+    currentTeamName &&
+    mostRecentTransfer.teams.in?.name &&
+    mostRecentTransfer.teams.in.name.toLowerCase().replace(/\s/g, "") ===
+      currentTeamName.toLowerCase().replace(/\s/g, "")
+      ? mostRecentTransfer
+      : null
 
   const winnerTrophies = trophies.filter((t) => t.place.toLowerCase().includes("winner"))
 
