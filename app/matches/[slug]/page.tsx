@@ -111,7 +111,17 @@ async function fetchFixture(
     if (cached) return cached
   }
 
-  const result = (await apiFetch(`/fixtures?id=${fixtureId}`, revalidate)) as FixtureDetail[]
+  let result: FixtureDetail[]
+  try {
+    result = (await apiFetch(`/fixtures?id=${fixtureId}`, revalidate)) as FixtureDetail[]
+  } catch (err) {
+    // (2026-09-19) apiFetch가 실패를 더 이상 캐시하지 않는 대신, 화면 표시용
+    // 폴백은 이 호출부에서 담당한다 — 여기서 빈 배열을 반환해도 DB엔 절대
+    // 안 쓰인다. 실패해도 500 에러 페이지 대신 "경기 정보를 찾을 수 없습니다"로
+    // 보여준다 (Bayern München vs Union Berlin에서 실제 확인된 문제 대응)
+    console.error(`fetchFixture 실패: ${fixtureId}`, err instanceof Error ? err.message : err)
+    return []
+  }
 
   if (useDbCache && FINISHED_CODES.includes(result?.[0]?.fixture?.status?.short ?? "")) {
     // await 안 하고 흘려보냄 — 페이지 응답을 DB 쓰기 때문에 늦출 필요 없음

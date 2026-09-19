@@ -13,12 +13,17 @@ export default async function RecentFormSection({
   awayTeamId: number
   currentFixtureId: number
 }) {
-  const [homeRecent, awayRecent, homeNextArr, awayNextArr] = await Promise.all([
+  // (2026-09-19) apiFetch가 실패 시 이제 던지므로, 한 팀 데이터가 일시적으로
+  // 실패해도 나머지는 그대로 보여주도록 Promise.allSettled로 분리한다
+  const settled = await Promise.allSettled([
     apiFetch(`/fixtures?team=${homeTeamId}&last=6`, 21600) as Promise<TeamFixture[]>,
     apiFetch(`/fixtures?team=${awayTeamId}&last=6`, 21600) as Promise<TeamFixture[]>,
     apiFetch(`/fixtures?team=${homeTeamId}&next=1`, 21600) as Promise<TeamFixture[]>,
     apiFetch(`/fixtures?team=${awayTeamId}&next=1`, 21600) as Promise<TeamFixture[]>,
   ])
+  const [homeRecent, awayRecent, homeNextArr, awayNextArr] = settled.map((s) =>
+    s.status === "fulfilled" ? s.value : []
+  ) as [TeamFixture[], TeamFixture[], TeamFixture[], TeamFixture[]]
 
   return (
     <>

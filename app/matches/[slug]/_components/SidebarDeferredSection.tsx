@@ -57,9 +57,10 @@ export default async function SidebarDeferredSection({
     round
       ? getRoundFixtures(leagueId, season, round, roundFixturesRevalidate)
       : Promise.resolve([] as TeamFixture[]),
-    apiFetch(`/predictions?fixture=${fixtureId}`, staticDataRevalidate) as Promise<Prediction[]>,
-    apiFetch(`/fixtures?team=${homeTeamId}&last=6`, recentFormRevalidate) as Promise<TeamFixture[]>,
-    apiFetch(`/fixtures?team=${awayTeamId}&last=6`, recentFormRevalidate) as Promise<TeamFixture[]>,
+    // (2026-09-19) apiFetch 실패 시 이제 던지므로 개별 .catch로 격리
+    (apiFetch(`/predictions?fixture=${fixtureId}`, staticDataRevalidate) as Promise<Prediction[]>).catch(() => [] as Prediction[]),
+    (apiFetch(`/fixtures?team=${homeTeamId}&last=6`, recentFormRevalidate) as Promise<TeamFixture[]>).catch(() => [] as TeamFixture[]),
+    (apiFetch(`/fixtures?team=${awayTeamId}&last=6`, recentFormRevalidate) as Promise<TeamFixture[]>).catch(() => [] as TeamFixture[]),
   ])
 
   const prediction = predictions?.[0]?.predictions

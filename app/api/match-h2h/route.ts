@@ -12,6 +12,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "homeId/awayId required" }, { status: 400 })
   }
 
-  const h2h = (await apiFetch(`/fixtures/headtohead?h2h=${homeId}-${awayId}&last=20`, 86400)) as H2HMatch[]
+  const h2h = (await apiFetch(`/fixtures/headtohead?h2h=${homeId}-${awayId}&last=20`, 86400).catch(() => [])) as H2HMatch[]
   return NextResponse.json({ h2h: h2h ?? [] })
 }

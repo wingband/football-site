@@ -23,7 +23,7 @@ export default async function H2HSection({
   const h2h = (await apiFetch(
     `/fixtures/headtohead?h2h=${homeId}-${awayId}&last=20`,
     86400
-  )) as H2HMatch[]
+  ).catch(() => [])) as H2HMatch[]
 
   if (!h2h?.length) {
     return (

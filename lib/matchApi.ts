@@ -87,25 +87,29 @@ export async function apiFetch(path: string, revalidate?: number): Promise<unkno
   // DB에 신선한 값이 있으면 API를 아예 안 부름 — 같은 경기를 몇 명이 몇 번을 다시 봐도
   // ttl 안에서는 실시간 호출이 0번. (2026-09-17, 방문자 수와 API 소진량을 분리하는
   // 2단계 — 팀 데이터에 이어 경기 페이지가 담당하는 대부분의 콜을 여기서 한 번에 처리)
+  //
+  // (2026-09-19) 예전엔 여기서 catch로 []를 반환했는데, getCachedOrFetch가 그 []를
+  // "정상 성공한 값"으로 착각해서 그대로 DB에 영구 저장해버리는 버그가 있었다 —
+  // 타임아웃/일시적 API 오류 한 번이 캐시 TTL이 끝날 때까지 "경기 정보 없음"으로
+  // 영구 박제됐다 (Bayern München vs Union Berlin 경기에서 실제 확인됨: API는
+  // 정상 데이터를 갖고 있는데 우리 DB엔 빈 배열이 저장돼 있었음). 실패는 절대
+  // 캐시하면 안 되므로, 여기선 에러를 그대로 던지고 빈 배열 폴백은 호출부 쪽
+  // (fetchFixture 등, 이미 DB 폴백 로직이 있는 곳)에서만 하도록 바꾼다.
   const ttl = revalidate ?? 60
-  try {
-    return await getCachedOrFetch(path, ttl, async () => {
-      const res = await fetchWithTimeout(`https://v3.football.api-sports.io${path}`, {
-        headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-        next: { revalidate: ttl },
-      })
-      if (!res.ok) {
-        throw new Error(`API-Football 응답 오류 (${res.status}): ${path}`)
-      }
-      const data = await res.json()
-      return data.response
+  return await getCachedOrFetch(path, ttl, async () => {
+    const res = await fetchWithTimeout(`https://v3.football.api-sports.io${path}`, {
+      headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
+      next: { revalidate: ttl },
     })
-  } catch (err) {
-    // 타임아웃(AbortError) 포함 모든 네트워크 실패, 그리고 DB에 대신 쓸 오래된 값도
-    // 없는 경우에만 여기까지 온다 — 페이지가 몇 분씩 붙잡히는 대신 빈 배열로 즉시 폴백
-    console.error(`API-Football fetch 실패/타임아웃: ${path}`, err instanceof Error ? err.message : err)
-    return []
-  }
+    if (!res.ok) {
+      throw new Error(`API-Football 응답 오류 (${res.status}): ${path}`)
+    }
+    const data = await res.json()
+    if (!Array.isArray(data.response)) {
+      throw new Error(`API-Football 응답이 배열이 아님: ${path}`)
+    }
+    return data.response
+  })
 }
 
 export async function getStandings(leagueId: number, season: number): Promise<StandingRow[][]> {
