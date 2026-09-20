@@ -9,6 +9,13 @@
 // 스크립트 자체(ba.min.js)는 이 컴포넌트가 아니라 app/layout.tsx에서
 // 페이지당 한 번만 로드한다 — 광고 자리를 여러 개 추가해도 스크립트가
 // 중복 로드되지 않게 하기 위함.
+//
+// (2026-09-21) 부모(layout.tsx)가 넘겨준 className의 고정 높이(h-16/h-20,
+// 64~80px)가 실제 광고 높이(728x90 기준 90px)보다 작아서, overflow-x-auto만
+// 지정하고 overflow-y를 안 정하면 브라우저가 overflow-y를 자동으로 'auto'로
+// 승격시켜 불필요한 세로 스크롤바가 생기는 문제가 있었다. min-height를 실제
+// 광고 높이로 강제(고정 height보다 min-height가 항상 우선 적용됨)하고
+// overflow-y를 명시적으로 숨겨서 해결한다.
 export default function KakaoAdBanner({
   adUnit,
   width,
@@ -21,7 +28,10 @@ export default function KakaoAdBanner({
   className?: string
 }) {
   return (
-    <div className={`flex justify-center overflow-x-auto ${className}`}>
+    <div
+      className={`flex justify-center overflow-x-auto overflow-y-hidden ${className}`}
+      style={{ minHeight: `${height}px` }}
+    >
       <ins
         className="kakao_ad_area"
         style={{ display: "none" }}
