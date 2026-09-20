@@ -6,6 +6,7 @@
 // 그냥 호출만 해주면 된다 — 신선하면 API를 안 부르고, 오래됐으면 딱 1번만 갱신한다
 import { NextRequest, NextResponse } from "next/server"
 import { getCachedOrFetch } from "@/lib/apiCache"
+import { fetchApiFootball } from "@/lib/apiFootballClient"
 import { SCOPE_LEAGUES, MAJOR_NATIONAL_TEAM_IDS } from "@/lib/scope"
 import { KOREAN_PLAYERS_ABROAD } from "@/lib/koreanPlayersAbroad"
 import { getPlayerDataWithFallback, getPlayerTransfers, getTrophies, getSidelined } from "@/lib/playerData"
@@ -37,17 +38,18 @@ function sleep(ms: number) {
 // 여기서 429를 맞으면 리그 하나가 통째로 0팀이 되어버린다. 3초 대기 후 한 번만
 // 재시도한다 (2026-09-18, UCL이 5대리그 직후 처리되며 API 한도를 소진해
 // 이후 7개 리그가 전부 팀 목록 조회부터 실패하는 것 확인).
+// (2026-09-20) 기존엔 res.ok만 확인하고 errors 필드를 체크하지 않아서, API
+// 레이트리밋(200+errors) 시 "이 리그엔 팀이 없다"는 빈 배열로 오인해 604800초(7일)
+// 동안 리그 전체 예열이 조용히 스킵될 수 있었다. fetchApiFootball()로 교체하되,
+// 이 함수 고유의 "429면 3초 대기 후 1회 재시도" 로직은 그대로 유지하기 위해
+// retries: 1로 내부 자동재시도는 끄고 바깥 루프가 재시도를 담당하게 한다.
 async function getLeagueTeamIds(leagueId: number, season: number): Promise<number[]> {
   const path = `/teams?league=${leagueId}&season=${season}`
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const teams = await getCachedOrFetch<{ team: { id: number } }[]>(path, 604800, async () => {
-        const res = await fetch(`https://v3.football.api-sports.io${path}`, {
-          headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-        })
-        if (!res.ok) throw new Error(`리그 팀 목록 응답 오류 (${res.status})`)
-        const data = await res.json()
-        return data.response ?? []
+        const response = await fetchApiFootball(path, { retries: 1 })
+        return response as { team: { id: number } }[]
       })
       return teams.map((t) => t.team.id)
     } catch (err) {

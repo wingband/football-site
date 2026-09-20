@@ -4,6 +4,7 @@ import { matchHref } from "@/lib/slug"
 import { getTodayStr, shiftDate } from "@/lib/dateUtils"
 import { MOCK_FIXTURES } from "@/lib/mockData"
 import { compareSitemapPath, koreanComparePairs } from "@/lib/compare"
+import { fetchApiFootball } from "@/lib/apiFootballClient"
 
 // 사이트맵은 기본적으로 캐시되는 라우트 핸들러라서, 경기 목록이 하루 종일 굳지 않도록
 // 1시간마다 다시 만든다
@@ -43,16 +44,19 @@ type SitemapFixture = {
   league: { id: number }
 }
 
+// (2026-09-20) 기존엔 res.ok만 확인하고 errors 필드를 체크하지 않아서, API
+// 레이트리밋 시 "이 날짜엔 경기 없음"으로 오인해 revalidate(하루) 동안 그 날짜의
+// 모든 경기가 사이트맵/색인에서 조용히 빠질 수 있었다. fetchApiFootball()로 교체.
+// 사이트맵은 절대 500이 되면 안 되므로(크롤러가 아무것도 못 읽게 됨), 이 함수
+// 자체에서 실패를 잡아 빈 배열로 폴백한다 — 그 날짜만 스킵되고 나머지는 정상 동작.
 async function getFixturesByDate(date: string): Promise<SitemapFixture[]> {
-  const res = await fetch(`https://v3.football.api-sports.io/fixtures?date=${date}`, {
-    headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-    // 날짜별로 하루 캐시. 캐시 키가 날짜라서 날이 바뀔 때만 새로 호출되고,
-    // 사이트맵에 필요한 건 URL 목록이라 스코어가 몇 시간 굳어도 문제 없음
-    next: { revalidate: 86400 },
-  })
-  if (!res.ok) return []
-  const data = await res.json()
-  return Array.isArray(data.response) ? data.response : []
+  try {
+    const response = await fetchApiFootball(`/fixtures?date=${date}`, { revalidate: 86400 })
+    return response as SitemapFixture[]
+  } catch (err) {
+    console.error(`사이트맵: ${date} 경기 목록 조회 실패:`, err instanceof Error ? err.message : err)
+    return []
+  }
 }
 
 // 오늘 + 어제(한국 시간 기준) 경기를 날짜별로 한 번씩만 호출해서 가져온다.
