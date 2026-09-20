@@ -1,4 +1,5 @@
 import { getCachedOrFetch } from "@/lib/apiCache"
+import { fetchApiFootball } from "@/lib/apiFootballClient"
 import {
   MOCK_MATCH_DETAIL,
   MOCK_STANDINGS,
@@ -95,47 +96,10 @@ export async function apiFetch(path: string, revalidate?: number): Promise<unkno
   // 정상 데이터를 갖고 있는데 우리 DB엔 빈 배열이 저장돼 있었음). 실패는 절대
   // 캐시하면 안 되므로, 여기선 에러를 그대로 던지고 빈 배열 폴백은 호출부 쪽
   // (fetchFixture 등, 이미 DB 폴백 로직이 있는 곳)에서만 하도록 바꾼다.
+  // (2026-09-20) 실제 fetch/재시도/에러판별 로직은 lib/apiFootballClient.ts로
+  // 통합했다. 여기선 그 결과를 DB 우선 캐시(getCachedOrFetch)로 감싸는 역할만 한다.
   const ttl = revalidate ?? 60
-  return await getCachedOrFetch(path, ttl, async () => {
-    // (2026-09-19) 방문자가 한 번 실패 화면을 보고 새로고침해야만 정상적으로
-    // 뜨는 문제가 있었다 — 순간적인 레이트리밋/타임아웃 한 번에 바로 실패
-    // 화면까지 가버렸기 때문. 짧게 기다렸다가 한 번만 자체 재시도해서, 웬만한
-    // 일시적 흐림은 첫 로딩 안에서 조용히 해결되게 한다.
-    let lastErr: unknown
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        const res = await fetchWithTimeout(`https://v3.football.api-sports.io${path}`, {
-          headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-          next: { revalidate: ttl },
-        })
-        if (!res.ok) {
-          throw new Error(`API-Football 응답 오류 (${res.status}): ${path}`)
-        }
-        const data = await res.json()
-        // 결정적인 구멍: API-Football은 레이트리밋/쿼터 초과 시에도 HTTP
-        // 상태코드는 200(정상)으로 주고, 대신 JSON의 errors 필드에 에러를 담아
-        // 보낸다. response는 빈 배열([])로 온다. res.ok 체크와 Array.isArray
-        // 체크 둘 다 통과해버려서, 레이트리밋에 걸릴 때마다 빈 배열이 "정상
-        // 성공값"으로 캐시에 영구 저장되고 있었다.
-        const hasApiErrors = data.errors && (
-          Array.isArray(data.errors) ? data.errors.length > 0 : Object.keys(data.errors).length > 0
-        )
-        if (hasApiErrors) {
-          throw new Error(`API-Football 에러 응답: ${JSON.stringify(data.errors)} (${path})`)
-        }
-        if (!Array.isArray(data.response)) {
-          throw new Error(`API-Football 응답이 배열이 아님: ${path}`)
-        }
-        return data.response
-      } catch (err) {
-        lastErr = err
-        if (attempt === 0) {
-          await new Promise((resolve) => setTimeout(resolve, 800))
-        }
-      }
-    }
-    throw lastErr
-  })
+  return await getCachedOrFetch(path, ttl, () => fetchApiFootball(path, { revalidate: ttl }))
 }
 
 export async function getStandings(leagueId: number, season: number): Promise<StandingRow[][]> {
@@ -144,16 +108,8 @@ export async function getStandings(leagueId: number, season: number): Promise<St
   }
   try {
     return await getCachedOrFetch(`standings:${leagueId}:${season}`, 10800, async () => {
-      const res = await fetchWithTimeout(
-        `https://v3.football.api-sports.io/standings?league=${leagueId}&season=${season}`,
-        {
-          headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-          next: { revalidate: 10800 },
-        }
-      )
-      if (!res.ok) throw new Error(`standings 응답 오류 (${res.status}): league=${leagueId}`)
-      const data = await res.json()
-      return data.response?.[0]?.league?.standings ?? []
+      const response = await fetchApiFootball(`/standings?league=${leagueId}&season=${season}`, { revalidate: 10800 })
+      return (response[0] as { league?: { standings?: StandingRow[][] } })?.league?.standings ?? []
     })
   } catch (err) {
     console.error("getStandings fetch 실패/타임아웃:", err instanceof Error ? err.message : err)
@@ -193,13 +149,8 @@ export async function getVenueInfo(
   }
   const fallback = { name: fallbackName, city: fallbackCity, capacity: null, surface: null, image: null }
   try {
-    const res = await fetchWithTimeout(`https://v3.football.api-sports.io/venues?id=${venueId}`, {
-      headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      next: { revalidate: 86400 },
-    })
-    if (!res.ok) return fallback
-    const data = await res.json()
-    const v = data.response?.[0]
+    const response = await fetchApiFootball(`/venues?id=${venueId}`, { revalidate: 86400 })
+    const v = response[0] as { name?: string; city?: string; capacity?: number; surface?: string; image?: string } | undefined
     if (!v) return fallback
     return {
       name: v.name ?? fallbackName,
@@ -222,18 +173,9 @@ export async function getRoundFixtures(
 ): Promise<TeamFixture[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_TEAM_RECENT_FIXTURES as TeamFixture[]
   try {
-    return await getCachedOrFetch(`round-fixtures:${leagueId}:${season}:${round}`, revalidate, async () => {
-      const res = await fetchWithTimeout(
-        `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${season}&round=${encodeURIComponent(round)}`,
-        {
-          headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-          next: { revalidate },
-        }
-      )
-      if (!res.ok) throw new Error(`round fixtures 응답 오류 (${res.status})`)
-      const data = await res.json()
-      return data.response ?? []
-    })
+    return await getCachedOrFetch(`round-fixtures:${leagueId}:${season}:${round}`, revalidate, () =>
+      fetchApiFootball(`/fixtures?league=${leagueId}&season=${season}&round=${encodeURIComponent(round)}`, { revalidate }) as Promise<TeamFixture[]>
+    )
   } catch (err) {
     console.error("getRoundFixtures fetch 실패/타임아웃:", err instanceof Error ? err.message : err)
     return []

@@ -11,6 +11,7 @@ import KoreanAbroadWidget from "@/components/KoreanAbroadWidget"
 import type { Metadata } from "next"
 import { headers } from "next/headers"
 import { revalidateTag } from "next/cache"
+import { fetchApiFootball, ApiFootballError } from "@/lib/apiFootballClient"
 
 type Fixture = {
   fixture: {
@@ -42,16 +43,6 @@ async function getUserCountry(): Promise<string | null> {
   } catch {
     return null
   }
-}
-
-// API-Football 응답이 "쓸 수 있는" 응답인지 판단.
-// 레이트리밋/키 오류일 때 API가 200 + errors 필드로 응답하는 경우가 있어서 status만 봐선 부족함
-function hasApiError(data: { errors?: unknown }): boolean {
-  const e = data?.errors
-  if (!e) return false
-  if (Array.isArray(e)) return e.length > 0
-  if (typeof e === "object") return Object.keys(e as object).length > 0
-  return true
 }
 
 type FixturesResult = {
@@ -118,48 +109,45 @@ async function fetchFixturesFromApi(date: string): Promise<Fixture[] | null> {
   const dateRevalidate = isToday ? 1800 : 86400
   const yesterdayRevalidate = isToday ? 3600 : 86400
 
-  // (2026-09-20) Next.js의 fetch 캐시(next.revalidate)는 API-Football이 HTTP 200과
-  // 함께 errors 필드로 실패를 알리는 경우도 "성공한 응답"으로 그대로 캐시해버린다.
-  // 특히 과거 날짜는 revalidate가 24시간이라, 순간적인 흐림 한 번이 다음 날까지
-  // "일시적으로 캐시된 데이터입니다" 배너를 붙잡고 있게 만들었다 (2026-09-19~20,
-  // Ultra 플랜 반영 직후 과도기에 "어제" 탭이 정확히 이렇게 24시간 박제됨 확인).
-  // 태그를 달아두고, 에러를 감지하는 즉시 revalidateTag로 그 캐시 항목만 무효화해서
-  // 다음 요청부터는 24시간을 기다리지 않고 바로 재시도하게 한다.
+  // (2026-09-20) 실제 fetch/에러판별/재시도 로직은 lib/apiFootballClient.ts로
+  // 통합했다. 태그는 여전히 여기서 관리한다 — 실패 시 revalidateTag로 그 캐시
+  // 항목만 즉시 무효화해서, 과거 날짜(24시간 캐시)가 순간적 흐림 한 번으로
+  // 다음 날까지 박제되는 걸 막는다 (2026-09-19~20, Ultra 플랜 반영 직후
+  // 과도기에 "어제" 탭이 정확히 이렇게 24시간 박제됨 확인).
   const todayTag = `fixtures-${date}`
   const yesterdayTag = `fixtures-${yesterdayStr}`
 
-  const [todayRes, yesterdayRes] = await Promise.all([
-    fetch(`https://v3.football.api-sports.io/fixtures?date=${date}`, {
-      headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      next: { revalidate: dateRevalidate, tags: [todayTag] },
-    }),
-    fetch(`https://v3.football.api-sports.io/fixtures?date=${yesterdayStr}`, {
-      headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      next: { revalidate: yesterdayRevalidate, tags: [yesterdayTag] },
-    }),
-  ])
-
-  const [todayData, yesterdayData] = await Promise.all([
-    todayRes.json(),
-    yesterdayRes.json(),
-  ])
-
-  console.log(`=== 경기 목록: today=${date}, yesterday=${yesterdayStr} ===`)
-  console.log("today results:", todayData.results, "yesterday results:", yesterdayData.results)
-
-  // 선택된 날짜 호출이 실패했으면 캐시로 폴백해야 하므로 null을 돌려준다.
-  // 어제 호출은 보조 데이터라서 실패해도 그냥 빈 배열로 진행
-  if (!todayRes.ok || hasApiError(todayData)) {
-    console.error("경기 목록 API 실패:", todayRes.status, todayData?.errors)
+  let todayFixtures: Fixture[]
+  try {
+    todayFixtures = await fetchApiFootball(`/fixtures?date=${date}`, {
+      revalidate: dateRevalidate,
+      tags: [todayTag],
+    }) as Fixture[]
+  } catch (err) {
+    console.error(
+      "경기 목록 API 실패:",
+      err instanceof ApiFootballError ? err.message : err
+    )
     revalidateTag(todayTag, { expire: 0 })
     return null
   }
 
-  const yesterdayFailed = !yesterdayRes.ok || hasApiError(yesterdayData)
-  if (yesterdayFailed) revalidateTag(yesterdayTag, { expire: 0 })
+  let yesterdayFixtures: Fixture[] = []
+  try {
+    yesterdayFixtures = await fetchApiFootball(`/fixtures?date=${yesterdayStr}`, {
+      revalidate: yesterdayRevalidate,
+      tags: [yesterdayTag],
+    }) as Fixture[]
+  } catch (err) {
+    console.error(
+      "어제 경기 목록 API 실패(보조 데이터, 빈 배열로 진행):",
+      err instanceof ApiFootballError ? err.message : err
+    )
+    revalidateTag(yesterdayTag, { expire: 0 })
+  }
 
-  const todayFixtures: Fixture[] = todayData.response ?? []
-  const yesterdayFixtures: Fixture[] = yesterdayFailed ? [] : yesterdayData.response ?? []
+  console.log(`=== 경기 목록: today=${date}, yesterday=${yesterdayStr} ===`)
+  console.log("today count:", todayFixtures.length, "yesterday count:", yesterdayFixtures.length)
 
   // 어제 경기 중 주요 리그만 포함 (전체 가져오면 너무 많아짐)
   const MAJOR_LEAGUE_IDS = new Set([
