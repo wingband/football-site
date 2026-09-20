@@ -10,6 +10,7 @@ import AdSlot from "@/components/AdSlot"
 import KoreanAbroadWidget from "@/components/KoreanAbroadWidget"
 import type { Metadata } from "next"
 import { headers } from "next/headers"
+import { revalidateTag } from "next/cache"
 
 type Fixture = {
   fixture: {
@@ -117,14 +118,24 @@ async function fetchFixturesFromApi(date: string): Promise<Fixture[] | null> {
   const dateRevalidate = isToday ? 1800 : 86400
   const yesterdayRevalidate = isToday ? 3600 : 86400
 
+  // (2026-09-20) Next.js의 fetch 캐시(next.revalidate)는 API-Football이 HTTP 200과
+  // 함께 errors 필드로 실패를 알리는 경우도 "성공한 응답"으로 그대로 캐시해버린다.
+  // 특히 과거 날짜는 revalidate가 24시간이라, 순간적인 흐림 한 번이 다음 날까지
+  // "일시적으로 캐시된 데이터입니다" 배너를 붙잡고 있게 만들었다 (2026-09-19~20,
+  // Ultra 플랜 반영 직후 과도기에 "어제" 탭이 정확히 이렇게 24시간 박제됨 확인).
+  // 태그를 달아두고, 에러를 감지하는 즉시 revalidateTag로 그 캐시 항목만 무효화해서
+  // 다음 요청부터는 24시간을 기다리지 않고 바로 재시도하게 한다.
+  const todayTag = `fixtures-${date}`
+  const yesterdayTag = `fixtures-${yesterdayStr}`
+
   const [todayRes, yesterdayRes] = await Promise.all([
     fetch(`https://v3.football.api-sports.io/fixtures?date=${date}`, {
       headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      next: { revalidate: dateRevalidate },
+      next: { revalidate: dateRevalidate, tags: [todayTag] },
     }),
     fetch(`https://v3.football.api-sports.io/fixtures?date=${yesterdayStr}`, {
       headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      next: { revalidate: yesterdayRevalidate },
+      next: { revalidate: yesterdayRevalidate, tags: [yesterdayTag] },
     }),
   ])
 
@@ -140,12 +151,15 @@ async function fetchFixturesFromApi(date: string): Promise<Fixture[] | null> {
   // 어제 호출은 보조 데이터라서 실패해도 그냥 빈 배열로 진행
   if (!todayRes.ok || hasApiError(todayData)) {
     console.error("경기 목록 API 실패:", todayRes.status, todayData?.errors)
+    revalidateTag(todayTag, { expire: 0 })
     return null
   }
 
+  const yesterdayFailed = !yesterdayRes.ok || hasApiError(yesterdayData)
+  if (yesterdayFailed) revalidateTag(yesterdayTag, { expire: 0 })
+
   const todayFixtures: Fixture[] = todayData.response ?? []
-  const yesterdayFixtures: Fixture[] =
-    yesterdayRes.ok && !hasApiError(yesterdayData) ? yesterdayData.response ?? [] : []
+  const yesterdayFixtures: Fixture[] = yesterdayFailed ? [] : yesterdayData.response ?? []
 
   // 어제 경기 중 주요 리그만 포함 (전체 가져오면 너무 많아짐)
   const MAJOR_LEAGUE_IDS = new Set([
