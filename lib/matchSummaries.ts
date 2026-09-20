@@ -13,6 +13,13 @@
 export type RawMatchEvent = {
   time: { elapsed: number }
   type: string
+  // (2026-09-21) API-Football이 골 이벤트마다 실제로 채워주는 필드인데
+  // 여기 타입에 없어서 GPT 프롬프트에 한 번도 전달된 적이 없었다. 그 결과
+  // 페널티킥으로 넣은 골을 GPT가 "정확한 슈팅으로 골망을 흔들며"처럼
+  // 임의로 지어낸 오픈플레이 장면으로 서술하는 사고가 발생함
+  // (아틀레티코-레알 마드리드 리뷰, 그리말도 페널티골을 일반 슈팅골로 오기).
+  // "Normal Goal" | "Penalty" | "Own Goal" 등이 들어온다.
+  detail: string
   team: { name: string }
   player: { name: string }
   assist: { name: string | null }
@@ -30,6 +37,13 @@ export type MatchEventSummaries = {
 
 function formatHalfMinute(elapsed: number): string {
   return elapsed <= 45 ? `전반 ${elapsed}분` : `후반 ${elapsed - 45}분`
+}
+
+function goalTypeLabel(detail: string): string {
+  const d = detail.toLowerCase()
+  if (d.includes("penalty")) return "페널티킥"
+  if (d.includes("own goal")) return "자책골"
+  return "필드골(오픈플레이)"
 }
 
 function determineLeader(homeGoals: number, awayGoals: number): "home" | "away" | "tie" {
@@ -103,11 +117,12 @@ export function buildMatchEventSummaries(
           stateTag = `추가골 (${scoringTeamName} 리드 유지, 격차 확대)`
         }
 
-        scoreLabel = ` (스코어 ${homeGoals}-${awayGoals}) [${stateTag}]`
+        const typeLabel = goalTypeLabel(e.detail)
+        scoreLabel = ` (스코어 ${homeGoals}-${awayGoals}) [${stateTag}] [득점 유형: ${typeLabel}]`
         goalLines.push(
           `${goalLines.length + 1}번째 골 — ${formatHalfMinute(e.time.elapsed)} [${e.team.name}] ${e.player.name}` +
             (e.assist?.name ? ` (도움: ${e.assist.name})` : "") +
-            ` → 스코어 ${homeGoals}-${awayGoals} [${stateTag}]`
+            ` → 스코어 ${homeGoals}-${awayGoals} [${stateTag}] [득점 유형: ${typeLabel} — 반드시 이 유형에 맞게만 서술할 것. 페널티킥을 "정확한 슈팅", "오픈플레이 마무리" 등 일반 필드골처럼 묘사하지 말 것]`
         )
       }
       return `${formatHalfMinute(e.time.elapsed)}(전체 ${e.time.elapsed}분) [${e.team.name}] ${e.type} - ${e.player.name}${scoreLabel}`
