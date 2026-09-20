@@ -112,6 +112,16 @@ export default async function PlayerPage({
   // 고르면 예전 팀이 잘못 뽑혔다 (양민혁이 8/11 포츠머스 임대 종료 → KVC 베스털로
   // 재임대했는데도 계속 Portsmouth로 표시되던 것 확인). 가장 최근 이적의 도착팀을
   // "진짜 현재 소속팀"으로 우선 신뢰하고, 그 팀의 클럽 스탯을 찾는다
+  // 팀명 비교용 정규화: 공백 제거 + 악센트/발음기호 제거(NFD 분해 후 결합 문자 삭제).
+  // "Atlético Madrid"와 API의 "Atletico Madrid"처럼 악센트 유무만 다른 표기를
+  // 같은 팀으로 인식시키기 위함.
+  const normalizeTeamName = (name: string) =>
+    name
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/\s/g, "")
+
   const mostRecentTransfer = [...transfers]
     .flatMap((t) => t.transfers.map((tr) => ({ ...tr, update: t.update })))
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0] ?? null
@@ -134,11 +144,7 @@ export default async function PlayerPage({
   // 같은 팀 기록이 여러 개면 그 중 출전시간이 가장 긴 대회를 고른다
   let stat = teamNameFromTransfer
     ? clubStats
-        .filter(
-          (s) =>
-            s.team.name.toLowerCase().replace(/\s/g, "") ===
-            teamNameFromTransfer.toLowerCase().replace(/\s/g, "")
-        )
+        .filter((s) => normalizeTeamName(s.team.name) === normalizeTeamName(teamNameFromTransfer))
         .sort((a, b) => (b.games.minutes ?? 0) - (a.games.minutes ?? 0))[0]
     : undefined
 
@@ -202,8 +208,7 @@ export default async function PlayerPage({
     mostRecentTransfer &&
     currentTeamName &&
     mostRecentTransfer.teams.in?.name &&
-    mostRecentTransfer.teams.in.name.toLowerCase().replace(/\s/g, "") ===
-      currentTeamName.toLowerCase().replace(/\s/g, "")
+    normalizeTeamName(mostRecentTransfer.teams.in.name) === normalizeTeamName(currentTeamName)
       ? mostRecentTransfer
       : null
 
