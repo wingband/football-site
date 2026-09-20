@@ -11,7 +11,9 @@ const NAV_LINKS = [
   { href: "/standings", label: "순위표" },
   { href: "/korean-players", label: "🇰🇷 해외파" },
   { href: "/compare", label: "비교" },
-  { href: "/news", label: "뉴스" },
+  // (2026-09-21) NewsData.io 크레딧 소진으로 뉴스 페이지가 정상 작동 안 해서,
+  // AdSense 심사 기간 동안 헤더 메뉴에서 임시로 숨김. 크레딧 복구되면 이 줄 살릴 것.
+  // { href: "/news", label: "뉴스" },
   { href: "/best11", label: "베스트11" },
   { href: "/transfers", label: "이적" },
 ]
