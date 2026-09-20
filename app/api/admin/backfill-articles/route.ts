@@ -12,7 +12,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { fetchApiFootball } from "@/lib/apiFootballClient"
 import { buildStatsSummary, buildMatchEventSummaries, type RawMatchEvent, type RawTeamStats } from "@/lib/matchSummaries"
 import { generateMatchArticle } from "@/lib/generateArticle"
-import { getArticlesUnderLength, updateArticleContent } from "@/lib/articles"
+import { getArticlesUnderLength, getArticleByMatchId, updateArticleContent } from "@/lib/articles"
 import { TEAM_NAME_KO } from "@/lib/koreanNames"
 import { KOREAN_PLAYERS_ABROAD } from "@/lib/koreanPlayersAbroad"
 
@@ -75,8 +75,15 @@ export async function GET(req: NextRequest) {
   const limit = Math.min(parseInt(sp.get("limit") ?? "3"), 30) // 안전장치: 한 번에 최대 30건
   const maxLength = parseInt(sp.get("maxLength") ?? "800")
   const dryRun = sp.get("dryRun") === "true"
+  const matchIdParam = sp.get("matchId")
 
-  const targets = await getArticlesUnderLength(maxLength, limit)
+  // (2026-09-21) 골 유형(페널티/자책골) 오기처럼, 글자 수와 무관하게 사실관계
+  // 자체가 틀린 특정 기사 하나를 콕 집어 재생성해야 하는 경우를 위한 경로.
+  // ?matchId=1570394 형태로 호출하면 길이 조건 없이 그 경기 하나만 대상이 된다.
+  const targets = matchIdParam
+    ? (await getArticleByMatchId(parseInt(matchIdParam))
+        .then((a) => (a ? [a] : [])))
+    : await getArticlesUnderLength(maxLength, limit)
 
   const results: {
     slug: string
