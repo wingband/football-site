@@ -590,11 +590,7 @@ export default async function MatchDetailPage({
             <span className="text-sm">{fromReview ? "리뷰" : "경기"}</span>
           </Link>
           <div className="flex items-center gap-2 text-sm text-floodlight/80 min-w-0">
-            <Logo
-              src={match.league.logo}
-              alt=""
-              className={`w-4 h-4 shrink-0${match.league.id === 39 ? " brightness-0 invert" : ""}`}
-            />
+            <Logo src={match.league.logo} alt="" className="w-4 h-4 shrink-0" />
             <span className="truncate">
               {match.league.name}
               {match.league.round ? ` ${match.league.round}` : ""}
