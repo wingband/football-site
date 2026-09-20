@@ -1,5 +1,6 @@
 import { getCachedOrFetch } from "@/lib/apiCache"
 import { fetchApiFootball } from "@/lib/apiFootballClient"
+import { fetchNewsData } from "@/lib/newsData"
 import {
   MOCK_MATCH_DETAIL,
   MOCK_STANDINGS,
@@ -120,23 +121,9 @@ export async function getStandings(leagueId: number, season: number): Promise<St
 export async function getMatchNews(homeTeam: string, awayTeam: string): Promise<NewsArticle[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_NEWS
 
+  // (2026-09-21) fetchNewsData()로 통합 — DB 캐시(6시간) 적용으로 API 소진 절감
   const query = encodeURIComponent(`"${homeTeam}" AND "${awayTeam}"`)
-  try {
-    const res = await fetchWithTimeout(
-      `https://newsdata.io/api/1/news?apikey=${process.env.NEWSDATA_API_KEY}&q=${query}&language=en&category=sports`,
-      { next: { revalidate: 3600 } }
-    )
-    const data = await res.json()
-
-    if (!Array.isArray(data.results)) {
-      console.error("NewsData.io 에러 (경기 관련 뉴스):", data)
-      return []
-    }
-    return data.results ?? []
-  } catch (err) {
-    console.error("getMatchNews fetch 실패/타임아웃:", err instanceof Error ? err.message : err)
-    return []
-  }
+  return fetchNewsData(query)
 }
 
 export async function getVenueInfo(

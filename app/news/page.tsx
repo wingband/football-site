@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import AdSlot from "@/components/AdSlot"
 import Link from "next/link"
 import Logo from "@/components/Logo"
+import { fetchNewsData } from "@/lib/newsData"
 
 export const metadata: Metadata = {
   title: "축구 뉴스 — GoalLine",
@@ -17,8 +18,6 @@ type Article = {
   description: string | null
 }
 
-const NEWSDATA_KEY = () => process.env.NEWSDATA_API_KEY!
-
 // 리그별 검색 키워드
 const LEAGUE_SECTIONS = [
   { id: "pl",       label: "Premier League",   logo: "/leagues/pl.png",         query: '"Premier League"' },
@@ -27,18 +26,11 @@ const LEAGUE_SECTIONS = [
   { id: "bundesliga", label: "Bundesliga",     logo: "/leagues/bundesliga.png", query: '"Bundesliga"' },
 ]
 
+// (2026-09-21) fetchNewsData()로 통합 — DB 캐시(6시간) 적용으로 API 소진 절감.
+// 뉴스 홈은 이 사이트에서 NewsData.io를 가장 많이 부르는 페이지(리그 4개 + 종합
+// 쿼리, 방문마다 5번)라 캐싱 부재의 영향이 가장 컸을 곳이다.
 async function fetchNews(query: string, size = 8): Promise<Article[]> {
-  try {
-    const res = await fetch(
-      `https://newsdata.io/api/1/news?apikey=${NEWSDATA_KEY()}&q=${encodeURIComponent(query)}&language=en&category=sports&size=${size}`,
-      { next: { revalidate: 1800 } }
-    )
-    const data = await res.json()
-    if (!Array.isArray(data.results)) return []
-    return data.results
-  } catch {
-    return []
-  }
+  return fetchNewsData(encodeURIComponent(query), { size })
 }
 
 async function fetchTopNews(): Promise<Article[]> {

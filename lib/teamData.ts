@@ -9,6 +9,7 @@
 // fetchApiFootball() 공용 함수로 통합하고, 캐시 안 쓰던 함수들에도 DB 캐시를 추가했다.
 import { getCachedOrFetch } from "@/lib/apiCache"
 import { fetchApiFootball, fetchApiFootballRaw } from "@/lib/apiFootballClient"
+import { fetchNewsData } from "@/lib/newsData"
 import {
   MOCK_TEAM_INFO,
   MOCK_TEAM_SQUAD,
@@ -221,22 +222,11 @@ export async function getTeamCurrentLeague(teamId: string): Promise<{ id: number
 export async function getTeamNews(teamName: string): Promise<NewsArticle[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_NEWS as unknown as NewsArticle[]
 
-  // NewsData.io는 API-Football과 다른 별도 서비스라 fetchApiFootball 대상이 아님.
-  // errors 필드 형태도 달라서 이 함수 고유의 검증(Array.isArray(data.results))을 유지한다.
+  // (2026-09-21) fetchNewsData()로 통합 — DB 캐시(6시간) 적용으로 API 소진 절감
   const query = encodeURIComponent(`"${teamName}" AND (football OR soccer OR match OR transfer OR goal)`)
-  const res = await fetch(
-    `https://newsdata.io/api/1/news?apikey=${process.env.NEWSDATA_API_KEY}&q=${query}&language=en&category=sports`,
-    { next: { revalidate: 3600 } }
-  )
-  const data = await res.json()
-  if (!Array.isArray(data.results)) {
-    console.error("NewsData.io 에러 (팀 뉴스):", data)
-    return []
-  }
+  const results = await fetchNewsData(query)
   const teamLower = teamName.toLowerCase()
-  return (data.results as NewsArticle[]).filter(
-    (a) => a.title?.toLowerCase().includes(teamLower)
-  )
+  return results.filter((a) => a.title?.toLowerCase().includes(teamLower))
 }
 
 // ── 플레이어 통계 탭 (시즌 개인 기록) ──────────────────────────

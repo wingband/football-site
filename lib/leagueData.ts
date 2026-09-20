@@ -2,6 +2,7 @@
 import { cache } from "react"
 import { MOCK_STANDINGS, MOCK_SEASON_FIXTURES, MOCK_TOP_SCORERS, MOCK_NEWS } from "@/lib/mockData"
 import { fetchApiFootball } from "@/lib/apiFootballClient"
+import { fetchNewsData } from "@/lib/newsData"
 
 export type TeamSplit = {
   played: number
@@ -146,18 +147,10 @@ export async function getLeagueTopAssists(leagueId: string, season: number): Pro
 export async function getLeagueNews(leagueName: string): Promise<NewsArticle[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_NEWS as unknown as NewsArticle[]
 
+  // (2026-09-21) fetchNewsData()로 통합 — DB 캐시(6시간) 적용으로 API 소진 절감.
   // 따옴표로 정확한 구문 검색을 걸어서, 리그명과 무관한 일반 뉴스가 섞이는 것을 방지
   const query = encodeURIComponent(`"${leagueName}"`)
-  const res = await fetch(
-    `https://newsdata.io/api/1/news?apikey=${process.env.NEWSDATA_API_KEY}&q=${query}&language=en&category=sports`,
-    { next: { revalidate: 3600 } }
-  )
-  const data = await res.json()
-  if (!Array.isArray(data.results)) {
-    console.error("NewsData.io 에러 (리그 뉴스):", data)
-    return []
-  }
-  return data.results ?? []
+  return fetchNewsData(query)
 }
 
 // 예정 경기 목록에서 각 팀의 "다음 상대" 로고 맵 생성 (순위표 '다음' 컬럼용)
