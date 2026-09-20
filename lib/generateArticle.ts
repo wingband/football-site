@@ -7,15 +7,45 @@ type ArticleInput = {
   statsSummary: string
   eventsSummary: string
   goalsSummary: string
-  // 이 경기에 뛴 한국인 해외파 선수의 실제 매치 스탯 요약(없으면 undefined).
-  // 값이 있으면 프롬프트를 분량 늘리기 모드로 바꾸고, 이 선수 전용 문단을 추가한다
-  // (2026-09-10, 한국 선수 출전 경기는 독자 관심이 커서 더 길고 상세하게 요청받음)
   koreanPlayerSummary?: string
 }
 
 type ArticleOutput = {
   title: string
   content: string
+}
+
+// (2026-09-21) 기존엔 "300~500단어" 식으로 분량을 지시했는데, 한국어는 "단어" 단위가
+// 모호해서 GPT가 실제로는 훨씬 짧게(평균 748자, 중앙값 656자, 128건 중 109건이
+// 800자 미만) 써내는 문제가 있었다. AdSense 심사 관점에서 콘텐츠 깊이가 부족해
+// 보일 위험이 있어, 분량 기준을 명확한 "글자 수(공백 포함)"로 바꾸고, 생성 후
+// 미달 시 자동으로 한 번 더 확장 요청하는 안전장치를 추가했다.
+const BASE_MIN_LENGTH = 1300
+const KOREAN_PLAYER_MIN_LENGTH = 2000
+
+async function callOpenAI(prompt: string, maxTokens: number): Promise<string> {
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: "gpt-4o-mini",
+      max_tokens: maxTokens,
+      // 기본값(1.0)에서는 경기 시각/스코어 같은 구체적 사실을 "그럴듯하게" 바꿔 쓰는
+      // 경향이 있어서 크게 낮춰서 사실 충실도를 높인다
+      temperature: 0.2,
+      messages: [{ role: "user", content: prompt }],
+    }),
+  })
+
+  const data = await res.json()
+  if (!res.ok) {
+    console.error("OpenAI API 에러:", data)
+    return ""
+  }
+  return data.choices?.[0]?.message?.content ?? ""
 }
 
 export async function generateMatchArticle(input: ArticleInput): Promise<ArticleOutput | null> {
@@ -33,12 +63,11 @@ export async function generateMatchArticle(input: ArticleInput): Promise<Article
     : null
 
   const hasKoreanPlayer = Boolean(input.koreanPlayerSummary)
+  const minLength = hasKoreanPlayer ? KOREAN_PLAYER_MIN_LENGTH : BASE_MIN_LENGTH
 
-  // 한국 선수가 뛴 경기는 독자 관심이 훨씬 크므로, 분량을 늘리고 그 선수 전용
-  // 문단을 하나 더 넣는다. 없는 경기는 기존 300~500단어 4단락 그대로 유지
   const lengthGuide = hasKoreanPlayer
-    ? "**2. 경기 리뷰 본문 (700~1000단어, 기승전결+ 한국 선수 파트 총 5~6단락)**"
-    : "**2. 경기 리뷰 본문 (300~500단어, 기승전결 4단락)**"
+    ? "**2. 경기 리뷰 본문 (공백 포함 2200~2800자, 기승전결 + 한국 선수 파트 총 5~6단락)**"
+    : "**2. 경기 리뷰 본문 (공백 포함 1400~1800자, 기승전결 4단락)**"
 
   const koreanPlayerParagraphGuide = hasKoreanPlayer
     ? `\n4단락 (한국 선수 집중 조명): 아래 "한국 선수 매치 스탯"에 나온 실제 기록(출전 시간, 평점,\n  골/도움, 포지션 등)을 근거로 이 선수가 경기에서 구체적으로 어떤 활약을 했는지 집중적으로\n  서술한다. 이 문단은 다른 문단보다 조금 더 길게 써서 이 선수에게 확실히 무게를 실어라.\n  주어진 스탯에 없는 장면(예: 특정 드리블, 특정 수비 상황)은 지어내지 말고, 주어진 숫자\n  (평점·출전시간·골·도움 등)를 바탕으로 그 활약상을 설명해라. 이 선수가 아직 교체 출전도\n  안 했거나 벤치에 머물렀다면, 그 사실 그대로(출전 안 함/벤치)를 솔직하게 언급하고\n  무리하게 활약을 지어내지 마라.\n5단락 (결 — 마무리): 왜 이런 결과가 나왔는지 승패 요인을 짧게 정리하고,\n  이 경기가 남긴 의미나 다음 경기에 대한 시사점으로 임팩트 있게 끝맺는다.`
@@ -62,6 +91,13 @@ ${lengthGuide}
 너는 20년 경력의 축구 전문 기자다. 술술 읽히는 스포츠 기사를 써야 한다.
 각 단락은 3~5문장으로 짧게 끊어 써라. 한 문장에 정보를 욱여넣지 말고,
 짧고 리듬감 있는 문장과 약간 긴 문장을 섞어서 리듬을 만들어라.
+
+**분량 기준은 "단어 수"가 아니라 "글자 수(공백 포함)"다.** 위에 명시된 글자 수
+범위를 반드시 채워야 하고, 그 아래로 짧게 쓰면 안 된다. 각 단락에서 경기 흐름,
+팀의 전술적 특징, 그 골/카드/교체가 경기 전체에 미친 영향 등 주어진 데이터로부터
+합리적으로 추론 가능한 범위의 서술을 덧붙여서 분량을 채워라. 다만 이미 있는
+사실을 부풀리거나 없는 사실(관중 반응, 감독 발언 등)을 지어내서 채우면 안 된다 —
+분량은 "묘사와 설명의 깊이"로 채우는 것이지 "없는 사실 추가"로 채우는 게 아니다.
 
 1단락 (기 — 훅): 이 경기에서 가장 인상적인 장면이나 결과를 첫 문장부터 던져서
   독자의 시선을 붙잡는다. 이어서 경기 전체를 한 줄로 요약한다.
@@ -133,46 +169,48 @@ ${winner ? `승자: ${winner}` : "무승부"}
 TITLE: [제목]
 CONTENT: [본문]`
 
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: "gpt-4o-mini",
-      // 한국어 300~500단어는 토큰을 많이 먹어서 1000이면 문장이 잘린다.
-      // 한국 선수가 있어 700~1000단어로 늘어나는 경우엔 더 넉넉하게 잡는다
-      max_tokens: hasKoreanPlayer ? 4000 : 2500,
-      // 기본값(1.0)에서는 경기 시각/스코어 같은 구체적 사실을 "그럴듯하게" 바꿔 쓰는
-      // 경향이 있어서 크게 낮춰서 사실 충실도를 높인다 (0.4에서도 득점 순서/스코어를
-      // 재구성하며 틀리는 사례가 있어 추가로 낮춤)
-      temperature: 0.2,
-      messages: [{ role: "user", content: prompt }],
-    }),
-  })
+  // 한국어 1400~1800자는 토큰을 많이 먹는다 (한국어는 음절 단위 토크나이징 특성상
+  // 글자당 토큰 소비가 영어보다 크다). 넉넉하게 잡아서 문장이 중간에 잘리지 않게 한다
+  const maxTokens = hasKoreanPlayer ? 4500 : 3000
 
-  const data = await res.json()
+  const raw = await callOpenAI(prompt, maxTokens)
+  if (!raw) return null
 
-  if (!res.ok) {
-    console.error("OpenAI API 에러 (기사 생성):", data)
-    return null
+  const parse = (text: string): ArticleOutput => {
+    const titleMatch = text.match(/TITLE:\s*(.+)/i)
+    const contentMatch = text.match(/CONTENT:\s*([\s\S]+)/i)
+    if (!titleMatch || !contentMatch) {
+      return {
+        title: `${input.homeTeam} ${input.homeScore ?? "-"}-${input.awayScore ?? "-"} ${input.awayTeam} — ${input.leagueName} 경기 리뷰`,
+        content: text,
+      }
+    }
+    return { title: titleMatch[1].trim(), content: contentMatch[1].trim() }
   }
 
-  const raw = data.choices?.[0]?.message?.content ?? ""
-  const titleMatch = raw.match(/TITLE:\s*(.+)/i)
-  const contentMatch = raw.match(/CONTENT:\s*([\s\S]+)/i)
+  let result = parse(raw)
 
-  if (!titleMatch || !contentMatch) {
-    // 파싱 실패 시 전체를 content로, 기본 제목 사용
-    return {
-      title: `${input.homeTeam} ${input.homeScore ?? "-"}-${input.awayScore ?? "-"} ${input.awayTeam} — ${input.leagueName} 경기 리뷰`,
-      content: raw,
+  // (2026-09-21) GPT가 여전히 목표 분량에 못 미치면, 이미 쓴 초안을 그대로 주고
+  // "사실은 그대로 두고 묘사만 더 채워서 확장하라"고 한 번 더 요청한다. 무한 재시도는
+  // 비용/시간 낭비라 최대 1회만 시도한다.
+  if (result.content.length < minLength) {
+    const expandPrompt = `아래는 축구 경기 리뷰 기사 초안이다. 사실 관계(스코어, 득점자, 시간, 팀명 등)는
+절대 바꾸지 말고, 각 단락에 경기 흐름·전술적 배경·그 장면이 승부에 미친 영향에 대한
+묘사와 설명을 추가해서 전체 분량을 공백 포함 ${minLength}~${minLength + 400}자로 확장해라.
+없는 사실(관중 반응, 감독 발언 등)을 새로 지어내면 안 된다. 마크다운이나 소제목 없이
+본문 텍스트만 출력해라.
+
+[참고용 원본 데이터 — 사실 확인용, 재계산 금지]
+${input.goalsSummary}
+
+[현재 초안]
+${result.content}`
+
+    const expanded = await callOpenAI(expandPrompt, maxTokens)
+    if (expanded && expanded.trim().length > result.content.length) {
+      result = { title: result.title, content: expanded.trim() }
     }
   }
 
-  return {
-    title: titleMatch[1].trim(),
-    content: contentMatch[1].trim(),
-  }
+  return result
 }
