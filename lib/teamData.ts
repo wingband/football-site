@@ -7,6 +7,15 @@
 // 더 근본적으로 Postgres 캐시(getCachedOrFetch) 자체를 안 쓰고 있어서 방문자 수만큼
 // API를 그대로 소진하고 있었다(lib/playerData.ts에서 먼저 발견된 것과 같은 패턴).
 // fetchApiFootball() 공용 함수로 통합하고, 캐시 안 쓰던 함수들에도 DB 캐시를 추가했다.
+//
+// (2026-09-21) 팀 페이지 체감 속도 저하 조사 중, getTeamInfo/getTeamCurrentLeague
+// 같은 함수가 layout.tsx + 각 탭 page.tsx(본문 + generateMetadata)에서 페이지
+// 하나당 2~4번씩 중복 호출되는 게 확인됐다. Next의 fetch()는 같은 요청 안에서
+// 자동으로 중복 제거되지만, 이 함수들은 fetch 대신 Neon Postgres를 직접 쿼리하는
+// getCachedOrFetch를 쓰기 때문에 그 혜택을 못 받아 매번 실제 DB 왕복이 발생했다.
+// React.cache()로 감싸서 같은 렌더링 요청 안에서는 동일 인자 호출이 1회로
+// 합쳐지게 한다 (leagueData.ts의 getLeagueStandings에 이미 쓰이던 패턴과 동일).
+import { cache } from "react"
 import { getCachedOrFetch } from "@/lib/apiCache"
 import { fetchApiFootball, fetchApiFootballRaw } from "@/lib/apiFootballClient"
 import { fetchNewsData } from "@/lib/newsData"
@@ -88,7 +97,7 @@ export type NewsArticle = {
   description: string | null
 }
 
-export async function getTeamInfo(teamId: string): Promise<TeamInfo | null> {
+export const getTeamInfo = cache(async function getTeamInfo(teamId: string): Promise<TeamInfo | null> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_TEAM_INFO as unknown as TeamInfo
 
   // 팀 기본 정보(이름/로고/창단연도)는 DB에 7일 이내 값이 있으면 API를 아예 안 부름.
@@ -102,19 +111,16 @@ export async function getTeamInfo(teamId: string): Promise<TeamInfo | null> {
     console.error("getTeamInfo fetch 실패:", err instanceof Error ? err.message : err)
     return null
   }
-}
+})
 
-export async function getTeamSquad(teamId: string): Promise<SquadPlayer[]> {
+export const getTeamSquad = cache(async function getTeamSquad(teamId: string): Promise<SquadPlayer[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_TEAM_SQUAD as unknown as SquadPlayer[]
 
   try {
     // 스쿼드는 이적시장 기간 외엔 거의 안 바뀌어서 6시간으로 늘림.
-    // (2026-09-20) 이전엔 이 함수가 DB 캐시를 전혀 안 써서 방문자 수만큼 API를
-    // 그대로 소진했다 — 다른 팀 데이터 함수들과 동일한 패턴으로 캐싱 추가
     return await getCachedOrFetch<SquadPlayer[]>(`team-squad:${teamId}`, 21600, async () => {
       const response = await fetchApiFootball(`/players/squads?team=${teamId}`, { revalidate: 21600 })
       const rawPlayers = ((response[0] as { players?: RawSquadPlayer[] } | undefined)?.players) ?? []
-      // API가 선수 정보를 평평한 구조로 주기 때문에({id, name, ...}), 우리 타입({player: {...}})에 맞게 변환
       return rawPlayers.map((p) => ({
         player: { id: p.id, name: p.name, age: p.age, number: p.number, photo: p.photo },
         position: p.position,
@@ -124,9 +130,13 @@ export async function getTeamSquad(teamId: string): Promise<SquadPlayer[]> {
     console.error("getTeamSquad fetch 실패:", err instanceof Error ? err.message : err)
     return []
   }
-}
+})
 
-export async function getTeamSeasonFixtures(teamId: string, season: number, revalidate = 21600): Promise<TeamFixture[]> {
+export const getTeamSeasonFixtures = cache(async function getTeamSeasonFixtures(
+  teamId: string,
+  season: number,
+  revalidate = 21600
+): Promise<TeamFixture[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_TEAM_FIXTURES as unknown as TeamFixture[]
 
   try {
@@ -138,9 +148,13 @@ export async function getTeamSeasonFixtures(teamId: string, season: number, reva
     console.error("getTeamSeasonFixtures fetch 실패:", err instanceof Error ? err.message : err)
     return []
   }
-}
+})
 
-export async function getTeamInjuries(teamId: string, season: number, revalidate = 10800): Promise<Injury[]> {
+export const getTeamInjuries = cache(async function getTeamInjuries(
+  teamId: string,
+  season: number,
+  revalidate = 10800
+): Promise<Injury[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_INJURIES as unknown as Injury[]
 
   try {
@@ -152,9 +166,12 @@ export async function getTeamInjuries(teamId: string, season: number, revalidate
     console.error("getTeamInjuries fetch 실패:", err instanceof Error ? err.message : err)
     return []
   }
-}
+})
 
-export async function getTeamCoach(teamId: string, expectedTeamId: number): Promise<Coach | null> {
+export const getTeamCoach = cache(async function getTeamCoach(
+  teamId: string,
+  expectedTeamId: number
+): Promise<Coach | null> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_COACH as unknown as Coach
 
   let coaches: Coach[] = []
@@ -180,13 +197,12 @@ export async function getTeamCoach(teamId: string, expectedTeamId: number): Prom
     }
   }
   return best?.coach ?? null
-}
+})
 
-export async function getTeamTransfers(teamId: string): Promise<TransferEntry[]> {
+export const getTeamTransfers = cache(async function getTeamTransfers(teamId: string): Promise<TransferEntry[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_TEAM_TRANSFERS as unknown as TransferEntry[]
 
   try {
-    // (2026-09-20) 이전엔 DB 캐시 없이 매번 라이브 호출했음 — 캐싱 추가
     return await getCachedOrFetch<TransferEntry[]>(`team-transfers:${teamId}`, 21600, async () => {
       const response = await fetchApiFootball(`/transfers?team=${teamId}`, { revalidate: 21600 })
       return response as TransferEntry[]
@@ -195,10 +211,12 @@ export async function getTeamTransfers(teamId: string): Promise<TransferEntry[]>
     console.error("getTeamTransfers fetch 실패:", err instanceof Error ? err.message : err)
     return []
   }
-}
+})
 
 // 팀이 현재 속한 리그 id/시즌 조회 (순위표 표시용)
-export async function getTeamCurrentLeague(teamId: string): Promise<{ id: number; name: string; season: number } | null> {
+export const getTeamCurrentLeague = cache(async function getTeamCurrentLeague(
+  teamId: string
+): Promise<{ id: number; name: string; season: number } | null> {
   if (process.env.USE_MOCK_DATA === "true") {
     return { id: MOCK_TEAM_LEAGUE.league.id, name: MOCK_TEAM_LEAGUE.league.name, season: MOCK_TEAM_LEAGUE.league.season }
   }
@@ -217,17 +235,16 @@ export async function getTeamCurrentLeague(teamId: string): Promise<{ id: number
     console.error("getTeamCurrentLeague fetch 실패:", err instanceof Error ? err.message : err)
     return null
   }
-}
+})
 
-export async function getTeamNews(teamName: string): Promise<NewsArticle[]> {
+export const getTeamNews = cache(async function getTeamNews(teamName: string): Promise<NewsArticle[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_NEWS as unknown as NewsArticle[]
 
-  // (2026-09-21) fetchNewsData()로 통합 — DB 캐시(6시간) 적용으로 API 소진 절감
   const query = encodeURIComponent(`"${teamName}" AND (football OR soccer OR match OR transfer OR goal)`)
   const results = await fetchNewsData(query)
   const teamLower = teamName.toLowerCase()
   return results.filter((a) => a.title?.toLowerCase().includes(teamLower))
-}
+})
 
 // ── 플레이어 통계 탭 (시즌 개인 기록) ──────────────────────────
 export type TeamPlayerSeasonStat = {
@@ -238,13 +255,15 @@ export type TeamPlayerSeasonStat = {
   }[]
 }
 
-export async function getTeamPlayerStats(teamId: string, season: number): Promise<TeamPlayerSeasonStat[]> {
+export const getTeamPlayerStats = cache(async function getTeamPlayerStats(
+  teamId: string,
+  season: number
+): Promise<TeamPlayerSeasonStat[]> {
   if (process.env.USE_MOCK_DATA === "true") {
     return MOCK_TEAM_PLAYER_STATS as unknown as TeamPlayerSeasonStat[]
   }
 
   try {
-    // (2026-09-20) 이전엔 DB 캐시 없이 매번 라이브 호출했음 — 캐싱 추가
     return await getCachedOrFetch<TeamPlayerSeasonStat[]>(`team-player-stats:${teamId}:${season}`, 10800, async () => {
       const response = await fetchApiFootball(`/players?team=${teamId}&season=${season}`, { revalidate: 10800 })
       return response as TeamPlayerSeasonStat[]
@@ -253,10 +272,10 @@ export async function getTeamPlayerStats(teamId: string, season: number): Promis
     console.error("getTeamPlayerStats fetch 실패:", err instanceof Error ? err.message : err)
     return []
   }
-}
+})
 
 // ── 기록 탭: 과거 시즌 순위 ──────────────────────────────────
-export async function getHistoricalRank(
+export const getHistoricalRank = cache(async function getHistoricalRank(
   leagueId: number,
   teamId: number,
   season: number
@@ -265,9 +284,6 @@ export async function getHistoricalRank(
     return Math.floor(Math.random() * 10) + 1
   }
 
-  // 과거 시즌 순위는 한 번 확정되면 절대 안 바뀌는 데이터라 30일로 캐시하는데,
-  // 기존엔 errors 필드를 체크 안 해서 API 실패로 받은 빈 배열이 최대 30일간
-  // "이 시즌 순위 없음"으로 박제될 위험이 있었다 (가장 오래 캐싱되는 함수라 가장 위험)
   const path = `/standings?league=${leagueId}&season=${season}`
   try {
     const groups = await getCachedOrFetch<any[]>(path, 2592000, async () => {
@@ -283,7 +299,7 @@ export async function getHistoricalRank(
     console.error("getHistoricalRank fetch 실패:", err instanceof Error ? err.message : err)
     return null
   }
-}
+})
 
 // ── 팀 시즌 종합 통계 (/teams/statistics) ─────────────────────
 export type TeamSeasonStats = {
@@ -310,14 +326,14 @@ export type TeamSeasonStats = {
   penalty: { scored: { total: number; percentage: string }; missed: { total: number; percentage: string }; total: number }
 }
 
-export async function getTeamSeasonStats(teamId: string, leagueId: number, season: number): Promise<TeamSeasonStats | null> {
+export const getTeamSeasonStats = cache(async function getTeamSeasonStats(
+  teamId: string,
+  leagueId: number,
+  season: number
+): Promise<TeamSeasonStats | null> {
   if (process.env.USE_MOCK_DATA === "true") return null
 
   try {
-    // (2026-09-20) /teams/statistics는 API-Football의 다른 엔드포인트와 달리 response가
-    // 배열이 아니라 객체 하나로 온다 — fetchApiFootball은 "배열이어야 한다"를 강제하므로
-    // 여기 쓰면 항상 실패한다. 배열 검증만 생략하는 fetchApiFootballRaw를 대신 쓴다
-    // (errors 체크/재시도는 동일하게 적용됨). 이전엔 DB 캐시도 없이 매번 라이브 호출했음.
     return await getCachedOrFetch<TeamSeasonStats | null>(
       `team-season-stats:${teamId}:${leagueId}:${season}`,
       10800,
@@ -333,4 +349,4 @@ export async function getTeamSeasonStats(teamId: string, leagueId: number, seaso
     console.error("getTeamSeasonStats fetch 실패:", err instanceof Error ? err.message : err)
     return null
   }
-}
+})

@@ -7,6 +7,13 @@
 // 최근 이적한 선수의 페이지가 간헐적으로 "선수 정보를 찾을 수 없습니다"로 막힘).
 // lib/matchApi.ts 등에 이미 적용된 공용 fetchApiFootball()로 통합해서
 // errors 체크와 실패 시 throw(=캐시 안 됨)를 모든 fetcher에 일괄 적용한다.
+//
+// (2026-09-21) 선수 페이지(generateMetadata + 본문)에서 getPlayerDataWithFallback이
+// 페이지 하나당 2번 호출되는 등 중복 호출이 있었다. Neon Postgres를 직접 쿼리하는
+// 이 함수들은 Next의 fetch() 자동 중복 제거 혜택을 못 받으므로, React.cache()로
+// 감싸서 같은 렌더링 요청 안에서는 동일 인자 호출이 1회로 합쳐지게 한다
+// (lib/teamData.ts에 동일하게 적용한 것과 같은 패턴).
+import { cache } from "react"
 import { getCachedOrFetch } from "@/lib/apiCache"
 import { fetchApiFootball } from "@/lib/apiFootballClient"
 import {
@@ -86,7 +93,10 @@ export type Trophy = { league: string; country: string; season: string; place: s
 // 같은 리소스(예: /fixtures/players?fixture=X)를 경기 페이지 쪽에서 이미 캐시해뒀으면
 // 여기서도 API를 안 부르고 바로 재사용된다. (2026-09-17, DB 우선 캐시 3단계 — 선수 페이지)
 
-export async function getPlayerData(playerId: string, season: number): Promise<PlayerData | null> {
+export const getPlayerData = cache(async function getPlayerData(
+  playerId: string,
+  season: number
+): Promise<PlayerData | null> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_PLAYER as unknown as PlayerData
 
   const path = `/players?id=${playerId}&season=${season}`
@@ -99,11 +109,11 @@ export async function getPlayerData(playerId: string, season: number): Promise<P
     console.error("getPlayerData fetch 실패:", err instanceof Error ? err.message : err)
     return null
   }
-}
+})
 
 // 최근 이적 선수처럼 새 시즌 통계가 아직 안 잡힌 경우를 위한 폴백.
 // 여러 시즌을 순서대로 시도하고, 그래도 없으면 통계 없이 기본 프로필만이라도 반환
-export async function getPlayerDataWithFallback(
+export const getPlayerDataWithFallback = cache(async function getPlayerDataWithFallback(
   playerId: string,
   primarySeason: number
 ): Promise<PlayerData | null> {
@@ -134,9 +144,9 @@ export async function getPlayerDataWithFallback(
     console.error("getPlayerDataWithFallback fetch 실패:", err instanceof Error ? err.message : err)
     return null
   }
-}
+})
 
-export async function getPlayerTransfers(playerId: string): Promise<TransferEntry[]> {
+export const getPlayerTransfers = cache(async function getPlayerTransfers(playerId: string): Promise<TransferEntry[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_PLAYER_TRANSFERS as unknown as TransferEntry[]
 
   const path = `/transfers?player=${playerId}`
@@ -149,9 +159,9 @@ export async function getPlayerTransfers(playerId: string): Promise<TransferEntr
     console.error("getPlayerTransfers fetch 실패:", err instanceof Error ? err.message : err)
     return []
   }
-}
+})
 
-export async function getTrophies(playerId: string): Promise<Trophy[]> {
+export const getTrophies = cache(async function getTrophies(playerId: string): Promise<Trophy[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_TROPHIES as unknown as Trophy[]
 
   const path = `/trophies?player=${playerId}`
@@ -165,14 +175,14 @@ export async function getTrophies(playerId: string): Promise<Trophy[]> {
     console.error("getTrophies fetch 실패:", err instanceof Error ? err.message : err)
     return []
   }
-}
+})
 
 // 경력(소속팀 이력): 최근 3개 시즌을 각각 조회해서 팀별로 합침 (전용 "경력" 엔드포인트가 없어서 이렇게 재구성)
 // 원래 5시즌이었는데, ?season= 파라미터를 돌며 스크래핑당할 때 시즌당 5콜씩 나가던
 // 비용을 줄이려고 3으로 낮춤 (2026-09-07) — "최근 경력" 표시 목적엔 3개로도 충분.
 // 각 시즌 fetch는 getPlayerData와 똑같은 경로(/players?id=X&season=Y)를 쓰기 때문에
 // 캐시 키가 자동으로 겹쳐서, 선수 페이지에서 이미 조회한 시즌은 여기서 또 안 부른다
-export async function getPlayerCareer(
+export const getPlayerCareer = cache(async function getPlayerCareer(
   playerId: string,
   currentSeason: number,
   seasonsBack = 3
@@ -226,10 +236,10 @@ export async function getPlayerCareer(
       goals: v.goals,
     }))
     .sort((a, b) => Math.min(...a.seasons) - Math.min(...b.seasons))
-}
+})
 
 // 최근 경기 리스트: 이 선수 소속팀의 최근 경기를 가져온 뒤, 경기별로 이 선수의 개인 기록을 조회
-export async function getPlayerRecentMatches(
+export const getPlayerRecentMatches = cache(async function getPlayerRecentMatches(
   playerId: string,
   teamId: number,
   season: number,
@@ -292,7 +302,7 @@ export async function getPlayerRecentMatches(
   )
 
   return withStats.filter((m): m is PlayerRecentMatch => m !== null)
-}
+})
 
 export type SidelinedEntry = {
   type: string
@@ -300,7 +310,7 @@ export type SidelinedEntry = {
   end: string | null
 }
 
-export async function getSidelined(playerId: string): Promise<SidelinedEntry[]> {
+export const getSidelined = cache(async function getSidelined(playerId: string): Promise<SidelinedEntry[]> {
   if (process.env.USE_MOCK_DATA === "true") return []
 
   const path = `/sidelined?player=${playerId}`
@@ -316,4 +326,4 @@ export async function getSidelined(playerId: string): Promise<SidelinedEntry[]> 
   } catch {
     return []
   }
-}
+})
