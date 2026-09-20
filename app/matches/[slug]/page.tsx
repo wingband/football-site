@@ -16,6 +16,7 @@ import MatchReviewCard from "@/components/MatchReviewCard"
 import AdSlot from "@/components/AdSlot"
 import RelatedMatches from "@/components/RelatedMatches"
 import StorySection from "./_components/StorySection"
+import { buildStatsSummary, buildMatchEventSummaries, type RawMatchEvent } from "@/lib/matchSummaries"
 import NewsSection from "./_components/NewsSection"
 import RecentFormSection from "./_components/RecentFormSection"
 import SidebarDeferredSection from "./_components/SidebarDeferredSection"
@@ -289,13 +290,16 @@ export default async function MatchDetailPage({
     apiFetch(`/fixtures/lineups?fixture=${fixtureId}`, matchDataRevalidate) as Promise<Lineup[]>,
   ])
 
-  // statsSummary는 fast path의 stats에서 즉시 계산해 StorySection에 prop으로 전달
-  const statsSummary =
-    stats.length === 2
-      ? stats[0].statistics
-          .map((s, i) => `${s.type}: ${s.value ?? 0} vs ${stats[1].statistics[i]?.value ?? 0}`)
-          .join(", ")
-      : "통계 데이터 없음"
+  // statsSummary/eventsSummary/goalsSummary는 크론(generate-articles)과 동일한
+  // lib/matchSummaries.ts 로직으로 계산한다. StorySection의 3문장 폴백도 똑같이
+  // 정확한 골/스코어 흐름 데이터를 받아야 "역전골" 같은 오보를 지어내지 않는다
+  // (2026-09-20, 토트넘-아스톤빌라 사건 이후 통합)
+  const statsSummary = buildStatsSummary(stats as unknown as { statistics: { type: string; value: unknown }[] }[])
+  const { eventsSummary, goalsSummary } = buildMatchEventSummaries(
+    events as unknown as RawMatchEvent[],
+    match.teams.home.name,
+    match.teams.away.name
+  )
 
   const topPlayers = getTopRatedPlayers(playerStats, 3)
 
@@ -375,6 +379,8 @@ export default async function MatchDetailPage({
             awayScore={match.goals.away}
             leagueName={match.league.name}
             statsSummary={statsSummary}
+            goalsSummary={goalsSummary}
+            eventsSummary={eventsSummary}
             homeLogo={match.teams.home.logo}
             awayLogo={match.teams.away.logo}
           />

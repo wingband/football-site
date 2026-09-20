@@ -11,6 +11,8 @@ export default async function StorySection({
   awayScore,
   leagueName,
   statsSummary,
+  goalsSummary,
+  eventsSummary,
   homeLogo,
   awayLogo,
 }: {
@@ -21,11 +23,15 @@ export default async function StorySection({
   awayScore: number | null
   leagueName: string
   statsSummary: string
+  goalsSummary: string
+  eventsSummary: string
   homeLogo: string
   awayLogo: string
 }) {
   // 크론이 이미 300~500단어 리뷰를 만들어뒀으면 그걸 그대로 쓰고,
-  // 없을 때만(대상 리그가 아니거나 아직 생성 전) 간단한 3문장 요약으로 대체한다
+  // 없을 때만(대상 리그가 아니거나 아직 생성 전) 간단한 3문장 요약으로 대체한다.
+  // 이 폴백도 반드시 실제 골/스코어 흐름 데이터(goalsSummary/eventsSummary)를 받아야
+  // "역전골" 같은 오보를 지어내지 않는다 (2026-09-20 사건 이후 수정)
   const fullArticle = await getArticleByMatchId(matchId)
 
   const summary = fullArticle
@@ -38,10 +44,10 @@ export default async function StorySection({
         awayScore,
         leagueName,
         statsSummary,
+        goalsSummary,
+        eventsSummary,
       })
 
-  // 팀명·리그명은 항상 태그로 붙이고(한글 매핑이 있으면 한글 태그도 같이),
-  // 득점/어시스트/카드 선수 태그는 기사가 있을 때만 추가된다
   const tags = [
     homeTeam,
     TEAM_NAME_KO[homeTeam],

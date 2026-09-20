@@ -3,7 +3,6 @@ import { getCachedStory, saveCachedStory } from "@/lib/storyCache"
 const FAILED_MESSAGE = "스토리를 생성하지 못했습니다."
 
 type StoryInput = {
-  // 리뷰 캐시 키. 종료된 경기의 리뷰는 다시 바뀌지 않는다
   matchId: number
   homeTeam: string
   awayTeam: string
@@ -11,6 +10,12 @@ type StoryInput = {
   awayScore: number | null
   leagueName: string
   statsSummary: string
+  // 실제 골 기록(몇 분에, 누가, 도움은 누구, 그 골 이후 스코어, 그리고 그 골이
+  // 선제/동점/역전/추가골 중 무엇인지까지 이미 계산되어 있는 정답표).
+  // 2026-09-20 이전에는 이 필드가 아예 없어서, GPT가 팀명·최종스코어만으로
+  // "역전골" 같은 실제로 없었던 장면을 지어내는 사고가 있었다.
+  goalsSummary: string
+  eventsSummary: string
 }
 
 export async function generateMatchStory(input: StoryInput): Promise<string> {
@@ -25,9 +30,25 @@ export async function generateMatchStory(input: StoryInput): Promise<string> {
   const prompt = `너는 스포츠 전문 기자야. 아래 경기 데이터를 바탕으로, 3문장짜리 흥미로운 경기 요약 스토리를 한국어로 써줘.
 과장하지 말고, 데이터에 근거해서 이 경기의 핵심 포인트(승부처, 눈에 띄는 스탯)를 짚어줘.
 
+작성 규칙 (반드시 지켜라):
+- 아래 "정확한 득점 기록"에 없는 골, 순서, 스코어, 시점은 절대 지어내지 마라.
+  이 표가 유일한 정답이고, 재계산하거나 다르게 서술하면 안 된다.
+- 각 골 줄 끝의 [ ] 안에는 그 골이 선제골/동점골/역전골/추가골 중 무엇인지
+  이미 계산되어 있다. "역전골"이라는 표현은 오직 [ ] 안에 "역전골"이라고
+  명시된 골에만 써라. 그렇지 않은 골에 "역전골"을 갖다 붙이면 심각한 오보다.
+  나머지는 표시된 대로 "선제골"/"동점골"/"추가골" 등 표시된 단어만 사용해라.
+- 이 경기에 골이 없었다면 "역전"이나 "골"에 관한 어떤 장면도 지어내지 마라.
+- ${input.homeTeam}(홈)과 ${input.awayTeam}(원정) 중 어느 팀 골인지는 반드시
+  "정확한 득점 기록"에 표시된 팀명을 그대로 따라야 한다. 헷갈리거나 뒤바꿔 쓰지 마라.
+- 최종 스코어는 반드시 ${input.homeScore ?? "-"}:${input.awayScore ?? "-"}와 일치해야 한다.
+
+정확한 득점 기록 (그대로 사용, 재계산 금지):
+${input.goalsSummary}
+
 리그: ${input.leagueName}
 ${input.homeTeam} ${input.homeScore ?? "-"} : ${input.awayScore ?? "-"} ${input.awayTeam}
 주요 스탯: ${input.statsSummary}
+주요 이벤트(참고용): ${input.eventsSummary}
 
 3문장으로만 답해. 다른 설명 없이 스토리 본문만 출력해.`
 
@@ -40,10 +61,13 @@ ${input.homeTeam} ${input.homeScore ?? "-"} : ${input.awayScore ?? "-"} ${input.
     body: JSON.stringify({
       model: "gpt-4o-mini",
       max_tokens: 300,
+      // 기본값(1.0)은 짧은 3문장 안에서도 스코어/득점 흐름을 "그럴듯하게" 지어내는
+      // 경향이 있어서, generateArticle.ts와 동일하게 낮춰서 사실 충실도를 높인다
+      // (2026-09-20, "역전골" 오보 사건 이후 추가)
+      temperature: 0.2,
       messages: [{ role: "user", content: prompt }],
     }),
     // DB 캐시(위)가 1차 방어선이고, 이건 배포 직후처럼 DB에 아직 없을 때를 위한 2차 방어선.
-    // force-cache는 POST도 캐시하지만 캐시 키에 요청 본문이 들어가고 배포 시 비워진다
     cache: "force-cache",
   })
 
