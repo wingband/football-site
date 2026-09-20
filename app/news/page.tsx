@@ -161,12 +161,28 @@ function LeagueSection({ label, logo, articles }: { label: string; logo: string;
   )
 }
 
+// (2026-09-21) NewsData.io 크레딧 소진(ApiLimitExceeded) 등으로 API 호출이
+// 전부 실패하면 topNews/leagueNews가 모두 빈 배열이 되어, HeroSection과
+// LeagueSection이 각자 null을 반환하면서 페이지 제목만 남고 본문이 완전히
+// 텅 비어버리는 문제가 있었다. AdSense 심사 시 "빈 페이지"보다 "깨진 기능"으로
+// 더 부정적으로 비칠 수 있어, 완전 실패 상황을 감지해 명확한 안내 문구를 보여준다.
+function EmptyNewsState() {
+  return (
+    <div className="bg-turf/20 border border-turf-line/30 py-16 px-6 text-center">
+      <p className="text-floodlight/60 text-sm mb-1">지금은 뉴스를 불러올 수 없습니다.</p>
+      <p className="text-floodlight/30 text-xs">잠시 후 다시 방문해 주세요.</p>
+    </div>
+  )
+}
+
 export default async function NewsPage() {
   // 상단 종합 + 리그별 뉴스 병렬 로드
   const [topNews, ...leagueNews] = await Promise.all([
     fetchTopNews(),
     ...LEAGUE_SECTIONS.map(s => fetchNews(s.query)),
   ])
+
+  const hasAnyNews = topNews.length > 0 || leagueNews.some((a) => a.length > 0)
 
   return (
     <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
@@ -177,18 +193,24 @@ export default async function NewsPage() {
 
         <AdSlot label="뉴스 페이지 배너 광고 (예: 728x90)" className="w-full h-16 mb-8" />
 
-        {/* 히어로 + 트렌딩 */}
-        <HeroSection articles={topNews} />
+        {hasAnyNews ? (
+          <>
+            {/* 히어로 + 트렌딩 */}
+            <HeroSection articles={topNews} />
 
-        {/* 리그별 섹션 */}
-        {LEAGUE_SECTIONS.map((section, i) => (
-          <LeagueSection
-            key={section.id}
-            label={section.label}
-            logo={section.logo}
-            articles={leagueNews[i] ?? []}
-          />
-        ))}
+            {/* 리그별 섹션 */}
+            {LEAGUE_SECTIONS.map((section, i) => (
+              <LeagueSection
+                key={section.id}
+                label={section.label}
+                logo={section.logo}
+                articles={leagueNews[i] ?? []}
+              />
+            ))}
+          </>
+        ) : (
+          <EmptyNewsState />
+        )}
       </div>
     </main>
   )
