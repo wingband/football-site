@@ -5,7 +5,6 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import AdSlot from "@/components/AdSlot";
 import { GoogleTagManager, GoogleAnalytics } from '@next/third-parties/google';
-import Script from "next/script";
 import { ClerkProvider } from "@clerk/nextjs";
 import { SITE_URL } from "@/lib/siteConfig";
 
@@ -55,6 +54,11 @@ export const metadata: Metadata = {
     // 필드가 없어서 other로 임의 메타태그를 추가한다
     other: {
       "naver-site-verification": "3836c5a9753c3db89b2e8c1f994b93231c889147",
+      // Google AdSense 사이트 소유권 확인용 메타태그 (2026-09-21).
+      // 처음엔 next/script(beforeInteractive)로 <script> 태그를 넣었으나
+      // 렌더링된 <head>에 실제로 반영이 안 되는 문제가 있어서, 이미 검증된
+      // verification 메타태그 패턴(위 google/naver와 동일)으로 대체했다.
+      "google-adsense-account": "ca-pub-4818682522889602",
     },
   },
 };
@@ -72,16 +76,6 @@ export default function RootLayout({
     >
       <GoogleTagManager gtmId="GTM-MXDTC98T" />
       <GoogleAnalytics gaId="G-1PL7KFH8KD" />
-      {/* Google AdSense 사이트 소유권 확인용 스니펫. beforeInteractive로 지정해
-          Next.js가 하이드레이션 전 <head> 안에 서버 렌더링 시점부터 확실히
-          포함시키게 한다 — Google이 확인할 때 요구하는 <head></head> 사이 위치를
-          그대로 만족시키기 위함 (2026-09-21, AdSense 사이트 연결 절차) */}
-      <Script
-        async
-        src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4818682522889602"
-        crossOrigin="anonymous"
-        strategy="beforeInteractive"
-      />
       <body className="min-h-full flex flex-col bg-pitch-night">
         <Header />
         {/* 전 페이지 공통 상단 배너 광고 자리 */}
