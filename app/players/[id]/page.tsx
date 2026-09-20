@@ -116,7 +116,16 @@ export default async function PlayerPage({
     .flatMap((t) => t.transfers.map((tr) => ({ ...tr, update: t.update })))
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0] ?? null
 
-  const teamNameFromTransfer = mostRecentTransfer?.teams.in?.name ?? null
+  // (2026-09-21) 해외파 트래커에 등록된 선수는 이적/임대 복귀 때마다 사람이 직접
+  // 확인해 KOREAN_PLAYERS_ABROAD에 정확한 소속팀을 기록해둔다. API-Football의
+  // /transfers는 "임대 복귀"(원 소속팀으로 되돌아가는 것)를 놓치거나 반영이 늦어서,
+  // 김지수처럼 임대가 끝나 원 소속팀(브렌트퍼드) 1군에 정식 복귀했는데도 여전히
+  // 임대팀(카이저슬라우테른)을 최신 소속팀으로 잘못 인식하는 경우가 있었다
+  // (심지어 카이저슬라우테른 쪽에 2026/27시즌 출전 기록까지 잘못 누적됨).
+  // 트래커 등록 선수는 이 수동 관리 값을 API 이적 기록보다 우선한다.
+  const trackerEntry = KOREAN_PLAYERS_ABROAD.find((p) => p.id === Number(id))
+
+  const teamNameFromTransfer = trackerEntry?.teamName ?? mostRecentTransfer?.teams.in?.name ?? null
 
   // (2026-09-19) "어느 팀인지"는 최근 이적 기록으로 맞게 골랐는데, 그 팀 안에서도
   // 대회별로 기록이 따로 있어서(리그/챔스/국내컵 등) .find()가 배열의 첫 번째

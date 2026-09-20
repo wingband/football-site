@@ -79,7 +79,11 @@ export default function KoreanPlayersPage() {
           {sorted.map(({ league, players }) => (
             <section key={league}>
               <div className="flex items-center gap-2 mb-4">
-                <Logo src={LEAGUE_LOGO_LOCAL[league] ?? players[0].leagueLogo} alt="" className="w-5 h-5 shrink-0" />
+                <Logo
+                  src={LEAGUE_LOGO_LOCAL[league] ?? players[0].leagueLogo}
+                  alt=""
+                  className={`w-5 h-5 shrink-0${league === "Premier League" ? " brightness-0 invert" : ""}`}
+                />
                 <h2 className="font-display uppercase text-base text-floodlight/80 tracking-wide">
                   {league}
                 </h2>
@@ -116,7 +120,11 @@ export default function KoreanPlayersPage() {
                           <Logo src={p.teamLogo} alt="" className="w-4 h-4 shrink-0" />
                           <span className="text-sm font-semibold text-score-amber">{p.teamName}</span>
                           <span className="text-floodlight/30 text-xs">·</span>
-                          <Logo src={LEAGUE_LOGO_LOCAL[p.league] ?? p.leagueLogo} alt="" className="w-3.5 h-3.5 shrink-0" />
+                          <Logo
+                            src={LEAGUE_LOGO_LOCAL[p.league] ?? p.leagueLogo}
+                            alt=""
+                            className={`w-3.5 h-3.5 shrink-0${p.league === "Premier League" ? " brightness-0 invert" : ""}`}
+                          />
                           <span className="text-xs text-floodlight/50">{p.league}</span>
                         </div>
 
