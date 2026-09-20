@@ -150,7 +150,7 @@ export default async function PlayerPage({
   // 폴백을 타지 않고, 새 팀 스탯이 없으면 0경기짜리 빈 스탯을 직접 만들어 보여준다.
   if (!stat && trackerEntry) {
     stat = {
-      team: { id: 0, name: trackerEntry.teamName, logo: trackerEntry.teamLogo },
+      team: { id: trackerEntry.teamId, name: trackerEntry.teamName, logo: trackerEntry.teamLogo },
       league: { id: 0, name: trackerEntry.league, logo: trackerEntry.leagueLogo, country: "" },
       games: {
         appearences: 0,
