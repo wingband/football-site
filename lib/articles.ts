@@ -219,6 +219,53 @@ export async function deleteArticlesMissingLogos(): Promise<string[]> {
   `
   return rows.map((r) => r.slug as string)
 }
+
+// (2026-09-21) AdSense 심사 대비 콘텐츠 깊이 백필용. content 길이가 짧은 순으로
+// 가장 개선 효과가 큰 기사부터 골라서 재생성 대상으로 삼는다.
+export async function getArticlesUnderLength(maxLength: number, limit: number): Promise<Article[]> {
+  if (process.env.USE_MOCK_DATA === "true") {
+    return [...mockArticleStore]
+      .filter((a) => a.content.length < maxLength)
+      .sort((a, b) => a.content.length - b.content.length)
+      .slice(0, limit)
+  }
+
+  await ensureTable()
+  const sql = getSql()
+  const rows = await sql`
+    SELECT * FROM articles
+    WHERE LENGTH(content) < ${maxLength}
+    ORDER BY LENGTH(content) ASC
+    LIMIT ${limit}
+  `
+  return rows.map(rowToArticle)
+}
+
+// 같은 slug/match_id를 유지한 채 title/content/player_tags만 새로 덮어쓴다.
+// (2026-09-21) 기존 기사를 삭제 후 재생성하면 이미 Search Console에 색인된
+// URL이 깨져서 SEO 자산을 잃게 되므로, 반드시 "제자리 업데이트" 방식을 쓴다.
+export async function updateArticleContent(
+  matchId: number,
+  title: string,
+  content: string,
+  playerTags: string[]
+): Promise<void> {
+  if (process.env.USE_MOCK_DATA === "true") {
+    const idx = mockArticleStore.findIndex((a) => a.matchId === matchId)
+    if (idx !== -1) {
+      mockArticleStore[idx] = { ...mockArticleStore[idx], title, content, playerTags }
+    }
+    return
+  }
+
+  await ensureTable()
+  const sql = getSql()
+  await sql`
+    UPDATE articles
+    SET title = ${title}, content = ${content}, player_tags = ${playerTags}
+    WHERE match_id = ${matchId}
+  `
+}
 // ── 경기 프리뷰 ──────────────────────────────────────────────────────────────
 export type Preview = {
   slug: string
