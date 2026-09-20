@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server"
 import { neon } from "@neondatabase/serverless"
 
-// API-Football Pro 플랜 실제 한도 (api-football.com 공식 페이지 및 RapidAPI 파트너
-// 페이지 확인, 2026-09-19): 하루 7,500회, 분당 300회. 매일 UTC 자정에 리셋된다.
-// 이 상수는 플랜을 바꾸면 같이 바꿔줘야 한다.
-const DAILY_LIMIT = 7500
+// API-Football Ultra 플랜 실제 한도 (2026-09-19 Pro→Ultra 업그레이드 반영,
+// 2026-09-21 이 상수가 업그레이드 이후에도 7,500(Pro 한도)에 그대로 남아있어서
+// 실제 사용률을 10배 부풀려 보여주고 있던 것 발견 — 예: 실사용 4%인데 40%로 표시).
+// 하루 75,000회. 이 상수는 플랜을 바꾸면 같이 바꿔줘야 한다.
+const DAILY_LIMIT = 75000
 
 // 최근 14일간 실제 API-Football 라이브 호출량을 우리 DB에서 바로 조회.
 // 날짜별로 한 줄씩 쌓이는 구조라 이 자체가 히스토리 — 오늘 하루만 있으면 1줄,
@@ -42,7 +43,12 @@ export async function GET() {
       }
     })
 
-    return NextResponse.json({ ok: true, dailyLimit: DAILY_LIMIT, history })
+    return NextResponse.json(
+      { ok: true, dailyLimit: DAILY_LIMIT, history },
+      // (2026-09-21) charset 미지정으로 일부 클라이언트/도구가 응답의 한글 status
+      // 값("위험"/"주의"/"안전")을 잘못된 인코딩으로 표시하는 문제가 있었다
+      { headers: { "Content-Type": "application/json; charset=utf-8" } }
+    )
   } catch (err) {
     return NextResponse.json(
       { ok: false, error: err instanceof Error ? err.message : String(err) },
