@@ -4,6 +4,8 @@ import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import AdSlot from "@/components/AdSlot";
+import KakaoAdBanner from "@/components/KakaoAdBanner";
+import Script from "next/script";
 import { GoogleTagManager, GoogleAnalytics } from '@next/third-parties/google';
 import { ClerkProvider } from "@clerk/nextjs";
 import { SITE_URL } from "@/lib/siteConfig";
@@ -76,11 +78,21 @@ export default function RootLayout({
     >
       <GoogleTagManager gtmId="GTM-MXDTC98T" />
       <GoogleAnalytics gaId="G-1PL7KFH8KD" />
+      {/* 카카오 애드핏 스크립트. 광고 자리(KakaoAdBanner)가 여러 개 생겨도
+          이 스크립트는 페이지당 한 번만 있으면 된다 (2026-09-21, 애드핏
+          매체 등록 및 상단 배너 광고단위 생성 후 적용) */}
+      <Script src="//t1.kakaocdn.net/kas/static/ba.min.js" strategy="afterInteractive" async />
       <body className="min-h-full flex flex-col bg-pitch-night">
         <Header />
-        {/* 전 페이지 공통 상단 배너 광고 자리 */}
+        {/* 전 페이지 공통 상단 배너 광고 자리 — 카카오 애드핏 728x90
+            (광고단위: GoalLine 상단 배너, DAN-y9b1xdwBphlFmU6b) */}
         <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 pt-3">
-          <AdSlot label="상단 배너 광고 (예: 728x90)" className="w-full h-16 sm:h-20" />
+          <KakaoAdBanner
+            adUnit="DAN-y9b1xdwBphlFmU6b"
+            width={728}
+            height={90}
+            className="w-full h-16 sm:h-20"
+          />
         </div>
         <div className="flex-1">{children}</div>
         <Footer />
