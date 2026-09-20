@@ -142,6 +142,38 @@ export default async function PlayerPage({
         .sort((a, b) => (b.games.minutes ?? 0) - (a.games.minutes ?? 0))[0]
     : undefined
 
+  // (2026-09-21) 트래커 등록 선수가 방금 이적/임대 복귀해서 새 소속팀 클럽 스탯이
+  // API에 단 하나도 안 잡힌 경우(출전 0경기)가 있다. 이때 바로 아래의 '출전횟수 최다'
+  // 폴백을 그대로 타면, 방금 떠나온 예전 팀(임대팀 등)이 출전 기록이 더 많다는
+  // 이유로 다시 뽑혀버린다 (김지수: 브렌트퍼드 0경기 vs 카이저슬라우테른 17경기 →
+  // 카이저슬라우테른으로 잘못 되돌아가 표시됨). 트래커 등록 선수는 이 교차팀
+  // 폴백을 타지 않고, 새 팀 스탯이 없으면 0경기짜리 빈 스탯을 직접 만들어 보여준다.
+  if (!stat && trackerEntry) {
+    stat = {
+      team: { id: 0, name: trackerEntry.teamName, logo: trackerEntry.teamLogo },
+      league: { id: 0, name: trackerEntry.league, logo: trackerEntry.leagueLogo, country: "" },
+      games: {
+        appearences: 0,
+        lineups: 0,
+        minutes: 0,
+        number: null,
+        position: "",
+        rating: null,
+        captain: false,
+      },
+      substitutes: { in: 0, out: 0, bench: 0 },
+      goals: { total: 0, assists: 0, conceded: 0, saves: 0 },
+      shots: { total: 0, on: 0 },
+      passes: { total: 0, key: 0, accuracy: 0 },
+      tackles: { total: 0, blocks: 0, interceptions: 0 },
+      duels: { total: 0, won: 0 },
+      dribbles: { attempts: 0, success: 0, past: 0 },
+      fouls: { drawn: 0, committed: 0 },
+      cards: { yellow: 0, yellowred: 0, red: 0 },
+      penalty: { won: 0, committed: 0, scored: 0, missed: 0, saved: 0 },
+    }
+  }
+
   // 이적 기록이 없거나, 새 팀 시즌 스탯이 API에 아직 하나도 안 잡힌 경우엔
   // 예전 방식(출전횟수 최다)으로 폴백
   if (!stat) {
