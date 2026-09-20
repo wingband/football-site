@@ -3,6 +3,7 @@ import PlayerAvatar from "@/components/PlayerAvatar"
 import { getSeasonYear } from "@/lib/season"
 import { MOCK_TOP_SCORERS } from "@/lib/mockData"
 import Logo from "@/components/Logo"
+import { fetchApiFootball } from "@/lib/apiFootballClient"
 
 type ScorerEntry = {
   player: { id: number; name: string; photo: string }
@@ -13,18 +14,22 @@ type ScorerEntry = {
   }[]
 }
 
+// (2026-09-20) 기존엔 fetch를 직접 호출하고 errors 필드를 체크하지 않아서, API
+// 레이트리밋 시 "이 시즌 득점 기록 없음"으로 오인해 불필요하게 season-1로
+// 폴백하거나 빈 화면을 보여줄 수 있었다. fetchApiFootball()로 통합한다.
 async function getTopScorers(leagueId: string, season: number): Promise<ScorerEntry[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_TOP_SCORERS
 
-  const res = await fetch(
-    `https://v3.football.api-sports.io/players/topscorers?league=${leagueId}&season=${season}`,
-    {
-      headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      next: { revalidate: 10800 },
-    }
-  )
-  const data = await res.json()
-  return data.response ?? []
+  try {
+    const response = await fetchApiFootball(
+      `/players/topscorers?league=${leagueId}&season=${season}`,
+      { revalidate: 10800 }
+    )
+    return response as ScorerEntry[]
+  } catch (err) {
+    console.error("getTopScorers 실패:", err instanceof Error ? err.message : err)
+    return []
+  }
 }
 
 export default async function TopScorersPage({

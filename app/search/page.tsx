@@ -4,43 +4,50 @@ import { MOCK_SEARCH_RESULTS } from "@/lib/mockData"
 import Logo from "@/components/Logo"
 import PlayerAvatar from "@/components/PlayerAvatar"
 import { teamHref } from "@/lib/slug"
+import { fetchApiFootball } from "@/lib/apiFootballClient"
 
 type TeamResult = { team: { id: number; name: string; logo: string; country: string } }
 type PlayerResult = { player: { id: number; name: string; photo: string; nationality: string } }
 type LeagueResult = { league: { id: number; name: string; logo: string; country: string } }
 
+// (2026-09-20) 세 함수 모두 기존엔 fetch를 직접 호출하고 errors 필드를 체크하지
+// 않아서, API 레이트리밋 시 "검색 결과 없음"으로 오인될 수 있었다.
+// fetchApiFootball()로 통합. 실패는 빈 배열로 처리해 페이지 자체는 안 죽게 한다.
 async function searchTeams(q: string): Promise<TeamResult[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_SEARCH_RESULTS.teams
-  const res = await fetch(`https://v3.football.api-sports.io/teams?search=${encodeURIComponent(q)}`, {
-    headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-    next: { revalidate: 3600 },
-  })
-  const data = await res.json()
-  return data.response ?? []
+  try {
+    const response = await fetchApiFootball(`/teams?search=${encodeURIComponent(q)}`, { revalidate: 3600 })
+    return response as TeamResult[]
+  } catch (err) {
+    console.error("searchTeams 실패:", err instanceof Error ? err.message : err)
+    return []
+  }
 }
 
 async function searchLeagues(q: string): Promise<LeagueResult[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_SEARCH_RESULTS.leagues
-  const res = await fetch(`https://v3.football.api-sports.io/leagues?search=${encodeURIComponent(q)}`, {
-    headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-    next: { revalidate: 3600 },
-  })
-  const data = await res.json()
-  return data.response ?? []
+  try {
+    const response = await fetchApiFootball(`/leagues?search=${encodeURIComponent(q)}`, { revalidate: 3600 })
+    return response as LeagueResult[]
+  } catch (err) {
+    console.error("searchLeagues 실패:", err instanceof Error ? err.message : err)
+    return []
+  }
 }
 
 async function searchPlayers(q: string, season: number): Promise<PlayerResult[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_SEARCH_RESULTS.players
   if (q.length < 4) return []
-  const res = await fetch(
-    `https://v3.football.api-sports.io/players?search=${encodeURIComponent(q)}&season=${season}`,
-    {
-      headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY! },
-      next: { revalidate: 3600 },
-    }
-  )
-  const data = await res.json()
-  return data.response ?? []
+  try {
+    const response = await fetchApiFootball(
+      `/players?search=${encodeURIComponent(q)}&season=${season}`,
+      { revalidate: 3600 }
+    )
+    return response as PlayerResult[]
+  } catch (err) {
+    console.error("searchPlayers 실패:", err instanceof Error ? err.message : err)
+    return []
+  }
 }
 
 export default async function SearchPage({
