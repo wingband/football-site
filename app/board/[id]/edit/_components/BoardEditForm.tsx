@@ -3,17 +3,22 @@
 import { useRef, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useUser, SignInButton } from "@clerk/nextjs"
+import { useUser } from "@clerk/nextjs"
 import { applyFormat, FORMAT_BUTTONS, TITLE_MAX, CONTENT_MAX } from "@/lib/boardEditor"
+import type { Post } from "@/lib/board"
 
-export default function BoardWritePage() {
-  const { isSignedIn, isLoaded, user } = useUser()
+export default function BoardEditForm({ post }: { post: Post }) {
+  const { user } = useUser()
   const router = useRouter()
-  const [title, setTitle] = useState("")
-  const [content, setContent] = useState("")
+  const [title, setTitle] = useState(post.title)
+  const [content, setContent] = useState(post.content)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // 서버에서 이미 본인 확인 후 아니면 리다이렉트하지만, 하이드레이션
+  // 직후 잠깐 잘못된 화면이 보이는 걸 막는 2차 방어
+  if (user && user.id !== post.userId) return null
 
   function handleFormat(action: Parameters<typeof applyFormat>[1]) {
     const el = textareaRef.current
@@ -34,56 +39,37 @@ export default function BoardWritePage() {
     setSubmitting(true)
     setError("")
     try {
-      const nickname =
-        user?.username ?? user?.firstName ?? user?.emailAddresses[0]?.emailAddress?.split("@")[0] ?? "익명"
-      const res = await fetch("/api/board", {
-        method: "POST",
+      const res = await fetch(`/api/board/${post.id}`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, content, nickname }),
+        body: JSON.stringify({ title, content }),
       })
       const data = await res.json()
       if (!res.ok) {
-        setError(data.error ?? "글 등록에 실패했습니다")
+        setError(data.error ?? "수정에 실패했습니다")
         return
       }
-      router.push(`/board/${data.id}`)
+      router.push(`/board/${post.id}`)
     } catch {
-      setError("글 등록에 실패했습니다")
+      setError("수정에 실패했습니다")
     } finally {
       setSubmitting(false)
     }
-  }
-
-  if (!isLoaded) return null
-
-  if (!isSignedIn) {
-    return (
-      <main className="min-h-screen bg-pitch-night text-floodlight font-sans flex items-center justify-center px-4">
-        <div className="text-center">
-          <p className="text-sm text-floodlight/50 mb-4">글을 쓰려면 로그인이 필요합니다</p>
-          <SignInButton mode="modal">
-            <button className="text-sm px-6 py-2.5 bg-score-amber text-pitch-night font-bold rounded hover:bg-score-amber/80 transition-colors">
-              로그인하기
-            </button>
-          </SignInButton>
-        </div>
-      </main>
-    )
   }
 
   return (
     <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
       <div className="max-w-2xl mx-auto px-4 py-8">
         <div className="flex items-center gap-1.5 text-[11px] text-floodlight/40 mb-3">
-          <Link href="/board" className="hover:text-floodlight/70 transition-colors">
-            자유게시판
+          <Link href={`/board/${post.id}`} className="hover:text-floodlight/70 transition-colors truncate max-w-xs">
+            {post.title}
           </Link>
           <span>/</span>
-          <span>글쓰기</span>
+          <span>수정</span>
         </div>
 
         <div className="flex items-center justify-between mb-6">
-          <h1 className="font-display uppercase text-xl text-score-amber">글쓰기</h1>
+          <h1 className="font-display uppercase text-xl text-score-amber">글 수정</h1>
           <span className="text-[11px] px-2.5 py-1 rounded border border-turf-line text-floodlight/50">
             자유
           </span>
@@ -135,13 +121,9 @@ export default function BoardWritePage() {
 
         {error && <p className="text-xs text-red-400 mt-2">{error}</p>}
 
-        <p className="text-[11px] text-floodlight/30 mt-3 leading-relaxed">
-          욕설·도배·분쟁 유발 게시글은 예고 없이 삭제될 수 있습니다. 서로 매너를 지켜주세요.
-        </p>
-
         <div className="flex justify-end gap-2 mt-4">
           <Link
-            href="/board"
+            href={`/board/${post.id}`}
             className="text-sm px-6 py-2.5 border border-turf-line text-floodlight/60 rounded hover:bg-turf-line/20 transition-colors"
           >
             취소
@@ -151,7 +133,7 @@ export default function BoardWritePage() {
             disabled={submitting}
             className="text-sm px-6 py-2.5 bg-score-amber text-pitch-night font-bold rounded hover:bg-score-amber/80 transition-colors disabled:opacity-50"
           >
-            {submitting ? "등록 중..." : "등록"}
+            {submitting ? "저장 중..." : "저장"}
           </button>
         </div>
       </div>
