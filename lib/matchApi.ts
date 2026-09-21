@@ -121,9 +121,21 @@ export async function getStandings(leagueId: number, season: number): Promise<St
 export async function getMatchNews(homeTeam: string, awayTeam: string): Promise<NewsArticle[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_NEWS
 
-  // (2026-09-21) fetchNewsData()로 통합 — DB 캐시(6시간) 적용으로 API 소진 절감
-  const query = encodeURIComponent(`"${homeTeam}" AND "${awayTeam}"`)
-  return fetchNewsData(query)
+  // (2026-09-21) fetchNewsData()로 통합 — DB 캐시(6시간) 적용으로 API 소진 절감.
+  // try/catch가 없어서 NewsData.io 크레딧 소진(ApiLimitExceeded) 시 이 함수가
+  // 예외를 그대로 던졌고, 이를 부르는 NewsSection.tsx가 경기 상세 페이지 서버
+  // 컴포넌트 트리 안에 있다 보니 "관련 뉴스" 하나 실패한 게 경기 페이지 전체를
+  // 500으로 무너뜨렸다. Search Console에 잡힌 "서버 오류(5xx)" 색인 누락의
+  // 실제 원인이 이것으로 확인됨 (2026-09-21). 뉴스는 부가 정보일 뿐이라, 실패
+  // 시 페이지 전체를 죽이는 대신 빈 배열로 조용히 넘어가고 뉴스 섹션만
+  // "뉴스 없음"으로 보이게 한다.
+  try {
+    const query = encodeURIComponent(`"${homeTeam}" AND "${awayTeam}"`)
+    return await fetchNewsData(query)
+  } catch (err) {
+    console.error("getMatchNews fetch 실패:", err instanceof Error ? err.message : err)
+    return []
+  }
 }
 
 export async function getVenueInfo(
