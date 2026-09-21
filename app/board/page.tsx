@@ -16,20 +16,41 @@ function categoryLabel(category: string) {
   return CATEGORY_LABELS[category] ?? category
 }
 
+// 서버가 어느 시간대(Vercel 서버리스는 보통 UTC)로 돌든 항상 한국 시간
+// 기준으로 나오도록 Intl.DateTimeFormat에 timeZone을 명시한다.
+// Date의 getFullYear()/getDate() 등은 서버의 로컬 시간대를 따르므로
+// "오늘인지" 판단에도 절대 쓰면 안 됨 — KST 기준 날짜 문자열로 직접 비교한다.
+const KST_TIME_ZONE = "Asia/Seoul"
+
+function kstDateParts(date: Date) {
+  const parts = new Intl.DateTimeFormat("ko-KR", {
+    timeZone: KST_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date)
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? ""
+  return { year: get("year"), month: get("month"), day: get("day") }
+}
+
 function formatBoardDate(dateStr: string) {
   const d = new Date(dateStr)
   const now = new Date()
+  const dParts = kstDateParts(d)
+  const nowParts = kstDateParts(now)
   const sameDay =
-    d.getFullYear() === now.getFullYear() &&
-    d.getMonth() === now.getMonth() &&
-    d.getDate() === now.getDate()
+    dParts.year === nowParts.year && dParts.month === nowParts.month && dParts.day === nowParts.day
+
   if (sameDay) {
-    return d.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", hour12: false })
+    return new Intl.DateTimeFormat("ko-KR", {
+      timeZone: KST_TIME_ZONE,
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).format(d)
   }
-  const mm = String(d.getMonth() + 1).padStart(2, "0")
-  const dd = String(d.getDate()).padStart(2, "0")
-  if (d.getFullYear() === now.getFullYear()) return `${mm}.${dd}`
-  return `${String(d.getFullYear()).slice(2)}.${mm}.${dd}`
+  if (dParts.year === nowParts.year) return `${dParts.month}.${dParts.day}`
+  return `${dParts.year.slice(2)}.${dParts.month}.${dParts.day}`
 }
 
 const ROW_GRID_COLS = "md:grid-cols-[56px_minmax(0,1fr)_100px_70px_56px_56px]"
