@@ -25,7 +25,7 @@ export default function MatchPrediction({
   kickoffAt: string
   isStarted: boolean
 }) {
-  const { isSignedIn } = useUser()
+  const { isSignedIn, user } = useUser()
   const [existing, setExisting] = useState<PredictionResult>(null)
   const [loaded, setLoaded] = useState(false)
   const [homeScore, setHomeScore] = useState("")
@@ -67,6 +67,7 @@ export default function MatchPrediction({
           predictedHomeScore: h,
           predictedAwayScore: a,
           kickoffAt,
+          nickname: user?.username ?? user?.firstName ?? user?.emailAddresses[0]?.emailAddress?.split("@")[0] ?? "익명",
         }),
       })
       if (!res.ok) {

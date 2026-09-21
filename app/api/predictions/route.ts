@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
   if (!userId) return NextResponse.json({ error: "로그인이 필요합니다" }, { status: 401 })
 
   const body = await req.json()
-  const { matchId, homeTeam, awayTeam, predictedHomeScore, predictedAwayScore, kickoffAt } = body
+  const { matchId, homeTeam, awayTeam, predictedHomeScore, predictedAwayScore, kickoffAt, nickname } = body
 
   if (
     typeof matchId !== "number" ||
@@ -47,6 +47,7 @@ export async function POST(req: NextRequest) {
     predictedHomeScore,
     predictedAwayScore,
     kickoffAt: kickoffAt ?? new Date().toISOString(),
+    nickname: typeof nickname === "string" && nickname.trim() ? nickname.trim() : "익명",
   })
 
   return NextResponse.json({ ok: true })

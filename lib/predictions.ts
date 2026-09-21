@@ -17,6 +17,7 @@ export type Prediction = {
 
 export type LeaderboardRow = {
   userId: string
+  nickname: string
   totalPoints: number
   totalPredictions: number
   exactCount: number  // 정확히 맞힌 횟수 (3점)
@@ -56,7 +57,8 @@ function ensureTable() {
       const sql2 = getSql()
       return sql2`
         ALTER TABLE predictions
-          ADD COLUMN IF NOT EXISTS kickoff_at TIMESTAMPTZ
+          ADD COLUMN IF NOT EXISTS kickoff_at TIMESTAMPTZ,
+          ADD COLUMN IF NOT EXISTS nickname TEXT
       `
     })
   }
@@ -100,12 +102,13 @@ export async function createPrediction(params: {
   predictedHomeScore: number
   predictedAwayScore: number
   kickoffAt: string
+  nickname: string
 }): Promise<void> {
   await ensureTable()
   const sql = getSql()
   await sql`
-    INSERT INTO predictions (user_id, match_id, home_team, away_team, predicted_home_score, predicted_away_score, kickoff_at)
-    VALUES (${params.userId}, ${params.matchId}, ${params.homeTeam}, ${params.awayTeam}, ${params.predictedHomeScore}, ${params.predictedAwayScore}, ${params.kickoffAt})
+    INSERT INTO predictions (user_id, match_id, home_team, away_team, predicted_home_score, predicted_away_score, kickoff_at, nickname)
+    VALUES (${params.userId}, ${params.matchId}, ${params.homeTeam}, ${params.awayTeam}, ${params.predictedHomeScore}, ${params.predictedAwayScore}, ${params.kickoffAt}, ${params.nickname})
     ON CONFLICT (user_id, match_id) DO NOTHING
   `
 }
@@ -167,20 +170,31 @@ export async function settleMatchPredictions(
 export async function getLeaderboard(limit = 50): Promise<LeaderboardRow[]> {
   await ensureTable()
   const sql = getSql()
+  // nickname은 유저가 마지막으로 제출한 예측의 값을 쓴다(DISTINCT ON으로
+  // created_at 최신 순 1건만 뽑음) — 표시 이름이 바뀌어도(닉네임 변경 등)
+  // 최근 값을 반영하기 위함
   const rows = await sql`
+    WITH latest_nickname AS (
+      SELECT DISTINCT ON (user_id) user_id, nickname
+      FROM predictions
+      ORDER BY user_id, created_at DESC
+    )
     SELECT
-      user_id,
-      COALESCE(SUM(points), 0) as total_points,
-      COUNT(*) FILTER (WHERE settled = true) as total_predictions,
-      COUNT(*) FILTER (WHERE points = 3) as exact_count
-    FROM predictions
-    WHERE settled = true
-    GROUP BY user_id
+      p.user_id,
+      COALESCE(ln.nickname, '익명') as nickname,
+      COALESCE(SUM(p.points), 0) as total_points,
+      COUNT(*) FILTER (WHERE p.settled = true) as total_predictions,
+      COUNT(*) FILTER (WHERE p.points = 3) as exact_count
+    FROM predictions p
+    LEFT JOIN latest_nickname ln ON ln.user_id = p.user_id
+    WHERE p.settled = true
+    GROUP BY p.user_id, ln.nickname
     ORDER BY total_points DESC
     LIMIT ${limit}
   `
   return rows.map((r) => ({
     userId: r.user_id as string,
+    nickname: r.nickname as string,
     totalPoints: Number(r.total_points),
     totalPredictions: Number(r.total_predictions),
     exactCount: Number(r.exact_count),

@@ -14,6 +14,7 @@ const isPublicRoute = createRouteMatcher([
   "/standings(.*)",
   "/korean-players(.*)",
   "/best11(.*)",
+  "/predictions(.*)",
   "/compare(.*)",
   "/privacy(.*)",
   "/company(.*)",
