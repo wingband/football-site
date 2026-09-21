@@ -113,8 +113,10 @@ export async function createPost(params: {
   return rows[0].id as number
 }
 
+// category가 null/undefined면 전체 게시판(모든 카테고리) 조회.
+// 특정 카테고리 문자열을 넘기면 그 카테고리만 필터링 — 팀별 게시판 확장 시 그대로 사용 가능
 export async function getPosts(
-  category = "free",
+  category: string | null = null,
   page = 1,
   pageSize = 20
 ): Promise<{ posts: Post[]; total: number }> {
@@ -122,19 +124,32 @@ export async function getPosts(
   const sql = getSql()
   const offset = (page - 1) * pageSize
 
-  const [rows, countRows] = await Promise.all([
-    sql`
-      SELECT
-        p.*,
-        (SELECT COUNT(*) FROM board_likes l WHERE l.post_id = p.id) as like_count,
-        (SELECT COUNT(*) FROM board_comments c WHERE c.post_id = p.id) as comment_count
-      FROM board_posts p
-      WHERE category = ${category}
-      ORDER BY created_at DESC
-      LIMIT ${pageSize} OFFSET ${offset}
-    `,
-    sql`SELECT COUNT(*) as count FROM board_posts WHERE category = ${category}`,
-  ])
+  const [rows, countRows] = category
+    ? await Promise.all([
+        sql`
+          SELECT
+            p.*,
+            (SELECT COUNT(*) FROM board_likes l WHERE l.post_id = p.id) as like_count,
+            (SELECT COUNT(*) FROM board_comments c WHERE c.post_id = p.id) as comment_count
+          FROM board_posts p
+          WHERE category = ${category}
+          ORDER BY created_at DESC
+          LIMIT ${pageSize} OFFSET ${offset}
+        `,
+        sql`SELECT COUNT(*) as count FROM board_posts WHERE category = ${category}`,
+      ])
+    : await Promise.all([
+        sql`
+          SELECT
+            p.*,
+            (SELECT COUNT(*) FROM board_likes l WHERE l.post_id = p.id) as like_count,
+            (SELECT COUNT(*) FROM board_comments c WHERE c.post_id = p.id) as comment_count
+          FROM board_posts p
+          ORDER BY created_at DESC
+          LIMIT ${pageSize} OFFSET ${offset}
+        `,
+        sql`SELECT COUNT(*) as count FROM board_posts`,
+      ])
 
   return {
     posts: rows.map(rowToPost),
