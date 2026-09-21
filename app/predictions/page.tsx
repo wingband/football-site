@@ -23,7 +23,7 @@ export default async function PredictionsPage() {
             <h1 className="font-display uppercase text-2xl text-score-amber">예측 랭킹</h1>
           </div>
           <p className="text-sm text-floodlight/50">
-            스코어를 정확히 맞히면 3점, 승/무/패만 맞혀도 1점을 드립니다.
+            매주 예측하고 순위에 도전하세요
           </p>
         </div>
 
