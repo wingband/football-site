@@ -44,11 +44,21 @@ function ensureTable() {
         actual_away_score INTEGER,
         points INTEGER,
         settled BOOLEAN NOT NULL DEFAULT false,
-        kickoff_at TIMESTAMPTZ,
         created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
         UNIQUE(user_id, match_id)
       )
-    `
+    `.then(() => {
+      // (2026-09-21) 이 테이블이 kickoff_at 컬럼을 추가하기 전에 이미
+      // 생성되어 있어서, CREATE TABLE IF NOT EXISTS는 아무 효과가 없고
+      // 크론이 "column kickoff_at does not exist" 500 에러를 내던 문제.
+      // articles.ts와 동일한 패턴으로 ALTER TABLE ADD COLUMN IF NOT EXISTS로
+      // 보강한다 — 이러면 신규/기존 DB 모두 안전하게 컬럼이 채워진다.
+      const sql2 = getSql()
+      return sql2`
+        ALTER TABLE predictions
+          ADD COLUMN IF NOT EXISTS kickoff_at TIMESTAMPTZ
+      `
+    })
   }
   return tableReady
 }
