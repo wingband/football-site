@@ -84,15 +84,30 @@ export default function RootLayout({
       <Script src="//t1.kakaocdn.net/kas/static/ba.min.js" strategy="afterInteractive" async />
       <body className="min-h-full flex flex-col bg-pitch-night">
         <Header />
-        {/* 전 페이지 공통 상단 배너 광고 자리 — 카카오 애드핏 728x90
-            (광고단위: GoalLine 상단 배너, DAN-y9b1xdwBphlFmU6b) */}
+        {/* 전 페이지 공통 상단 배너 광고 자리 — 카카오 애드핏.
+            PC(728x90)와 모바일(320x50) 광고단위를 각각 별도로 렌더링해두고
+            Tailwind 반응형 클래스로 한쪽만 보이게 전환한다. 애드핏 광고단위는
+            생성 시점에 크기가 고정되는 방식이라(반응형 단일 배너 불가), 화면
+            폭에 안 맞는 728x90을 모바일에 그대로 우겨넣으면 잘려 보이는
+            문제가 있었다 (2026-09-21, 모바일 화면 배너 잘림 확인 → 320x50
+            전용 광고단위(DAN-BIe8FUOzKHZPUiH5) 신규 생성 후 분기 처리). */}
         <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 pt-3">
-          <KakaoAdBanner
-            adUnit="DAN-y9b1xdwBphlFmU6b"
-            width={728}
-            height={90}
-            className="w-full h-16 sm:h-20"
-          />
+          <div className="hidden md:block">
+            <KakaoAdBanner
+              adUnit="DAN-y9b1xdwBphlFmU6b"
+              width={728}
+              height={90}
+              className="w-full h-16 sm:h-20"
+            />
+          </div>
+          <div className="block md:hidden">
+            <KakaoAdBanner
+              adUnit="DAN-BIe8FUOzKHZPUiH5"
+              width={320}
+              height={50}
+              className="w-full h-[50px]"
+            />
+          </div>
         </div>
         <div className="flex-1">{children}</div>
         <Footer />
