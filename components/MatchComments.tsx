@@ -164,11 +164,15 @@ export default function MatchComments({
             <p className="text-[10px] text-floodlight/20">욕설·스팸은 삭제됩니다</p>
           </div>
         ) : (
-          /* 비로그인: 로그인 유도 */
-          <div className="flex items-center justify-between">
+          /* 비로그인: 로그인 유도.
+             (2026-09-21) 좁은 사이드바 폭에서 가로 배치(justify-between)로는
+             안내 문구와 버튼이 한 줄에 다 안 들어가 텍스트/버튼 둘 다 줄바꿈되며
+             찌그러지던 문제. 세로로 쌓고 버튼을 꽉 채운 너비(w-full)의 한 줄
+             텍스트(whitespace-nowrap)로 바꿔 어떤 폭에서도 안 잘리게 함. */
+          <div className="flex flex-col gap-2">
             <p className="text-xs text-floodlight/40">반응을 남기려면 로그인이 필요합니다</p>
             <SignInButton mode="modal">
-              <button className="text-xs px-4 py-2 bg-score-amber text-pitch-night font-bold rounded hover:bg-score-amber/80 transition-colors">
+              <button className="w-full text-xs px-4 py-2 bg-score-amber text-pitch-night font-bold rounded hover:bg-score-amber/80 transition-colors whitespace-nowrap">
                 로그인하고 댓글 달기
               </button>
             </SignInButton>
