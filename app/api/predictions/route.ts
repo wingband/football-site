@@ -46,6 +46,7 @@ export async function POST(req: NextRequest) {
     awayTeam,
     predictedHomeScore,
     predictedAwayScore,
+    kickoffAt: kickoffAt ?? new Date().toISOString(),
   })
 
   return NextResponse.json({ ok: true })

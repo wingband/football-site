@@ -44,6 +44,7 @@ function ensureTable() {
         actual_away_score INTEGER,
         points INTEGER,
         settled BOOLEAN NOT NULL DEFAULT false,
+        kickoff_at TIMESTAMPTZ,
         created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
         UNIQUE(user_id, match_id)
       )
@@ -88,23 +89,31 @@ export async function createPrediction(params: {
   awayTeam: string
   predictedHomeScore: number
   predictedAwayScore: number
+  kickoffAt: string
 }): Promise<void> {
   await ensureTable()
   const sql = getSql()
   await sql`
-    INSERT INTO predictions (user_id, match_id, home_team, away_team, predicted_home_score, predicted_away_score)
-    VALUES (${params.userId}, ${params.matchId}, ${params.homeTeam}, ${params.awayTeam}, ${params.predictedHomeScore}, ${params.predictedAwayScore})
+    INSERT INTO predictions (user_id, match_id, home_team, away_team, predicted_home_score, predicted_away_score, kickoff_at)
+    VALUES (${params.userId}, ${params.matchId}, ${params.homeTeam}, ${params.awayTeam}, ${params.predictedHomeScore}, ${params.predictedAwayScore}, ${params.kickoffAt})
     ON CONFLICT (user_id, match_id) DO NOTHING
   `
 }
 
 // 정산 대상: 아직 settled=false인 예측들의 고유 match_id 목록.
 // 크론이 이 목록을 돌면서 각 경기가 실제로 끝났는지(FT) API로 확인한다
+// (2026-09-21) 아직 시작도 안 한 경기까지 매 크론 실행마다 API로 "끝났는지"
+// 확인하면 API 호출이 크게 낭비된다 — 예측은 경기 며칠 전부터도 걸 수 있어서,
+// kickoff_at이 지난(=이미 시작된) 경기만 조회 대상으로 좁힌다. kickoff_at이
+// NULL인 행(이 컬럼 추가 이전에 생성된 예측)은 안전하게 계속 포함해서
+// 영원히 정산 안 되는 일이 없게 한다.
 export async function getUnsettledMatchIds(limit = 50): Promise<number[]> {
   await ensureTable()
   const sql = getSql()
   const rows = await sql`
-    SELECT DISTINCT match_id FROM predictions WHERE settled = false LIMIT ${limit}
+    SELECT DISTINCT match_id FROM predictions
+    WHERE settled = false AND (kickoff_at IS NULL OR kickoff_at <= now())
+    LIMIT ${limit}
   `
   return rows.map((r) => r.match_id as number)
 }
