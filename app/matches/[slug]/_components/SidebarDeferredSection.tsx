@@ -3,6 +3,7 @@ import type { TeamFixture } from "@/lib/matchApi"
 import MatchSidebar from "@/components/MatchSidebar"
 import MatchVote from "@/components/MatchVote"
 import MatchComments from "@/components/MatchComments"
+import MatchPrediction from "@/components/MatchPrediction"
 
 type Prediction = {
   predictions: {
@@ -28,6 +29,8 @@ export default async function SidebarDeferredSection({
   venueName,
   venueCity,
   isFinished,
+  kickoffAt,
+  isStarted,
 }: {
   homeTeamId: number
   awayTeamId: number
@@ -45,6 +48,8 @@ export default async function SidebarDeferredSection({
   venueName: string
   venueCity: string
   isFinished: boolean
+  kickoffAt: string
+  isStarted: boolean
 }) {
   // 종료된 경기는 예측/최근폼/라운드 정보도 다시 바뀔 일이 없으므로 7일로 늘림
   // (2026-09-09, 스탯/라인업 등과 같은 이유)
@@ -101,6 +106,15 @@ export default async function SidebarDeferredSection({
       }
     >
       {isFinished && <MatchVote matchId={fixtureId} />}
+      {!isFinished && (
+        <MatchPrediction
+          matchId={fixtureId}
+          homeTeam={homeTeamName}
+          awayTeam={awayTeamName}
+          kickoffAt={kickoffAt}
+          isStarted={isStarted}
+        />
+      )}
       <MatchComments
         matchId={fixtureId}
         homeTeam={homeTeamName}

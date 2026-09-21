@@ -719,6 +719,8 @@ export default async function MatchDetailPage({
             venueName={match.fixture.venue?.name ?? ""}
             venueCity={match.fixture.venue?.city ?? ""}
             isFinished={isFinished}
+            kickoffAt={match.fixture.date}
+            isStarted={match.fixture.status.short !== "NS"}
           />
         </Suspense>
       </aside>
