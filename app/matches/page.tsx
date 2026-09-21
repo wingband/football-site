@@ -308,7 +308,7 @@ export default async function MatchesPage({
           <div className="border border-turf-line bg-turf/40 px-4 py-3 flex items-start gap-2.5">
             <span className="text-floodlight/50 text-sm leading-5">ℹ</span>
             <p className="text-sm text-floodlight/70">
-              {formatDateLabel(fallbackFromDate, today)}에는 예정된 경기가 없어, 가장 최근 경기가
+              {formatDateLabel(fallbackFromDate, today)}은 예정된 경기가 없어, 가장 최근 경기가
               있었던 {formatDateLabel(effectiveDate, today)} 일정을 보여드립니다.
             </p>
           </div>
