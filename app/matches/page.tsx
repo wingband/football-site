@@ -3,7 +3,7 @@ import DateTabs from "@/components/DateTabs"
 import TransferWidget from "@/components/TransferWidget"
 import LiveCommentsWidget from "@/components/LiveCommentsWidget"
 import GlobalChatWidget from "@/components/GlobalChatWidget"
-import { getTodayStr } from "@/lib/dateUtils"
+import { getTodayStr, shiftDate, formatDateLabel } from "@/lib/dateUtils"
 import { MOCK_FIXTURES } from "@/lib/mockData"
 import { saveCachedFixtures, getCachedFixtures } from "@/lib/fixturesCache"
 import AdSlot from "@/components/AdSlot"
@@ -219,6 +219,27 @@ async function getFixturesByDate(date: string): Promise<FixturesResult> {
   return { fixtures: fixtures ?? [], fromCache: false, cachedAt: null }
 }
 
+// 선택한 날짜에 경기가 하나도 없을 때(비시즌, 국가대표 주간 등) 화면을 텅 비우는
+// 대신 최근에 경기가 있었던 날짜를 찾아 보여준다. 하루씩 API를 새로 호출하면
+// 쿼터를 불필요하게 소모하니, 여기서는 이미 저장돼있는 DB 캐시만 뒤진다 —
+// cron prefill이 못 채운 아주 오래된 날짜는 못 찾을 수 있는데, 그 경우엔
+// 기존처럼(못 찾으면) 빈 목록으로 남는다.
+const FALLBACK_SEARCH_DAYS = 14
+
+async function findFallbackFixtures(
+  fromDate: string
+): Promise<{ date: string; fixtures: Fixture[] } | null> {
+  let candidate = fromDate
+  for (let i = 0; i < FALLBACK_SEARCH_DAYS; i++) {
+    candidate = shiftDate(candidate, -1)
+    const cached = await getCachedFixtures<Fixture>(candidate)
+    if (cached && cached.data.length > 0) {
+      return { date: candidate, fixtures: cached.data.filter(isRelevantFixture) }
+    }
+  }
+  return null
+}
+
 export default async function MatchesPage({
   searchParams,
 }: {
@@ -231,6 +252,20 @@ export default async function MatchesPage({
     getUserCountry(),
   ])
 
+  // 선택한 날짜에 경기가 없으면 최근 경기가 있었던 날짜로 자동 대체
+  let effectiveDate = selectedDate
+  let effectiveFixtures = fixtures
+  let fallbackFromDate: string | null = null
+
+  if (fixtures.length === 0) {
+    const fallback = await findFallbackFixtures(selectedDate)
+    if (fallback) {
+      effectiveDate = fallback.date
+      effectiveFixtures = fallback.fixtures
+      fallbackFromDate = selectedDate
+    }
+  }
+
   // 캐시 시점은 한국 시간으로 보여줌 (서버 타임존과 무관하게 고정)
   const cachedAtText = cachedAt
     ? new Intl.DateTimeFormat("ko-KR", {
@@ -241,6 +276,8 @@ export default async function MatchesPage({
         minute: "2-digit",
       }).format(cachedAt)
     : null
+
+  const today = getTodayStr()
 
   return (
     <main className="min-h-screen bg-pitch-night p-4 sm:p-8 font-sans">
@@ -266,11 +303,22 @@ export default async function MatchesPage({
           </div>
         )}
 
+        {/* 선택한 날짜에 경기가 없어 최근 경기로 대체 표시 중일 때만 노출 */}
+        {fallbackFromDate && (
+          <div className="border border-turf-line bg-turf/40 px-4 py-3 flex items-start gap-2.5">
+            <span className="text-floodlight/50 text-sm leading-5">ℹ</span>
+            <p className="text-sm text-floodlight/70">
+              {formatDateLabel(fallbackFromDate, today)}에는 예정된 경기가 없어, 가장 최근 경기가
+              있었던 {formatDateLabel(effectiveDate, today)} 일정을 보여드립니다.
+            </p>
+          </div>
+        )}
+
         <div>
-          <DateTabs selectedDate={selectedDate} />
+          <DateTabs selectedDate={effectiveDate} />
           <div className="flex gap-6 items-start mt-8">
             <div className="flex-1 min-w-0">
-              <MatchesExplorer fixtures={fixtures} userCountry={userCountry ?? undefined} />
+              <MatchesExplorer fixtures={effectiveFixtures} userCountry={userCountry ?? undefined} />
             </div>
             <aside className="w-72 shrink-0 hidden lg:block sticky top-20 space-y-6">
               <TransferWidget />
