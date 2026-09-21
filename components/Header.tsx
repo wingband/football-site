@@ -15,6 +15,8 @@ const NAV_LINKS = [
   // AdSense 심사 기간 동안 헤더 메뉴에서 임시로 숨김. 크레딧 복구되면 이 줄 살릴 것.
   // { href: "/news", label: "뉴스" },
   { href: "/best11", label: "베스트11" },
+  { href: "/predictions", label: "예측" },
+  { href: "/board", label: "게시판" },
   { href: "/transfers", label: "이적" },
 ]
 
