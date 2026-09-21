@@ -2,6 +2,8 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { getPostById } from "@/lib/board"
 import PostDeleteButton from "./_components/PostDeleteButton"
+import LikeButton from "./_components/LikeButton"
+import BoardComments from "./_components/BoardComments"
 
 export default async function BoardPostPage({
   params,
@@ -30,9 +32,12 @@ export default async function BoardPostPage({
           {post.content}
         </div>
 
-        <div className="flex justify-end pt-4 border-t border-turf-line/40">
+        <div className="flex items-center justify-between pt-4 border-t border-turf-line/40">
+          <LikeButton postId={post.id} initialCount={post.likeCount} />
           <PostDeleteButton postId={post.id} authorUserId={post.userId} />
         </div>
+
+        <BoardComments postId={post.id} />
       </div>
     </main>
   )
