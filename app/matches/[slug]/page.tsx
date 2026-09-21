@@ -536,11 +536,20 @@ export default async function MatchDetailPage({
   // 구조화 데이터(SportsEvent) — 구글이 경기를 "이벤트"로 인식하게 도와준다.
   // 실시간 스코어 리치 스니펫이 뜨는 건 구글의 공식 스포츠 데이터 파트너에만 열려있어서
   // 이것만으로 보장되진 않지만, 정석적인 엔티티/이벤트 마크업이라 안 넣을 이유가 없다
+  // 경기 시작 시각 + 약 2시간(전후반 90분 + 하프타임 + 추가시간 여유)을
+  // 종료 예상 시각으로 계산. 정확한 실제 종료 시각을 API가 별도로 주지 않아서
+  // 축구 경기 하나의 통상 소요 시간으로 근사한다.
+  const estimatedEndDate = new Date(
+    new Date(match.fixture.date).getTime() + 2 * 60 * 60 * 1000
+  ).toISOString()
+
   const sportsEventJsonLd = {
     "@context": "https://schema.org",
     "@type": "SportsEvent",
     name: `${match.teams.home.name} vs ${match.teams.away.name}`,
+    description: `${match.league.name}${match.league.round ? ` ${match.league.round}` : ""} — ${match.teams.home.name}와 ${match.teams.away.name}의 경기.`,
     startDate: match.fixture.date,
+    endDate: estimatedEndDate,
     eventStatus: isFinished
       ? "https://schema.org/EventCompleted"
       : "https://schema.org/EventScheduled",
@@ -554,6 +563,11 @@ export default async function MatchDetailPage({
           address: match.fixture.venue.city || undefined,
         }
       : undefined,
+    organizer: {
+      "@type": "Organization",
+      name: match.league.name,
+      logo: match.league.logo,
+    },
     homeTeam: {
       "@type": "SportsTeam",
       name: match.teams.home.name,
@@ -564,6 +578,18 @@ export default async function MatchDetailPage({
       name: match.teams.away.name,
       logo: match.teams.away.logo,
     },
+    // "performer" — 구조화 데이터 필드 요구사항 충족용으로, homeTeam/awayTeam과
+    // 같은 두 팀을 SportsTeam 배열로 중복 기재한다 (schema.org에서 event의
+    // 실제 출연/경기 주체를 나타내는 정식 필드).
+    performer: [
+      { "@type": "SportsTeam", name: match.teams.home.name, logo: match.teams.home.logo },
+      { "@type": "SportsTeam", name: match.teams.away.name, logo: match.teams.away.logo },
+    ],
+    // (2026-09-21) offers는 의도적으로 넣지 않는다. GoalLine은 실제 티켓을
+    // 판매하지 않는데 여기에 가격/판매 여부 같은 가짜 offers 데이터를 넣으면
+    // "페이지에 실제로 없는 내용을 마크업에 기재"한 것으로 간주되어 구글
+    // 구조화 데이터 스팸 정책 위반 소지가 있다. Search Console의 "누락"
+    // 경고(심각하지 않은 문제)가, 실제로 없는 정보를 지어내는 것보다 안전하다.
     // schema.org엔 공식 "score" 속성이 없어 PropertyValue로 부가 정보 형태로만 제공
     ...(isFinished && match.goals.home !== null && match.goals.away !== null
       ? {
