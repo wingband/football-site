@@ -5,6 +5,7 @@ import { getTodayStr, shiftDate } from "@/lib/dateUtils"
 import { MOCK_FIXTURES } from "@/lib/mockData"
 import { compareSitemapPath, koreanComparePairs } from "@/lib/compare"
 import { fetchApiFootball } from "@/lib/apiFootballClient"
+import { devErrorOrSilent } from "@/lib/quietLog"
 
 // 사이트맵은 기본적으로 캐시되는 라우트 핸들러라서, 경기 목록이 하루 종일 굳지 않도록
 // 1시간마다 다시 만든다
@@ -54,7 +55,7 @@ async function getFixturesByDate(date: string): Promise<SitemapFixture[]> {
     const response = await fetchApiFootball(`/fixtures?date=${date}`, { revalidate: 86400 })
     return response as SitemapFixture[]
   } catch (err) {
-    console.error(`사이트맵: ${date} 경기 목록 조회 실패:`, err instanceof Error ? err.message : err)
+    devErrorOrSilent(`사이트맵: ${date} 경기 목록 조회 실패:`, err instanceof Error ? err.message : err)
     return []
   }
 }

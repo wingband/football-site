@@ -9,6 +9,7 @@
 // getCachedOrFetch로 통합해 같은 쿼리는 캐시 기간 동안 API를 아예 안 부르게 한다.
 // 뉴스는 실시간성이 중요하지 않으므로 6시간 캐시로 방어한다.
 import { getCachedOrFetch } from "@/lib/apiCache"
+import { devErrorOrSilent } from "@/lib/quietLog"
 
 export type NewsArticle = {
   title: string
@@ -52,7 +53,7 @@ export async function fetchNewsData(
       return data.results as NewsArticle[]
     })
   } catch (err) {
-    console.error(`fetchNewsData 실패 (query=${encodedQuery}):`, err instanceof Error ? err.message : err)
+    devErrorOrSilent(`fetchNewsData 실패 (query=${encodedQuery}):`, err instanceof Error ? err.message : err)
     return []
   }
 }

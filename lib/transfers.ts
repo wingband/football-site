@@ -1,5 +1,6 @@
 import { MOCK_TRANSFERS } from "@/lib/mockData"
 import { fetchApiFootball } from "@/lib/apiFootballClient"
+import { devErrorOrSilent } from "@/lib/quietLog"
 
 export type TeamRef = { id: number; name: string; logo: string }
 
@@ -28,7 +29,7 @@ async function getTeamTransfers(teamId: number): Promise<TransferEntry[]> {
     const response = await fetchApiFootball(`/transfers?team=${teamId}`, { revalidate: 21600 })
     return response as TransferEntry[]
   } catch (err) {
-    console.error(`getAllTransfers: team ${teamId} 이적 조회 실패:`, err instanceof Error ? err.message : err)
+    devErrorOrSilent(`getAllTransfers: team ${teamId} 이적 조회 실패:`, err instanceof Error ? err.message : err)
     return []
   }
 }
