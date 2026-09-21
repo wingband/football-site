@@ -45,6 +45,24 @@ export const metadata: Metadata = {
   },
   description:
     "전 세계 축구 리그의 실시간 스코어, 순위표, 라인업, 경기 분석을 한곳에서 확인하세요. 한국인 해외파 선수 소식도 매일 업데이트됩니다.",
+  // (2026-09-21) 네이버 서치어드바이저 "사이트 간단 체크"에서 Open Graph
+  // 제목/설명 누락으로 지적됨 — 카카오톡/네이버 등에 링크 공유 시 미리보기
+  // 카드가 안 뜨던 원인. 대표 이미지는 app/opengraph-image.tsx가 동적 생성.
+  openGraph: {
+    type: "website",
+    locale: "ko_KR",
+    siteName: "GoalLine",
+    title: "GoalLine - 실시간 축구 스코어 · 순위표 · 경기 분석",
+    description:
+      "전 세계 축구 리그의 실시간 스코어, 순위표, 라인업, 경기 분석을 한곳에서 확인하세요. 한국인 해외파 선수 소식도 매일 업데이트됩니다.",
+    url: SITE_URL,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "GoalLine - 실시간 축구 스코어 · 순위표 · 경기 분석",
+    description:
+      "전 세계 축구 리그의 실시간 스코어, 순위표, 라인업, 경기 분석을 한곳에서 확인하세요.",
+  },
   verification: {
     // Search Console 속성이 둘(도메인/URL 접두어)이라 토큰도 둘이다.
     // 배열로 두면 meta 태그가 두 개 렌더되어 기존 인증이 풀리지 않는다
