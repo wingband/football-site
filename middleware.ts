@@ -21,6 +21,11 @@ const isPublicRoute = createRouteMatcher([
   "/sitemap.xml",
   "/robots.txt",
   "/ads.txt",
+  // Next.js가 app/opengraph-image.tsx, app/matches/[slug]/opengraph-image.tsx
+  // 등 파일 컨벤션으로 자동 생성하는 OG 이미지 라우트. 이것도 누락되어 있어서
+  // 카카오톡 공유 시 제목/설명은 뜨는데 이미지 자리만 빈 박스로 나오던 문제
+  // (2026-09-21, /company·/advertise·/sign-in·/ads.txt에 이은 다섯 번째 발견).
+  "/opengraph-image(.*)",
   "/api/comments(.*)",
   "/api/global-chat(.*)",
   "/api/vote(.*)",
