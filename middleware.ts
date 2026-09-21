@@ -27,6 +27,11 @@ const isPublicRoute = createRouteMatcher([
   // (2026-09-21, /company·/advertise·/sign-in·/ads.txt에 이은 다섯 번째 발견).
   "/opengraph-image(.*)",
   "/api/comments(.*)",
+  // 예측 API는 middleware가 아니라 라우트 자체(app/api/predictions/route.ts)
+  // 안에서 auth()로 로그인 여부를 확인해 401을 돌려준다. middleware가 먼저
+  // 막아버리면 그 401 로직까지 도달을 못 하고 무조건 404가 나버려서(2026-09-21
+  // 예측 제출 시 발견), /api/comments와 동일한 이유로 여기에 등록해야 함.
+  "/api/predictions(.*)",
   "/api/global-chat(.*)",
   "/api/vote(.*)",
   "/api/articles(.*)",
