@@ -35,11 +35,20 @@ export async function generateMetadata({
   const id1 = parseId(sp.player1)
   const id2 = parseId(sp.player2)
 
+  // (2026-09-21) Search Console에서 player1만 있고 player2가 없는 "미완성"
+  // 비교 URL이 대량으로 크롤링만 되고 색인은 안 되는 게 확인됨(사용자가
+  // 첫 선수만 고르고 아직 상대를 안 정한 중간 상태의 URL이 그대로 공유/링크된
+  // 경우). 빈 /compare 자체는 정상적인 랜딩 페이지라 색인 유지하되, 한쪽
+  // 파라미터만 있는 불완전한 조합은 명시적으로 noindex 처리해 크롤 예산
+  // 낭비를 막는다.
+  const isPartialCompare = (id1 === null) !== (id2 === null) // 정확히 한쪽만 있음 (XOR)
+
   if (id1 === null || id2 === null) {
     return {
       title: "선수 비교",
       description: "두 선수의 평점, 골, 도움, 패스 성공률, 드리블 등 시즌 기록을 나란히 비교해보세요.",
       alternates: { canonical: "/compare" },
+      ...(isPartialCompare ? { robots: { index: false, follow: true } } : {}),
     }
   }
 
@@ -47,8 +56,14 @@ export async function generateMetadata({
   const name1 = p1 ? displayPlayerName(id1, p1.player.name) : null
   const name2 = p2 ? displayPlayerName(id2, p2.player.name) : null
 
+  // 둘 다 id는 있지만 선수 데이터를 못 불러온 경우(잘못된 id, API 실패 등)도
+  // 콘텐츠가 비어있는 페이지이므로 같은 이유로 noindex 처리
   if (!name1 || !name2) {
-    return { title: "선수 비교", alternates: { canonical: "/compare" } }
+    return {
+      title: "선수 비교",
+      alternates: { canonical: "/compare" },
+      robots: { index: false, follow: true },
+    }
   }
 
   return {
