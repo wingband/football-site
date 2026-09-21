@@ -20,6 +20,7 @@ const isPublicRoute = createRouteMatcher([
   "/advertise(.*)",
   "/sitemap.xml",
   "/robots.txt",
+  "/ads.txt",
   "/api/comments(.*)",
   "/api/global-chat(.*)",
   "/api/vote(.*)",
