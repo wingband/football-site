@@ -41,11 +41,15 @@ export async function GET() {
   const players = await Promise.all(
     KOREAN_PLAYERS_ABROAD.map(async (player) => {
       try {
+        // (2026-09-22) 예전엔 이번 시즌(season) 조회가 일시적으로 실패하면(타임아웃/
+        // 레이트리밋 등) 곧장 작년(season-1) 시즌으로 폴백했다. 문제는 작년 시즌
+        // 데이터가 "부족한 데이터"가 아니라 완전한 풀시즌 기록이라 겉보기엔 멀쩡해서,
+        // 시즌 중 이적한 선수(이강인: PSG→Atletico)의 경우 작년 소속팀(PSG) 27경기
+        // 기록이 "이번 시즌 현재 소속팀 기록"인 것처럼 그대로 DB에 저장돼버렸다.
+        // 이번 시즌 조회 실패 시엔 작년 시즌으로 바로 넘어가지 않고, 먼저 기존 DB
+        // 캐시(지난 성공 시점의 이번 시즌 데이터일 가능성이 높음)를 우선 쓴다.
+        // 작년 시즌 폴백은 DB 캐시조차 전혀 없는 신규 등록 선수일 때만 최후 수단으로 쓴다.
         let raw = await fetchStat(player.id, season)
-        if (!raw) {
-          raw = await fetchStat(player.id, season - 1)
-        }
-
         let stat = null
 
         if (raw) {
@@ -53,7 +57,15 @@ export async function GET() {
           stat = getClubStat(raw.statistics ?? [])
         } else {
           const cached = await getCachedPlayerStat(player.id)
-          if (cached) stat = getClubStat(cached.statistics ?? [])
+          if (cached) {
+            stat = getClubStat(cached.statistics ?? [])
+          } else {
+            raw = await fetchStat(player.id, season - 1)
+            if (raw) {
+              await saveCachedPlayerStat(player.id, raw)
+              stat = getClubStat(raw.statistics ?? [])
+            }
+          }
         }
 
         return {
