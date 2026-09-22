@@ -29,11 +29,10 @@ export const KOREAN_PLAYERS_ABROAD: KoreanPlayer[] = [
     teamId: 174,
     name: "황희찬",
     // 2026-09-02 울버햄튼 → 샬케04 임대 이적 확정 (완전 영입 옵션 포함), 등번호 7번.
-    // 샬케는 25/26시즌 2.분데스리가 우승으로 분데스리가(1부) 승격 — 리그명은 확정이지만
-    // teamLogo/leagueLogo의 정확한 API-Football ID는 아래 URL로 재확인 후 교체 필요:
-    // https://v3.football.api-sports.io/teams?search=Schalke
-    teamName: "Schalke 04",
-    teamLogo: `${CDN}/leagues/78.png`, // TODO: 정확한 팀 ID로 교체 (임시로 분데스리가 로고 사용)
+    // 샬케는 25/26시즌 2.분데스리가 우승으로 분데스리가(1부) 승격.
+    // (2026-09-22) teamName/teamLogo API-Football 실제 값으로 확인 후 교체 완료.
+    teamName: "FC Schalke 04",
+    teamLogo: `${CDN}/teams/174.png`,
     league: "Bundesliga",
     leagueLogo: `${CDN}/leagues/78.png`,
     tier: 1,
@@ -66,8 +65,8 @@ export const KOREAN_PLAYERS_ABROAD: KoreanPlayer[] = [
     id: 2906,    // ✅ 확인됨
     teamId: 164,
     name: "이재성",
-    teamName: "Mainz 05",
-    teamLogo: `${CDN}/teams/1038.png`,
+    teamName: "FSV Mainz 05",
+    teamLogo: `${CDN}/teams/164.png`,
     league: "Bundesliga",
     leagueLogo: `${CDN}/leagues/78.png`,
     tier: 1,
@@ -77,7 +76,7 @@ export const KOREAN_PLAYERS_ABROAD: KoreanPlayer[] = [
     teamId: 182,
     name: "정우영",
     teamName: "Union Berlin",
-    teamLogo: `${CDN}/teams/173.png`,
+    teamLogo: `${CDN}/teams/182.png`,
     league: "Bundesliga",
     leagueLogo: `${CDN}/leagues/78.png`,
     tier: 1,
@@ -86,7 +85,9 @@ export const KOREAN_PLAYERS_ABROAD: KoreanPlayer[] = [
     id: 280358,  // ✅ 확인됨
     teamId: 163,
     name: "옌스 카스트로프",
-    teamName: "Borussia M'gladbach",
+    // (2026-09-22) 아포스트로피 표기("M'gladbach")는 normalizeTeamName이 제거하는
+    // 대상이 아니라서 API 실제 명칭과 매칭이 안 됐음 — 정식 명칭으로 교체
+    teamName: "Borussia Mönchengladbach",
     teamLogo: `${CDN}/teams/163.png`,
     league: "Bundesliga",
     leagueLogo: `${CDN}/leagues/78.png`,
@@ -99,7 +100,7 @@ export const KOREAN_PLAYERS_ABROAD: KoreanPlayer[] = [
     teamId: 75,
     name: "배준호",
     teamName: "Stoke City",
-    teamLogo: `${CDN}/teams/70.png`,
+    teamLogo: `${CDN}/teams/75.png`,
     league: "Championship",
     leagueLogo: `${CDN}/leagues/40.png`,
     tier: 2,
@@ -108,8 +109,8 @@ export const KOREAN_PLAYERS_ABROAD: KoreanPlayer[] = [
     id: 2909,    // ✅ 확인됨
     teamId: 54,
     name: "백승호",
-    teamName: "Birmingham City",
-    teamLogo: `${CDN}/teams/2.png`,
+    teamName: "Birmingham",
+    teamLogo: `${CDN}/teams/54.png`,
     league: "Championship",
     leagueLogo: `${CDN}/leagues/40.png`,
     tier: 2,
@@ -118,8 +119,8 @@ export const KOREAN_PLAYERS_ABROAD: KoreanPlayer[] = [
     id: 237050,  // ✅ 확인됨
     teamId: 76,
     name: "엄지성",
-    teamName: "Swansea City",
-    teamLogo: `${CDN}/teams/94.png`,
+    teamName: "Swansea",
+    teamLogo: `${CDN}/teams/76.png`,
     league: "Championship",
     leagueLogo: `${CDN}/leagues/40.png`,
     tier: 2,
@@ -128,10 +129,9 @@ export const KOREAN_PLAYERS_ABROAD: KoreanPlayer[] = [
     id: 423708,  // ✅ 확인됨 (2026-08-11 Portsmouth 임대 종료 → KVC Westerlo 재임대, Tottenham 소속)
     teamId: 791,
     name: "양민혁",
-    // TODO: teamLogo 정확한 API-Football 팀 ID 확인 필요
-    // https://v3.football.api-sports.io/teams?search=Westerlo
-    teamName: "KVC Westerlo",
-    teamLogo: `${CDN}/leagues/144.png`, // 임시로 벨기에 주필러 프로리그 로고 사용
+    // (2026-09-22) teamName/teamLogo API-Football 실제 값으로 확인 후 교체 완료.
+    teamName: "Westerlo",
+    teamLogo: `${CDN}/teams/791.png`,
     league: "Belgian Pro League",
     leagueLogo: `${CDN}/leagues/144.png`,
     tier: 2,
@@ -142,9 +142,9 @@ export const KOREAN_PLAYERS_ABROAD: KoreanPlayer[] = [
     id: 356237,  // ✅ 확인됨 (2026-06-30 Kaiserslautern 임대 종료 → Brentford 복귀)
     teamId: 55,
     name: "김지수",
-    // TODO: teamLogo 정확한 ID 확인 필요 https://v3.football.api-sports.io/teams?search=Brentford
+    // (2026-09-22) teamLogo API-Football 실제 값으로 확인 후 교체 완료.
     teamName: "Brentford",
-    teamLogo: `${CDN}/leagues/39.png`, // 임시로 프리미어리그 로고 사용
+    teamLogo: `${CDN}/teams/55.png`,
     league: "Premier League",
     leagueLogo: `${CDN}/leagues/39.png`,
     tier: 1,
@@ -155,8 +155,8 @@ export const KOREAN_PLAYERS_ABROAD: KoreanPlayer[] = [
     id: 26519,   // ✅ 확인됨 (Mainz 소속 → Gent 임대)
     teamId: 631,
     name: "홍현석",
-    teamName: "KAA Gent",
-    teamLogo: `${CDN}/teams/717.png`,
+    teamName: "Gent",
+    teamLogo: `${CDN}/teams/631.png`,
     league: "Belgian Pro League",
     leagueLogo: `${CDN}/leagues/144.png`,
     tier: 2,
