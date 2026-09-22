@@ -567,6 +567,7 @@ export default async function MatchDetailPage({
       "@type": "Organization",
       name: match.league.name,
       logo: match.league.logo,
+      url: `${SITE_URL}/leagues/${match.league.id}`,
     },
     homeTeam: {
       "@type": "SportsTeam",
