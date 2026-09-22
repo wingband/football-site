@@ -124,7 +124,7 @@ export default async function TeamOverviewPage({
 
   const season = teamLeague?.season ?? new Date().getFullYear()
 
-  const [fixtures, injuries, coach, news, standingsData, leagueUpcoming] = await Promise.all([
+  const [fixtures, injuries, coach, newsResult, standingsData, leagueUpcoming] = await Promise.all([
     getTeamSeasonFixtures(id, season, inScope ? undefined : OUT_OF_SCOPE_REVALIDATE),
     getTeamInjuries(id, season, inScope ? undefined : OUT_OF_SCOPE_REVALIDATE),
     getTeamCoach(id, info.team.id),
@@ -132,6 +132,8 @@ export default async function TeamOverviewPage({
     teamLeague ? getLeagueStandings(String(teamLeague.id), season, inScope ? undefined : OUT_OF_SCOPE_REVALIDATE) : Promise.resolve(null),
     teamLeague ? getLeagueFixturesByMode(String(teamLeague.id), season, "next", 10, inScope ? undefined : OUT_OF_SCOPE_REVALIDATE) : Promise.resolve([]),
   ])
+  const news = newsResult.articles
+  const newsLimited = newsResult.limited
 
   const nextOpponent = buildNextOpponentMap(leagueUpcoming)
 
@@ -290,14 +292,19 @@ export default async function TeamOverviewPage({
         </div>
 
         {/* 뉴스 */}
-        {news.length > 0 && (
+        {(news.length > 0 || newsLimited) && (
           <section className="mt-8">
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-display uppercase tracking-wide text-sm text-floodlight/70">뉴스</h2>
-              <Link href={`/teams/${id}/news?ref=internal`} className="text-xs text-floodlight/40 hover:text-score-amber">
-                전체 보기 →
-              </Link>
+              {news.length > 0 && (
+                <Link href={`/teams/${id}/news?ref=internal`} className="text-xs text-floodlight/40 hover:text-score-amber">
+                  전체 보기 →
+                </Link>
+              )}
             </div>
+            {news.length === 0 ? (
+              <p className="text-floodlight/40 text-sm py-4">뉴스를 일시적으로 불러올 수 없습니다.</p>
+            ) : (
             <div className="grid sm:grid-cols-2 gap-x-8 gap-y-4">
               {news.slice(0, 4).map((a, i) => (
                 <a
@@ -319,6 +326,7 @@ export default async function TeamOverviewPage({
                 </a>
               ))}
             </div>
+            )}
           </section>
         )}
     </>

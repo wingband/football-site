@@ -36,13 +36,15 @@ export default async function LeagueNewsPage({
   }
 
   const { league } = data
-  const news = await getLeagueNews(league.name)
+  const { articles: news, limited } = await getLeagueNews(league.name)
   const [hero, ...rest] = news
 
   return (
     <>
 {news.length === 0 && (
-          <p className="text-floodlight/40 text-sm py-6">관련 뉴스가 없습니다.</p>
+          <p className="text-floodlight/40 text-sm py-6">
+            {limited ? "뉴스를 일시적으로 불러올 수 없습니다." : "관련 뉴스가 없습니다."}
+          </p>
         )}
 
         {hero && (

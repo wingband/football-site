@@ -15,12 +15,16 @@ export default async function TeamNewsPage({ params }: { params: Promise<{ id: s
     return <p className="text-floodlight/40 pt-4">팀 정보를 찾을 수 없습니다.</p>
   }
 
-  const news = await getTeamNews(info.team.name)
+  const { articles: news, limited } = await getTeamNews(info.team.name)
   const [hero, ...rest] = news
 
   return (
     <>
-{news.length === 0 && <p className="text-floodlight/40 text-sm py-6">관련 뉴스가 없습니다.</p>}
+{news.length === 0 && (
+          <p className="text-floodlight/40 text-sm py-6">
+            {limited ? "뉴스를 일시적으로 불러올 수 없습니다." : "관련 뉴스가 없습니다."}
+          </p>
+        )}
 
         {hero && (
           <div className="grid lg:grid-cols-2 gap-6 mb-8">

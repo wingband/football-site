@@ -9,10 +9,10 @@ export default async function NewsSection({
   homeTeam: string
   awayTeam: string
 }) {
-  const articles = await getMatchNews(homeTeam, awayTeam)
+  const { articles, limited } = await getMatchNews(homeTeam, awayTeam)
   return (
     <Section title="뉴스">
-      <MatchNewsCard articles={articles} />
+      <MatchNewsCard articles={articles} limited={limited} />
     </Section>
   )
 }

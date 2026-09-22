@@ -229,12 +229,14 @@ export default async function LeagueOverviewPage({ params, searchParams }: { par
 
   const { league } = data
 
-  const [upcoming, news, topScorers, topAssists] = await Promise.all([
+  const [upcoming, newsResult, topScorers, topAssists] = await Promise.all([
     getLeagueFixturesByMode(id, season, "next", 10),
     getLeagueNews(league.name),
     getLeagueTopScorers(id, season),
     getLeagueTopAssists(id, season),
   ])
+  const news = newsResult.articles
+  const newsLimited = newsResult.limited
 
   const nextOpponent = buildNextOpponentMap(upcoming)
   const goalRows = toRows(topScorers, "goals")
@@ -270,28 +272,34 @@ export default async function LeagueOverviewPage({ params, searchParams }: { par
       )}
 
       {/* ── 뉴스 ── */}
-      {news.length > 0 && (
+      {(news.length > 0 || newsLimited) && (
         <section className="mt-8">
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-display uppercase tracking-wide text-sm text-floodlight/70">뉴스</h2>
-            <Link href={`/leagues/${id}/news`} className="text-xs text-floodlight/40 hover:text-score-amber">
-              전체 보기 →
-            </Link>
+            {news.length > 0 && (
+              <Link href={`/leagues/${id}/news`} className="text-xs text-floodlight/40 hover:text-score-amber">
+                전체 보기 →
+              </Link>
+            )}
           </div>
-          <div className="grid sm:grid-cols-2 gap-x-8 gap-y-4">
-            {news.slice(0, 4).map((a, i) => (
-              <a key={i} href={a.link} target="_blank" rel="noopener noreferrer"
-                className="flex gap-3 items-start hover:bg-turf-line/20 transition-colors p-1 -m-1">
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm text-floodlight/90 leading-snug line-clamp-2">{a.title}</p>
-                  <p className="text-xs text-floodlight/40 mt-1">
-                    {a.source_name} · {new Date(a.pubDate).toLocaleDateString("ko-KR")}
-                  </p>
-                </div>
-                {a.image_url && <img src={a.image_url} alt="" className="w-24 h-16 object-cover shrink-0 rounded" />}
-              </a>
-            ))}
-          </div>
+          {news.length > 0 ? (
+            <div className="grid sm:grid-cols-2 gap-x-8 gap-y-4">
+              {news.slice(0, 4).map((a, i) => (
+                <a key={i} href={a.link} target="_blank" rel="noopener noreferrer"
+                  className="flex gap-3 items-start hover:bg-turf-line/20 transition-colors p-1 -m-1">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm text-floodlight/90 leading-snug line-clamp-2">{a.title}</p>
+                    <p className="text-xs text-floodlight/40 mt-1">
+                      {a.source_name} · {new Date(a.pubDate).toLocaleDateString("ko-KR")}
+                    </p>
+                  </div>
+                  {a.image_url && <img src={a.image_url} alt="" className="w-24 h-16 object-cover shrink-0 rounded" />}
+                </a>
+              ))}
+            </div>
+          ) : (
+            <p className="text-floodlight/40 text-sm py-4">뉴스를 일시적으로 불러올 수 없습니다.</p>
+          )}
         </section>
       )}
     </>

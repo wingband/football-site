@@ -29,11 +29,11 @@ const LEAGUE_SECTIONS = [
 // (2026-09-21) fetchNewsData()로 통합 — DB 캐시(6시간) 적용으로 API 소진 절감.
 // 뉴스 홈은 이 사이트에서 NewsData.io를 가장 많이 부르는 페이지(리그 4개 + 종합
 // 쿼리, 방문마다 5번)라 캐싱 부재의 영향이 가장 컸을 곳이다.
-async function fetchNews(query: string, size = 8): Promise<Article[]> {
+async function fetchNews(query: string, size = 8) {
   return fetchNewsData(encodeURIComponent(query), { size })
 }
 
-async function fetchTopNews(): Promise<Article[]> {
+async function fetchTopNews() {
   return fetchNews("soccer OR football transfer", 10)
 }
 
@@ -102,8 +102,31 @@ function HeroSection({ articles }: { articles: Article[] }) {
 }
 
 // 리그별 섹션
-function LeagueSection({ label, logo, articles }: { label: string; logo: string; articles: Article[] }) {
-  if (articles.length === 0) return null
+function LeagueSection({
+  label,
+  logo,
+  articles,
+  limited,
+}: {
+  label: string
+  logo: string
+  articles: Article[]
+  limited: boolean
+}) {
+  if (articles.length === 0) {
+    // 진짜로 관련 기사가 없는 거면(정상 응답, 매칭 0건) 예전처럼 섹션 자체를 숨긴다.
+    // API 호출 자체가 실패한 거면(크레딧 소진 등) 조용히 사라지는 대신 안내를 보여준다.
+    if (!limited) return null
+    return (
+      <div className="bg-turf/20 border border-turf-line/30 overflow-hidden mb-6">
+        <div className="flex items-center gap-2.5 px-5 py-3 border-b border-turf-line/30">
+          <Logo src={logo} alt="" className="w-6 h-6" />
+          <h2 className="font-display uppercase text-sm text-floodlight/90 font-bold tracking-wide">{label}</h2>
+        </div>
+        <p className="text-floodlight/40 text-xs px-5 py-8 text-center">뉴스를 일시적으로 불러올 수 없습니다.</p>
+      </div>
+    )
+  }
 
   const hero = articles.find(a => a.image_url) ?? articles[0]
   const list = articles.filter(a => a !== hero).slice(0, 4)
@@ -166,22 +189,27 @@ function LeagueSection({ label, logo, articles }: { label: string; logo: string;
 // LeagueSection이 각자 null을 반환하면서 페이지 제목만 남고 본문이 완전히
 // 텅 비어버리는 문제가 있었다. AdSense 심사 시 "빈 페이지"보다 "깨진 기능"으로
 // 더 부정적으로 비칠 수 있어, 완전 실패 상황을 감지해 명확한 안내 문구를 보여준다.
-function EmptyNewsState() {
+function EmptyNewsState({ limited }: { limited: boolean }) {
   return (
     <div className="bg-turf/20 border border-turf-line/30 py-16 px-6 text-center">
-      <p className="text-floodlight/60 text-sm mb-1">지금은 뉴스를 불러올 수 없습니다.</p>
-      <p className="text-floodlight/30 text-xs">잠시 후 다시 방문해 주세요.</p>
+      <p className="text-floodlight/60 text-sm mb-1">
+        {limited ? "지금은 뉴스를 불러올 수 없습니다." : "관련 뉴스가 없습니다."}
+      </p>
+      {limited && <p className="text-floodlight/30 text-xs">잠시 후 다시 방문해 주세요.</p>}
     </div>
   )
 }
 
 export default async function NewsPage() {
   // 상단 종합 + 리그별 뉴스 병렬 로드
-  const [topNews, ...leagueNews] = await Promise.all([
+  const [topNewsResult, ...leagueNewsResults] = await Promise.all([
     fetchTopNews(),
     ...LEAGUE_SECTIONS.map(s => fetchNews(s.query)),
   ])
 
+  const topNews = topNewsResult.articles
+  const leagueNews = leagueNewsResults.map(r => r.articles)
+  const anyLimited = topNewsResult.limited || leagueNewsResults.some(r => r.limited)
   const hasAnyNews = topNews.length > 0 || leagueNews.some((a) => a.length > 0)
 
   return (
@@ -205,11 +233,12 @@ export default async function NewsPage() {
                 label={section.label}
                 logo={section.logo}
                 articles={leagueNews[i] ?? []}
+                limited={leagueNewsResults[i]?.limited ?? false}
               />
             ))}
           </>
         ) : (
-          <EmptyNewsState />
+          <EmptyNewsState limited={anyLimited} />
         )}
       </div>
     </main>

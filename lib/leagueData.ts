@@ -2,7 +2,7 @@
 import { cache } from "react"
 import { MOCK_STANDINGS, MOCK_SEASON_FIXTURES, MOCK_TOP_SCORERS, MOCK_NEWS } from "@/lib/mockData"
 import { fetchApiFootball } from "@/lib/apiFootballClient"
-import { fetchNewsData } from "@/lib/newsData"
+import { fetchNewsData, type NewsFetchResult } from "@/lib/newsData"
 
 export type TeamSplit = {
   played: number
@@ -144,8 +144,8 @@ export async function getLeagueTopAssists(leagueId: string, season: number): Pro
   }
 }
 
-export async function getLeagueNews(leagueName: string): Promise<NewsArticle[]> {
-  if (process.env.USE_MOCK_DATA === "true") return MOCK_NEWS as unknown as NewsArticle[]
+export async function getLeagueNews(leagueName: string): Promise<NewsFetchResult> {
+  if (process.env.USE_MOCK_DATA === "true") return { articles: MOCK_NEWS as unknown as NewsArticle[], limited: false }
 
   // (2026-09-21) fetchNewsData()로 통합 — DB 캐시(6시간) 적용으로 API 소진 절감.
   // 따옴표로 정확한 구문 검색을 걸어서, 리그명과 무관한 일반 뉴스가 섞이는 것을 방지

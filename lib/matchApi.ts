@@ -1,6 +1,6 @@
 import { getCachedOrFetch } from "@/lib/apiCache"
 import { fetchApiFootball } from "@/lib/apiFootballClient"
-import { fetchNewsData } from "@/lib/newsData"
+import { fetchNewsData, type NewsFetchResult } from "@/lib/newsData"
 import {
   MOCK_MATCH_DETAIL,
   MOCK_STANDINGS,
@@ -118,8 +118,8 @@ export async function getStandings(leagueId: number, season: number): Promise<St
   }
 }
 
-export async function getMatchNews(homeTeam: string, awayTeam: string): Promise<NewsArticle[]> {
-  if (process.env.USE_MOCK_DATA === "true") return MOCK_NEWS
+export async function getMatchNews(homeTeam: string, awayTeam: string): Promise<NewsFetchResult> {
+  if (process.env.USE_MOCK_DATA === "true") return { articles: MOCK_NEWS, limited: false }
 
   // (2026-09-21) fetchNewsData()로 통합 — DB 캐시(6시간) 적용으로 API 소진 절감.
   // try/catch가 없어서 NewsData.io 크레딧 소진(ApiLimitExceeded) 시 이 함수가
@@ -129,12 +129,14 @@ export async function getMatchNews(homeTeam: string, awayTeam: string): Promise<
   // 실제 원인이 이것으로 확인됨 (2026-09-21). 뉴스는 부가 정보일 뿐이라, 실패
   // 시 페이지 전체를 죽이는 대신 빈 배열로 조용히 넘어가고 뉴스 섹션만
   // "뉴스 없음"으로 보이게 한다.
+  // (2026-09-22) fetchNewsData가 이제 자체적으로 실패를 잡아 { articles: [],
+  // limited: true }를 반환하므로, 이 catch는 그 외의 예외에 대한 안전망으로 남겨둔다.
   try {
     const query = encodeURIComponent(`"${homeTeam}" AND "${awayTeam}"`)
     return await fetchNewsData(query)
   } catch (err) {
     console.error("getMatchNews fetch 실패:", err instanceof Error ? err.message : err)
-    return []
+    return { articles: [], limited: true }
   }
 }
 

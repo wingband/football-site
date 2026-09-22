@@ -18,7 +18,7 @@
 import { cache } from "react"
 import { getCachedOrFetch } from "@/lib/apiCache"
 import { fetchApiFootball, fetchApiFootballRaw } from "@/lib/apiFootballClient"
-import { fetchNewsData } from "@/lib/newsData"
+import { fetchNewsData, type NewsFetchResult } from "@/lib/newsData"
 import {
   MOCK_TEAM_INFO,
   MOCK_TEAM_SQUAD,
@@ -237,13 +237,13 @@ export const getTeamCurrentLeague = cache(async function getTeamCurrentLeague(
   }
 })
 
-export const getTeamNews = cache(async function getTeamNews(teamName: string): Promise<NewsArticle[]> {
-  if (process.env.USE_MOCK_DATA === "true") return MOCK_NEWS as unknown as NewsArticle[]
+export const getTeamNews = cache(async function getTeamNews(teamName: string): Promise<NewsFetchResult> {
+  if (process.env.USE_MOCK_DATA === "true") return { articles: MOCK_NEWS as unknown as NewsArticle[], limited: false }
 
   const query = encodeURIComponent(`"${teamName}" AND (football OR soccer OR match OR transfer OR goal)`)
-  const results = await fetchNewsData(query)
+  const { articles, limited } = await fetchNewsData(query)
   const teamLower = teamName.toLowerCase()
-  return results.filter((a) => a.title?.toLowerCase().includes(teamLower))
+  return { articles: articles.filter((a) => a.title?.toLowerCase().includes(teamLower)), limited }
 })
 
 // ── 플레이어 통계 탭 (시즌 개인 기록) ──────────────────────────

@@ -6,9 +6,19 @@ type NewsArticle = {
   source_name: string
 }
 
-export default function MatchNewsCard({ articles }: { articles: NewsArticle[] }) {
+export default function MatchNewsCard({
+  articles,
+  limited = false,
+}: {
+  articles: NewsArticle[]
+  limited?: boolean
+}) {
   if (articles.length === 0) {
-    return <p className="text-floodlight/40 text-sm py-2">관련 뉴스가 없습니다.</p>
+    return (
+      <p className="text-floodlight/40 text-sm py-2">
+        {limited ? "뉴스를 일시적으로 불러올 수 없습니다." : "관련 뉴스가 없습니다."}
+      </p>
+    )
   }
 
   return (

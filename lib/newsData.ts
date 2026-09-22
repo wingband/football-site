@@ -20,6 +20,15 @@ export type NewsArticle = {
   description: string | null
 }
 
+// (2026-09-22) 크레딧 소진 등으로 호출 자체가 실패한 경우와, 정상 응답인데
+// 매칭되는 기사가 진짜 0건인 경우를 화면에서 구분해서 보여주기 위한 플래그.
+// limited가 true면 "일시적으로 불러올 수 없음" 같은 안내로, false인데 배열이
+// 비어있으면 "관련 뉴스 없음"으로 다르게 렌더링한다.
+export type NewsFetchResult = {
+  articles: NewsArticle[]
+  limited: boolean
+}
+
 const NEWS_REVALIDATE = 21600 // 6시간
 
 export type NewsDataOptions = {
@@ -33,11 +42,11 @@ export type NewsDataOptions = {
 export async function fetchNewsData(
   encodedQuery: string,
   { size, category = "sports" }: NewsDataOptions = {}
-): Promise<NewsArticle[]> {
+): Promise<NewsFetchResult> {
   const cacheKey = `newsdata:${encodedQuery}:${category}:${size ?? "default"}`
 
   try {
-    return await getCachedOrFetch<NewsArticle[]>(cacheKey, NEWS_REVALIDATE, async () => {
+    const articles = await getCachedOrFetch<NewsArticle[]>(cacheKey, NEWS_REVALIDATE, async () => {
       const sizeParam = size ? `&size=${size}` : ""
       const res = await fetch(
         `https://newsdata.io/api/1/news?apikey=${process.env.NEWSDATA_API_KEY}&q=${encodedQuery}&language=en&category=${category}${sizeParam}`,
@@ -52,8 +61,9 @@ export async function fetchNewsData(
       }
       return data.results as NewsArticle[]
     })
+    return { articles, limited: false }
   } catch (err) {
     devErrorOrSilent(`fetchNewsData 실패 (query=${encodedQuery}):`, err instanceof Error ? err.message : err)
-    return []
+    return { articles: [], limited: true }
   }
 }
