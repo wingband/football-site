@@ -315,7 +315,11 @@ export default async function MatchesPage({
         )}
 
         <div>
-          <DateTabs selectedDate={effectiveDate} />
+          {/* 캘린더/화살표 네비게이션은 항상 실제 선택된 URL 날짜(selectedDate) 기준으로
+              동작해야 한다. effectiveDate(대체된 날짜)를 넘기면, 경기 없는 날짜를 눌러도
+              대체 로직이 계속 같은 날짜로 되돌려서 "날짜 선택이 안 먹히는 것처럼" 보인다
+              (2026-09-22 확인). 화면에 뿌리는 경기 목록/안내 배너만 effectiveDate를 쓴다. */}
+          <DateTabs selectedDate={selectedDate} />
           <div className="flex gap-6 items-start mt-8">
             <div className="flex-1 min-w-0">
               <MatchesExplorer fixtures={effectiveFixtures} userCountry={userCountry ?? undefined} />
