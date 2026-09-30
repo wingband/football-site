@@ -1,6 +1,7 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server"
 import { NextResponse } from "next/server"
 import { isInternalReferer } from "@/lib/scope"
+import { isKnownCrawler } from "@/lib/crawlerDetect"
 
 const isPublicRoute = createRouteMatcher([
   "/",
@@ -74,20 +75,8 @@ const RATE_LIMIT_WINDOW_MS = 60_000
 const hitCounts = new Map<string, { count: number; resetAt: number }>()
 
 // 검색엔진 크롤러는 User-Agent로 식별해 레이트리밋 한도를 훨씬 널널하게 준다.
-// User-Agent는 스푸핑 가능해서 완벽한 신원 확인은 아니지만, 이 레이트리밋은
-// 순간적인 폭주만 막는 보조 수단일 뿐 실제 방어선은 DB 캐시(같은 경기/팀
-// 재조회는 캐시로 처리됨)라, UA를 사칭한 스크래퍼가 한도를 더 받아가도
-// 실제 API 비용 증가는 제한적이다. 반면 네이버 Yeti/구글봇이 사이트맵의
-// 수백 개 경기 페이지를 훑다가 429를 반복해서 받으면 크롤링 자체가 위축돼
-// 색인이 안 되는 손해가 훨씬 크다고 판단함 (2026-09-22, site:goalline.me
-// 검색결과 0건 원인 추정).
-const CRAWLER_USER_AGENT_PATTERN = /Yeti|Googlebot|bingbot|DaumWeb|Applebot|DuckDuckBot/i
-
-function isKnownCrawler(userAgent: string | null): boolean {
-  if (!userAgent) return false
-  return CRAWLER_USER_AGENT_PATTERN.test(userAgent)
-}
-
+// (2026-09-30) lib/crawlerDetect.ts로 분리 — /api/pageview에서 크롤러 방문을
+// 집계에서 빼는 데도 같은 판별 로직을 재사용하기 위함
 function isRateLimited(ip: string, pathname: string, userAgent: string | null): boolean {
   const rule = RATE_LIMIT_RULES.find((r) => r.pattern.test(pathname))
   if (!rule) return false
