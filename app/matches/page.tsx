@@ -226,6 +226,27 @@ async function getFixturesByDate(date: string): Promise<FixturesResult> {
 // 기존처럼(못 찾으면) 빈 목록으로 남는다.
 const FALLBACK_SEARCH_DAYS = 14
 
+// 아직 "진행중"으로 보이는 상태값들. 이런 상태가 옛날 캐시 스냅샷에 남아있으면
+// 그건 실제로 진행중인 게 아니라, 그 날짜가 정상 fetch 흐름(오늘/어제만 API
+// 재조회)에서 벗어난 뒤로 다시 갱신될 기회가 없어서 그대로 얼어붙은 것이다
+const LIVE_STATUSES = new Set(["1H", "2H", "HT", "ET", "BT", "P", "INT", "LIVE"])
+
+function hasStaleLiveStatus(fixtures: Fixture[]): boolean {
+  return fixtures.some((f) => LIVE_STATUSES.has(f.fixture.status.short))
+}
+
+async function refetchDateFresh(date: string): Promise<Fixture[] | null> {
+  try {
+    return await fetchApiFootball(`/fixtures?date=${date}`, {
+      revalidate: 86400,
+      tags: [`fixtures-${date}`],
+    }) as Fixture[]
+  } catch (err) {
+    console.error("폴백 날짜 재조회 실패:", err instanceof Error ? err.message : err)
+    return null
+  }
+}
+
 async function findFallbackFixtures(
   fromDate: string
 ): Promise<{ date: string; fixtures: Fixture[] } | null> {
@@ -234,7 +255,23 @@ async function findFallbackFixtures(
     candidate = shiftDate(candidate, -1)
     const cached = await getCachedFixtures<Fixture>(candidate)
     if (cached && cached.data.length > 0) {
-      return { date: candidate, fixtures: cached.data.filter(isRelevantFixture) }
+      let relevant = cached.data.filter(isRelevantFixture)
+
+      // (2026-09-23) 캐시에 아직 "진행중" 상태 경기가 있으면 그 날짜만 한 번
+      // 실시간으로 다시 조회해 캐시를 갱신한다 (어제 끝난 경기가 며칠째 45'로
+      // 박제되어 보이던 문제 수정)
+      if (hasStaleLiveStatus(relevant)) {
+        const fresh = await refetchDateFresh(candidate)
+        if (fresh) {
+          const freshRelevant = fresh.filter(isRelevantFixture)
+          if (freshRelevant.length > 0) {
+            await saveCachedFixtures(candidate, freshRelevant)
+            relevant = freshRelevant
+          }
+        }
+      }
+
+      return { date: candidate, fixtures: relevant }
     }
   }
   return null
