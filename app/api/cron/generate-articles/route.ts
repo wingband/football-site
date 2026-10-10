@@ -6,8 +6,6 @@ import { MOCK_FIXTURES } from "@/lib/mockData"
 import { TEAM_NAME_KO } from "@/lib/koreanNames"
 import { KOREAN_PLAYERS_ABROAD } from "@/lib/koreanPlayersAbroad"
 
-// API 호출/AI 비용을 아끼기 위해, 기사를 만들 대상은 이 리그들의 "종료된 경기"로만 제한
-const TARGET_LEAGUE_IDS = [39, 140, 78, 292, 135, 61]
 // 리그 우선순위 (낮을수록 먼저)
 const LEAGUE_PRIORITY: Record<number, number> = {
   39: 1,   // Premier League
@@ -17,10 +15,19 @@ const LEAGUE_PRIORITY: Record<number, number> = {
   135: 5,  // Serie A
   61: 6,   // Ligue 1
 }
+// (2026-10-10) OpenAI 비용 절감. 리뷰 없는 경기 페이지는 이제 noindex라서, 리뷰를
+// 6개 리그 전 경기(주 50경기+)에 만들 이유가 없어졌다. 독자 관심이 큰 경기로만 좁힌다:
+//   1) 해외파 선수 소속팀 경기 (리그 무관, 컵대회 포함 — 친선경기 제외)
+//   2) 프리미어리그 경기 (국내 관심도 1위)
+// 나머지 리그는 위 1)에 해당할 때만 만든다. 크론 주기도 매시간 → 3시간(vercel.json),
+// 소급 기간도 7일 → 3일로 줄여 경기 목록 조회(API-Football) 횟수도 같이 줄인다.
+const KOREAN_TEAM_IDS = new Set(KOREAN_PLAYERS_ABROAD.map((p) => p.teamId).filter(Boolean))
+const ALWAYS_LEAGUE_IDS = new Set([39]) // Premier League
+const FINISHED_CODES = ["FT", "AET", "PEN"]
 // 1회 실행 시 생성할 기사 최대 개수
-const MAX_ARTICLES_PER_RUN = 20
+const MAX_ARTICLES_PER_RUN = 10
 // 최근 며칠치 경기까지 소급 생성할지
-const LOOKBACK_DAYS = 7
+const LOOKBACK_DAYS = 3
 
 async function apiFetch(path: string) {
   const res = await fetch(`https://v3.football.api-sports.io${path}`, {
@@ -59,11 +66,18 @@ export async function GET(req: NextRequest) {
     fixtures = results.flatMap((r) => r ?? [])
   }
 
-  // 주요 리그 + 종료된 경기 필터 후 우선순위 정렬
+  // 해외파 소속팀 경기 또는 프리미어리그 + 종료된 경기만. 해외파 경기를 먼저 만든다
+  const isKoreanMatch = (f: (typeof fixtures)[number]) =>
+    KOREAN_TEAM_IDS.has((f.teams.home as { id?: number }).id ?? -1) ||
+    KOREAN_TEAM_IDS.has((f.teams.away as { id?: number }).id ?? -1)
   const targets = fixtures
-    .filter((f) => TARGET_LEAGUE_IDS.includes(f.league.id))
-    .filter((f) => f.fixture.status.short === "FT")
+    .filter((f) => !/friendl/i.test((f.league as { name?: string }).name ?? ""))
+    .filter((f) => isKoreanMatch(f) || ALWAYS_LEAGUE_IDS.has(f.league.id))
+    .filter((f) => FINISHED_CODES.includes(f.fixture.status.short))
     .sort((a, b) => {
+      const ka = isKoreanMatch(a) ? 0 : 1
+      const kb = isKoreanMatch(b) ? 0 : 1
+      if (ka !== kb) return ka - kb
       const pa = LEAGUE_PRIORITY[a.league.id] ?? 99
       const pb = LEAGUE_PRIORITY[b.league.id] ?? 99
       return pa - pb
