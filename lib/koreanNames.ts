@@ -14,6 +14,18 @@ export const LEAGUE_NAME_KO: Record<string, string> = {
   "UEFA Europa League": "유로파리그",
   "Europa League": "유로파리그",
   "FA Cup": "FA컵",
+  // (2026-10-10) 해외파 허브용 추가
+  "Championship": "챔피언십",
+  "League One": "리그 원",
+  "2. Bundesliga": "2.분데스리가",
+  "DFB Pokal": "DFB 포칼",
+  "Copa del Rey": "코파 델 레이",
+  "League Cup": "리그컵",
+  "Jupiler Pro League": "벨기에 프로리그",
+  "Belgian Pro League": "벨기에 프로리그",
+  "Major League Soccer": "MLS",
+  "MLS": "MLS",
+  "UEFA Europa Conference League": "컨퍼런스리그",
 }
 
 export const TEAM_NAME_KO: Record<string, string> = {
@@ -161,6 +173,25 @@ export const TEAM_NAME_KO: Record<string, string> = {
   "Anyang": "FC 안양",
   "FC Anyang": "FC 안양",
   "Bucheon FC 1995": "부천 FC 1995",
+  // (2026-10-10) 해외파 소속팀 + 자주 만나는 상대팀 — 해외파 허브/주간 칼럼 표기용
+  "FC Schalke 04": "샬케04",
+  "FSV Mainz 05": "마인츠",
+  "Atlético Madrid": "아틀레티코 마드리드",
+  "Borussia Mönchengladbach": "묀헨글라트바흐",
+  "SC Freiburg": "프라이부르크",
+  "SV Elversberg": "엘버스베르크",
+  "FC St. Pauli": "장크트파울리",
+  "Birmingham": "버밍엄",
+  "Swansea": "스완지",
+  "Stoke City": "스토크 시티",
+  "West Brom": "웨스트 브롬",
+  "Norwich": "노리치",
+  "Bolton": "볼턴",
+  "Gent": "헨트",
+  "Westerlo": "베스털로",
+  "Zulte Waregem": "쥘테 바레험",
+  "Los Angeles FC": "LAFC",
+  "Vancouver Whitecaps": "밴쿠버 화이트캡스",
 }
 
 // API-Football의 국가대표팀 감독 데이터가 실제보다 뒤처지는 경우를 위한 수동 오버라이드.

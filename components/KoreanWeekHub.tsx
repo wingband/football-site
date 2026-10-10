@@ -101,7 +101,7 @@ export default function KoreanWeekHub({ weeks }: { weeks: PlayerWeek[] }) {
         <h2 className="font-display uppercase text-base text-floodlight/80 tracking-wide mb-1">최근 7일 해외파 활약</h2>
         <p className="text-xs text-floodlight/40 mb-4">경기별 출전 시간 · 평점 · 공격포인트</p>
         {performances.length === 0 ? (
-          <p className="text-sm text-floodlight/40 py-6">최근 7일 동안 치른 경기가 없습니다.</p>
+          <p className="text-sm text-floodlight/40 py-6">최근 7일 동안 치른 공식 경기가 없습니다. (A매치 휴식기일 수 있어요)</p>
         ) : (
           <ul className="space-y-2">
             {performances.map(({ w, m }) => (
@@ -139,7 +139,7 @@ export default function KoreanWeekHub({ weeks }: { weeks: PlayerWeek[] }) {
                         </p>
                       </>
                     ) : (
-                      <p className="text-xs text-floodlight/40">미출전</p>
+                      <p className="text-xs text-floodlight/40">{m.statsAvailable ? "미출전" : "기록 미제공"}</p>
                     )}
                   </div>
                 </Link>

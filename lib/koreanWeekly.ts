@@ -48,7 +48,9 @@ export type WeeklyMatch = {
   isHome: boolean
   opponentName: string
   result: "W" | "D" | "L" | null
-  // 선수 개인 기록. played=false면 명단 제외/결장(데이터상 출전 기록 없음)
+  // 이 경기에 선수 개인 기록 데이터가 제공됐는지 (일부 컵대회/하위리그는 제공 안 됨)
+  statsAvailable: boolean
+  // 선수 개인 기록. statsAvailable인데 played=false면 명단 제외/결장
   played: boolean
   minutes: number | null
   rating: number | null
@@ -136,7 +138,10 @@ export const getKoreanPlayersWeek = cache(async function getKoreanPlayersWeek(da
   const recentFixtureIds = new Set<number>()
   for (const { last } of teamData.values()) {
     for (const fx of last) {
-      if (getMatchPhase(fx.fixture.status.short) === "finished" && new Date(fx.fixture.date).getTime() >= since) {
+      // 클럽 친선경기는 개인 기록도 없고 의미도 적어서 "이번 주 활약"에서 뺀다
+      // (2026-10-10, A매치 휴식기에 친선경기만 잡혀 전원 "미출전"으로 보이던 문제)
+      const isFriendly = /friendl/i.test(fx.league.name)
+      if (!isFriendly && getMatchPhase(fx.fixture.status.short) === "finished" && new Date(fx.fixture.date).getTime() >= since) {
         recentFixtureIds.add(fx.fixture.id)
       }
     }
@@ -162,7 +167,9 @@ export const getKoreanPlayersWeek = cache(async function getKoreanPlayersWeek(da
         const result: WeeklyMatch["result"] = my.winner === true ? "W" : opp.winner === true ? "L" : my.winner === null && opp.winner === null && fx.goals.home !== null ? "D" : null
 
         let stat: RawFixturePlayers[number]["players"][number]["statistics"][number] | null = null
-        for (const team of fixturePlayers.get(fx.fixture.id) ?? []) {
+        const teamsStats = fixturePlayers.get(fx.fixture.id) ?? []
+        const statsAvailable = teamsStats.some((t) => (t.players ?? []).length > 0)
+        for (const team of teamsStats) {
           const found = (team.players ?? []).find((p) => p.player.id === player.id)
           if (found) {
             stat = found.statistics?.[0] ?? null
@@ -185,6 +192,7 @@ export const getKoreanPlayersWeek = cache(async function getKoreanPlayersWeek(da
           isHome,
           opponentName: opp.name,
           result,
+          statsAvailable,
           played: (minutes ?? 0) > 0,
           minutes,
           rating: ratingNum !== null && Number.isFinite(ratingNum) ? ratingNum : null,

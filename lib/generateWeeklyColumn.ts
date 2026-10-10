@@ -16,7 +16,9 @@ function line(w: PlayerWeek): string {
     const res = m.result === "W" ? "승" : m.result === "L" ? "패" : m.result === "D" ? "무" : "결과 미상"
     const perf = m.played
       ? `${m.minutes}분 출전${m.substitute ? "(교체 투입)" : "(선발)"}, 평점 ${m.rating?.toFixed(1) ?? "없음"}, ${m.goals}골 ${m.assists}도움${m.yellow ? `, 경고 ${m.yellow}` : ""}${m.red ? ", 퇴장" : ""}`
-      : "출전 기록 없음(명단 제외 또는 벤치)"
+      : m.statsAvailable
+        ? "출전 기록 없음(명단 제외 또는 벤치)"
+        : "개인 기록 데이터 미제공(출전 여부 알 수 없음 — 출전/결장을 단정하지 말 것)"
     return `  - ${formatKickoffKst(m.date)} ${koLeague(m.leagueName)} | ${score} (소속팀 ${res}) | ${perf}`
   })
   return `- ${w.player.name} (${w.teamNameKo}, ${koLeague(w.player.league)})\n${rows.join("\n")}`
