@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation"
+import type { Metadata } from "next"
 import { headers } from "next/headers"
 import TeamHeader from "@/components/TeamHeader"
 import AdSlot from "@/components/AdSlot"
@@ -14,6 +15,15 @@ import { isTeamInScope, isInternalReferer } from "@/lib/scope"
 // 선수 페이지 -> 팀 페이지 링크가 다시 깨지므로, "우리 사이트에서 클릭해서 온 요청인지"로
 // 나눈다. Referer만으론 클라이언트 사이드 라우팅에서 신뢰할 수 없어서, 우리 사이트의
 // 모든 팀 링크에 ?ref=internal을 붙이고 미들웨어가 이걸 커스텀 헤더로 넘겨준다
+// (2026-10-10) AdSense "가치가 별로 없는 콘텐츠" 거절 대응.
+// 팀 페이지(개요/순위/경기/스쿼드/...)는 API 데이터를 그대로 보여주는 페이지라
+// 다른 축구 사이트와 내용이 거의 같다. 사용자는 계속 볼 수 있게 두되, 검색 색인과
+// 애드센스 심사 대상에서는 뺀다. follow는 유지해서 링크 크롤링은 막지 않는다.
+// 하위 page.tsx의 generateMetadata가 robots를 따로 지정하지 않는 한 이 값이 상속된다.
+export const metadata: Metadata = {
+  robots: { index: false, follow: true },
+}
+
 export default async function TeamLayout({
   children,
   params,

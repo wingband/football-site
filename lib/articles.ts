@@ -104,6 +104,19 @@ export async function getArticleBySlug(slug: string): Promise<Article | null> {
   return rows.length > 0 ? rowToArticle(rows[0]) : null
 }
 
+// 주어진 경기 ID들 중 리뷰 글이 있는 것만 골라낸다. 사이트맵에서 "리뷰가 있는 경기만"
+// 넣기 위해 사용 (2026-10-10, 애드센스 "가치가 별로 없는 콘텐츠" 대응)
+export async function getMatchIdsWithArticles(matchIds: number[]): Promise<Set<number>> {
+  if (matchIds.length === 0) return new Set()
+  if (process.env.USE_MOCK_DATA === "true") {
+    return new Set(mockArticleStore.map((a) => a.matchId).filter((id) => matchIds.includes(id)))
+  }
+  await ensureTable()
+  const sql = getSql()
+  const rows = await sql`SELECT match_id FROM articles WHERE match_id = ANY(${matchIds})`
+  return new Set(rows.map((r) => r.match_id as number))
+}
+
 // match_id로 기존 기사 조회. 같은 경기 기사를 다시 생성(=GPT 재호출)하지 않으려고 씀.
 // saveArticle이 ON CONFLICT DO NOTHING이라, 이 확인 없이 돌리면 GPT 응답을 받고 나서
 // 조용히 버리는 낭비가 생긴다

@@ -36,7 +36,7 @@ export async function generateMetadata({
   const sp = await searchParams
   const season = sp.season ? parseInt(sp.season) : getSeasonYear("England")
   const data = await getPlayerDataWithFallback(id, season)
-  if (!data) return { title: "선수 정보를 찾을 수 없습니다" }
+  if (!data) return { title: "선수 정보를 찾을 수 없습니다", robots: { index: false, follow: true } }
 
   // 한국인 해외파 트래커에 등록된 선수면 한국어 이름 사용 (API는 로마자 표기만 줌)
   // "손흥민 다음경기", "이강인 오늘 경기" 같은 검색어를 겨냥한 타이틀/설명 구성
@@ -53,6 +53,9 @@ export async function generateMetadata({
   const teamNameKo = TEAM_NAME_KO[teamNameRaw] ?? teamNameRaw
 
   return {
+    // (2026-10-10) 애드센스 "가치가 별로 없는 콘텐츠" 대응: 일반 선수 페이지는 API 스탯을
+    // 그대로 보여주는 얇은 페이지라 noindex. 사이트의 차별점인 한국인 해외파 선수만 색인 유지.
+    ...(koreanEntry ? {} : { robots: { index: false, follow: true } }),
     title: teamNameKo
       ? `${displayName} 다음경기 일정 · 최근 스탯 - ${teamNameKo}`
       : `${displayName} 다음경기 일정 및 최근 스탯`,

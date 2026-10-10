@@ -72,6 +72,9 @@ export async function generateMetadata({
     description: `${name1}과 ${name2}의 시즌 기록을 나란히 비교합니다. 평점, 골, 도움, 출전 시간, 패스 성공률, 드리블 성공률까지 한눈에 확인하세요.`,
     // 순서만 바꾼 URL이 중복 색인되지 않도록 id 오름차순 주소를 정규 URL로 지정
     alternates: { canonical: compareHref(id1, id2) },
+    // (2026-10-10) 애드센스 "가치가 별로 없는 콘텐츠" 대응: 선수 조합으로 자동 생성되는
+    // 비교 페이지는 수가 많고 내용이 스탯 나열뿐이라 noindex. 빈 /compare 랜딩만 색인 유지.
+    robots: { index: false, follow: true },
     openGraph: {
       title: `${name1} vs ${name2} 비교 | GoalLine`,
       description: `${name1} vs ${name2} — 시즌 기록 상세 비교`,

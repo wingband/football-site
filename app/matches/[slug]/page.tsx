@@ -177,7 +177,7 @@ export async function generateMetadata({
   const match = matchArr?.[0] ?? null
 
   if (!match) {
-    return { title: "경기 정보를 찾을 수 없습니다" }
+    return { title: "경기 정보를 찾을 수 없습니다", robots: { index: false, follow: true } }
   }
 
   const scoreText =
@@ -199,6 +199,9 @@ export async function generateMetadata({
     title,
     description,
     alternates: { canonical: matchHref(match) },
+    // (2026-10-10) 애드센스 "가치가 별로 없는 콘텐츠" 대응: 리뷰 글이 없는 경기 페이지는
+    // 스코어/라인업/통계만 있는 데이터 페이지라 noindex. 리뷰가 생성되면 자동으로 색인 대상이 된다.
+    ...(article ? {} : { robots: { index: false, follow: true } }),
     openGraph: { title, description },
   }
 }

@@ -7,6 +7,7 @@ import { UserButton, SignInButton, SignUpButton, useUser } from "@clerk/nextjs"
 
 const NAV_LINKS = [
   { href: "/matches", label: "경기" },
+  { href: "/columns", label: "칼럼" },
   { href: "/stories", label: "리뷰" },
   { href: "/standings", label: "순위표" },
   { href: "/korean-players", label: "🇰🇷 해외파" },

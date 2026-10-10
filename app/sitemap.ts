@@ -3,7 +3,9 @@ import { SITE_URL } from "@/lib/siteConfig"
 import { matchHref } from "@/lib/slug"
 import { getTodayStr, shiftDate } from "@/lib/dateUtils"
 import { MOCK_FIXTURES } from "@/lib/mockData"
-import { compareSitemapPath, koreanComparePairs } from "@/lib/compare"
+import { getMatchIdsWithArticles } from "@/lib/articles"
+import { getColumns } from "@/lib/columns"
+import { KOREAN_PLAYERS_ABROAD } from "@/lib/koreanPlayersAbroad"
 import { fetchApiFootball } from "@/lib/apiFootballClient"
 import { devErrorOrSilent } from "@/lib/quietLog"
 
@@ -108,6 +110,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: { path: string; priority: number; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"] }[] = [
     { path: "",                 priority: 1,   changeFrequency: "hourly" },
     { path: "/matches",         priority: 1,   changeFrequency: "hourly" },
+    { path: "/columns",         priority: 0.9, changeFrequency: "daily" },
     { path: "/stories",         priority: 0.9, changeFrequency: "hourly" },
     { path: "/standings",       priority: 0.8, changeFrequency: "daily" },
     { path: "/korean-players",  priority: 0.8, changeFrequency: "daily" },
@@ -115,51 +118,65 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: "/news",            priority: 0.7, changeFrequency: "hourly" },
     { path: "/best11",          priority: 0.6, changeFrequency: "weekly" },
     { path: "/compare",         priority: 0.6, changeFrequency: "weekly" },
+    { path: "/company",         priority: 0.3, changeFrequency: "yearly" },
     { path: "/privacy",         priority: 0.3, changeFrequency: "yearly" },
   ]
 
+  // (2026-10-10) 애드센스 "가치가 별로 없는 콘텐츠" 거절 대응.
+  // 예전엔 오늘/어제 주요 경기 전부 + 그 경기 참가 팀 페이지 + 해외파 비교 조합(78개)을
+  // 다 넣었는데, 대부분이 API 데이터만 있는 얇은 페이지였다. 이제는
+  //   - 경기: 리뷰 글이 있는 경기만 (리뷰 없는 경기 페이지는 noindex 처리됨)
+  //   - 팀/비교 페이지: 제외 (noindex 처리됨)
+  //   - 칼럼(직접 쓴 글)과 해외파 선수 페이지 추가
   const fixtures = await getSitemapFixtures()
 
-  const matchEntries: MetadataRoute.Sitemap = fixtures.map((fx) => {
-    const finished = FINISHED_CODES.includes(fx.fixture.status?.short ?? "")
-    return {
-      url: `${SITE_URL}${matchHref(fx)}`,
-      lastModified: new Date(fx.fixture.date),
-      // 종료된 경기는 더 이상 안 바뀌고, 진행 전/중인 경기는 스코어가 계속 바뀜
-      changeFrequency: finished ? "weekly" : "hourly",
-      priority: 0.8,
-    }
-  })
+  let reviewedIds = new Set<number>()
+  try {
+    reviewedIds = await getMatchIdsWithArticles(fixtures.map((f) => f.fixture.id))
+  } catch (err) {
+    devErrorOrSilent("사이트맵: 리뷰 경기 조회 실패:", err instanceof Error ? err.message : err)
+  }
+
+  const matchEntries: MetadataRoute.Sitemap = fixtures
+    .filter((fx) => reviewedIds.has(fx.fixture.id))
+    .map((fx) => {
+      const finished = FINISHED_CODES.includes(fx.fixture.status?.short ?? "")
+      return {
+        url: `${SITE_URL}${matchHref(fx)}`,
+        lastModified: new Date(fx.fixture.date),
+        changeFrequency: finished ? "weekly" : "hourly",
+        priority: 0.7,
+      }
+    })
 
   const leagueEntries: MetadataRoute.Sitemap = SITEMAP_LEAGUES.map((league) => ({
     url: `${SITE_URL}/leagues/${league.id}`,
     lastModified: dailyStamp,
     changeFrequency: "daily",
-    priority: 0.7,
+    priority: 0.6,
   }))
 
-  // 팀 페이지는 위에서 가져온 경기의 참가 팀에서 뽑는다 (추가 API 호출 없음)
-  const teamIds = new Set<number>()
-  for (const fx of fixtures) {
-    if (fx.teams.home.id) teamIds.add(fx.teams.home.id)
-    if (fx.teams.away.id) teamIds.add(fx.teams.away.id)
-  }
-
-  const teamEntries: MetadataRoute.Sitemap = [...teamIds].map((teamId) => ({
-    url: `${SITE_URL}/teams/${teamId}`,
+  // 사이트의 차별점인 한국인 해외파 선수 페이지 (이 선수들만 색인 유지)
+  const koreanPlayerEntries: MetadataRoute.Sitemap = KOREAN_PLAYERS_ABROAD.map((p) => ({
+    url: `${SITE_URL}/players/${p.id}`,
     lastModified: dailyStamp,
     changeFrequency: "daily",
     priority: 0.6,
   }))
 
-  // 한국인 해외파끼리의 비교 페이지. (A,B)와 (B,A)는 같은 화면이라
-  // 정규 URL(id 오름차순) 한 쪽만 넣는다 — 13명이면 78개
-  const compareEntries: MetadataRoute.Sitemap = koreanComparePairs().map(([a, b]) => ({
-    url: `${SITE_URL}${compareSitemapPath(a, b)}`,
-    lastModified: dailyStamp,
-    changeFrequency: "weekly",
-    priority: 0.5,
-  }))
+  // 사이트 고유 콘텐츠인 칼럼. 가장 높은 우선순위
+  let columnEntries: MetadataRoute.Sitemap = []
+  try {
+    const columns = await getColumns()
+    columnEntries = columns.map((c) => ({
+      url: `${SITE_URL}/columns/${c.slug}`,
+      lastModified: new Date(c.updatedAt),
+      changeFrequency: "weekly",
+      priority: 0.9,
+    }))
+  } catch (err) {
+    devErrorOrSilent("사이트맵: 칼럼 목록 조회 실패:", err instanceof Error ? err.message : err)
+  }
 
   return [
     ...staticRoutes.map(({ path, priority, changeFrequency }) => ({
@@ -169,9 +186,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency,
       priority,
     })),
+    ...columnEntries,
     ...matchEntries,
     ...leagueEntries,
-    ...teamEntries,
-    ...compareEntries,
+    ...koreanPlayerEntries,
   ]
 }
