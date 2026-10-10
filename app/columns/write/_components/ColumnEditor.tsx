@@ -10,6 +10,8 @@ import ColumnBody from "@/components/ColumnBody"
 const TITLE_MAX = 120
 const SUMMARY_MAX = 200
 const CONTENT_MAX = 30000
+// lib/generateWeeklyColumn.ts의 OPINION_PLACEHOLDER와 같은 문자열 (서버 코드라 import 불가)
+const OPINION_PLACEHOLDER = "(여기에 직접 한두 줄 의견을 써주세요)"
 
 type Initial = {
   slug: string
@@ -225,6 +227,12 @@ export default function ColumnEditor({ initial }: { initial: Initial }) {
           </div>
         </div>
 
+        {content.includes(OPINION_PLACEHOLDER) && (
+          <p className="text-xs text-score-amber mt-2 leading-relaxed">
+            ✍️ AI가 만든 초안이에요. 본문의 「{OPINION_PLACEHOLDER}」 자리를 내 생각으로 바꿔야 공개할 수 있어요.
+            틀린 내용이 없는지도 한 번 확인해 주세요.
+          </p>
+        )}
         {error && <p className="text-xs text-red-400 mt-2">{error}</p>}
 
         <div className="flex items-center justify-between mt-4">

@@ -3,6 +3,11 @@ import Link from "next/link"
 import { KOREAN_PLAYERS_ABROAD } from "@/lib/koreanPlayersAbroad"
 import Logo from "@/components/Logo"
 import PlayerAvatar from "@/components/PlayerAvatar"
+import KoreanWeekHub from "@/components/KoreanWeekHub"
+import { getKoreanPlayersWeek } from "@/lib/koreanWeekly"
+
+// 경기 일정/최근 활약 데이터는 DB 캐시(3시간)를 거치므로 페이지는 1시간마다 다시 만든다
+export const revalidate = 3600
 
 // API-Football CDN의 리그 로고는 어두운 배경에서 잘 안 보이는 것들이 있어서(특히 프리미어리그),
 // 다크 테마에 맞게 준비된 로컬 흰색/고대비 에셋이 있으면 그걸 우선 쓴다
@@ -13,9 +18,11 @@ const LEAGUE_LOGO_LOCAL: Record<string, string> = {
 }
 
 export const metadata: Metadata = {
-  title: "해외파 한국 축구 선수 — 황희찬, 이강인, 김민재, 손흥민 | GoalLine",
-  description: "황희찬(샬케04), 이강인(아틀레티코), 김민재(바이에른), 손흥민(LAFC) 등 해외에서 활약 중인 한국 축구 선수들의 최신 시즌 성적과 소속팀 정보를 한눈에 확인하세요.",
-  keywords: ["황희찬", "이강인", "김민재", "손흥민", "정우영", "이재성", "한국 축구 해외파", "해외 한국선수"],
+  // 레이아웃 템플릿이 " | GoalLine"을 붙인다
+  title: "해외파 경기 일정·결과 — 손흥민, 이강인, 김민재, 황희찬 오늘 경기",
+  description: "손흥민, 이강인, 김민재, 황희찬 등 해외파 한국 선수들의 다음 경기 일정(한국 시간)과 최근 7일 경기별 출전 시간, 평점, 골·도움을 한 페이지에서 확인하세요.",
+  keywords: ["해외파 경기 일정", "손흥민 오늘 경기", "이강인 경기 일정", "김민재 경기", "황희찬 경기", "해외파 평점", "한국 축구 해외파"],
+  alternates: { canonical: "/korean-players" },
 }
 
 // 한국 선수별 한줄 소개 (SEO용)
@@ -37,7 +44,9 @@ const PLAYER_INTRO: Record<number, { nameKo: string; nameEn: string; desc: strin
 
 const LEAGUE_ORDER = ["Premier League", "La Liga", "Bundesliga", "Championship", "2. Bundesliga", "Belgian Pro League", "MLS"]
 
-export default function KoreanPlayersPage() {
+export default async function KoreanPlayersPage() {
+  const weeks = await getKoreanPlayersWeek()
+
   const byLeague = new Map<string, typeof KOREAN_PLAYERS_ABROAD>()
   for (const p of KOREAN_PLAYERS_ABROAD) {
     if (!byLeague.has(p.league)) byLeague.set(p.league, [])
@@ -57,12 +66,12 @@ export default function KoreanPlayersPage() {
           <div className="flex items-center gap-2 mb-2">
             <span className="text-2xl">🇰🇷</span>
             <h1 className="font-display uppercase text-2xl text-score-amber">
-              해외파 한국 축구 선수
+              해외파 경기 일정 · 결과
             </h1>
           </div>
           <p className="text-sm text-floodlight/50 leading-relaxed">
-            유럽 5대 리그를 비롯한 해외 무대에서 활약 중인 한국 국가대표 선수들의
-            소속팀·리그 정보와 시즌 성적을 실시간으로 확인하세요.
+            해외 무대에서 뛰는 한국 선수들의 다음 경기 일정(한국 시간)과 최근 경기 평점·공격포인트를
+            한 곳에서 확인하세요.
           </p>
           <div className="flex flex-wrap gap-2 mt-4">
             {KOREAN_PLAYERS_ABROAD.map(p => (
@@ -74,8 +83,12 @@ export default function KoreanPlayersPage() {
           </div>
         </div>
 
+        {/* 이번 주 해외파: 다음 경기 일정 + 최근 7일 활약 */}
+        <KoreanWeekHub weeks={weeks} />
+
         {/* 리그별 선수 목록 */}
-        <div className="space-y-8 mt-8">
+        <h2 className="font-display uppercase text-base text-floodlight/80 tracking-wide mt-12 mb-1">선수별 소속팀</h2>
+        <div className="space-y-8 mt-4">
           {sorted.map(({ league, players }) => (
             <section key={league}>
               <div className="flex items-center gap-2 mb-4">
@@ -141,10 +154,10 @@ export default function KoreanPlayersPage() {
         <section className="mt-12 pt-8 border-t border-turf-line/30">
           <h2 className="font-semibold text-base text-floodlight/80 mb-3">한국 축구 해외파 현황</h2>
           <p className="text-sm text-floodlight/50 leading-relaxed">
-            현재 유럽 무대에서 활약 중인 한국 선수는 프리미어리그의 황희찬, 라리가의 이강인,
-            분데스리가의 김민재·이재성·정우영·옌스 카스트로프 등이 있습니다.
-            챔피언십에서는 배준호(스토크), 백승호(버밍엄), 엄지성(스완지), 양민혁(포츠머스)이
-            뛰고 있으며, 손흥민은 MLS LAFC에서 새로운 도전을 이어가고 있습니다.
+            현재 유럽 무대에서 활약 중인 한국 선수는 라리가의 이강인(아틀레티코 마드리드),
+            분데스리가의 김민재(바이에른 뮌헨)·황희찬(샬케04)·이재성·정우영·옌스 카스트로프 등이 있습니다.
+            잉글랜드에서는 김지수(브렌트퍼드)와 챔피언십의 배준호·백승호·엄지성이 뛰고 있고,
+            손흥민은 MLS LAFC에서 새로운 도전을 이어가고 있습니다.
             GoalLine은 이 선수들의 매 경기 성적, 평점, 출전 시간을 실시간으로 추적합니다.
           </p>
         </section>

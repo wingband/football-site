@@ -2,6 +2,7 @@ import Link from "next/link"
 import type { Metadata } from "next"
 import { getColumns, readingMinutes } from "@/lib/columns"
 import { isAdmin } from "@/lib/admin"
+import WeeklyDraftButton from "./_components/WeeklyDraftButton"
 
 export const dynamic = "force-dynamic"
 
@@ -27,15 +28,18 @@ export default async function ColumnsPage() {
   return (
     <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
       <div className="max-w-3xl mx-auto px-4 pt-8 pb-16">
-        <div className="flex items-end justify-between gap-4 mb-2">
+        <div className="flex flex-wrap items-end justify-between gap-3 mb-2">
           <h1 className="font-display uppercase text-2xl text-score-amber">칼럼</h1>
           {admin && (
+            <div className="flex items-start gap-2">
+            <WeeklyDraftButton />
             <Link
               href="/columns/write"
               className="text-sm px-4 py-2 bg-score-amber text-pitch-night font-bold rounded hover:bg-score-amber/80 transition-colors"
             >
               새 칼럼 쓰기
             </Link>
+            </div>
           )}
         </div>
         <p className="text-sm text-floodlight/50 mb-8">

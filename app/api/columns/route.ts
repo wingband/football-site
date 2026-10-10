@@ -10,6 +10,7 @@ import {
   COLUMN_SUMMARY_MAX,
   COLUMN_CONTENT_MAX,
 } from "@/lib/columns"
+import { OPINION_PLACEHOLDER } from "@/lib/generateWeeklyColumn"
 
 // 칼럼 저장(새 글 작성 + 기존 글 수정). 관리자만 가능.
 export async function POST(req: NextRequest) {
@@ -38,6 +39,15 @@ export async function POST(req: NextRequest) {
   }
   if (content.length < 50 || content.length > COLUMN_CONTENT_MAX) {
     return NextResponse.json({ error: `본문은 50~${COLUMN_CONTENT_MAX}자로 입력해주세요` }, { status: 400 })
+  }
+
+  // 자동 생성 초안의 "내 의견" 자리를 비워둔 채로는 공개할 수 없다.
+  // 사람의 의견이 들어가야 자동 생성 글이 아닌 칼럼이 된다 (애드센스 "가치 없는 콘텐츠" 대응)
+  if (published && content.includes(OPINION_PLACEHOLDER)) {
+    return NextResponse.json(
+      { error: "'✍️ 내 의견' 자리에 직접 의견을 채운 뒤 공개할 수 있어요. 비공개로는 저장할 수 있습니다." },
+      { status: 400 }
+    )
   }
 
   // 수정이면 기존 slug 유지, 새 글이면 생성
