@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { applyFormat, FORMAT_BUTTONS } from "@/lib/boardEditor"
 import ColumnBody from "@/components/ColumnBody"
+import OpinionQuickPublish from "./OpinionQuickPublish"
 
 // lib/columns.ts는 서버 전용(DB)이라 클라이언트에서 import하지 않고 한도만 복제
 const TITLE_MAX = 120
@@ -41,6 +42,8 @@ export default function ColumnEditor({ initial }: { initial: Initial }) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  // AI 초안(의견 자리가 남아 있는 글)은 기본으로 "의견만 달고 발행" 간단 화면을 보여준다
+  const [quick, setQuick] = useState(() => Boolean(initial?.content.includes(OPINION_PLACEHOLDER)))
 
   function insertAtLineStart(prefix: string) {
     const el = textareaRef.current
@@ -117,6 +120,20 @@ export default function ColumnEditor({ initial }: { initial: Initial }) {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  if (quick && initial) {
+    return (
+      <OpinionQuickPublish
+        slug={initial.slug}
+        title={initial.title}
+        summary={initial.summary}
+        content={initial.content}
+        tags={initial.tags.split(",").map((t) => t.trim()).filter(Boolean)}
+        placeholder={OPINION_PLACEHOLDER}
+        onEditFull={() => setQuick(false)}
+      />
+    )
   }
 
   const inputCls =

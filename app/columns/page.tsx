@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { getColumns, readingMinutes } from "@/lib/columns"
 import { isAdmin } from "@/lib/admin"
 import WeeklyDraftButton from "./_components/WeeklyDraftButton"
+import { OPINION_PLACEHOLDER } from "@/lib/generateWeeklyColumn"
 
 export const dynamic = "force-dynamic"
 
@@ -24,6 +25,8 @@ function formatDate(iso: string) {
 export default async function ColumnsPage() {
   const admin = await isAdmin()
   const columns = await getColumns({ includeDrafts: admin })
+  // 관리자에게만: 의견을 기다리는 AI 초안이 있으면 맨 위에 바로가기를 띄운다
+  const pendingDraft = admin ? columns.find((c) => !c.published && c.content.includes(OPINION_PLACEHOLDER)) : undefined
 
   return (
     <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
@@ -45,6 +48,16 @@ export default async function ColumnsPage() {
         <p className="text-sm text-floodlight/50 mb-8">
           데이터만으로는 보이지 않는 이야기. 해외파 활약, 경기 흐름, 리그 판도를 직접 짚어봅니다.
         </p>
+
+        {pendingDraft && (
+          <Link
+            href={`/columns/write?slug=${pendingDraft.slug}`}
+            className="block mb-6 p-4 border border-score-amber/50 bg-score-amber/10 hover:bg-score-amber/15 transition-colors"
+          >
+            <p className="text-sm font-semibold text-score-amber">✍️ 이번 주 초안이 준비됐어요 — 한 줄 의견 달고 발행하기 →</p>
+            <p className="text-xs text-floodlight/60 mt-1 line-clamp-1">{pendingDraft.title}</p>
+          </Link>
+        )}
 
         {columns.length === 0 ? (
           <p className="text-sm text-floodlight/40 py-16 text-center">아직 등록된 칼럼이 없습니다.</p>
