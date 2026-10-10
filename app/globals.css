@@ -1,8 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* (2026-10-10) 사이트는 다크 단일 테마라 배경을 항상 pitch-night로 고정한다.
+     예전엔 create-next-app 기본값이 남아 있어서, 라이트 모드 컴퓨터에선 body가
+     흰색(#fff), 다크 모드에선 #0a0a0a가 되어 본문(pitch-night)과 색이 달랐다 —
+     특히 상단 광고 배너 주변 띠가 흰색/검은색으로 튀어 보이던 원인.
+     color-scheme은 일부러 지정하지 않는다: dark로 지정하면 카카오 애드핏 iframe과
+     색상 스킴이 어긋나 iframe 배경이 불투명 흰색으로 칠해질 수 있다. */
+  --background: #0b1210;
+  --foreground: #eaf6e9;
+}
+
+html {
+  background: #0b1210;
 }
 
 @theme inline {
@@ -21,13 +31,6 @@
 
   --font-display: var(--font-display);
   --font-data: var(--font-data);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {

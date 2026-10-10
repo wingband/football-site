@@ -32,14 +32,19 @@ export default function KakaoAdBanner({
       className={`flex justify-center overflow-x-auto overflow-y-hidden ${className}`}
       style={{ minHeight: `${height}px` }}
     >
-      <ins
-        className="kakao_ad_area"
-        style={{ display: "none" }}
-        data-ad-unit={adUnit}
-        data-ad-width={String(width)}
-        data-ad-height={String(height)}
-        suppressHydrationWarning
-      />
+      {/* (2026-10-10) 애드핏 스크립트가 <ins>를 width:100%로 바꿔서 광고 iframe이
+          컨테이너 전체 폭으로 늘어나고, 광고 소재 양옆이 iframe 배경색 띠로 보였다.
+          광고 크기만큼의 상자로 감싸서 iframe이 광고보다 넓어지지 않게 한다. */}
+      <div style={{ width: "100%", maxWidth: `${width}px` }}>
+        <ins
+          className="kakao_ad_area"
+          style={{ display: "none" }}
+          data-ad-unit={adUnit}
+          data-ad-width={String(width)}
+          data-ad-height={String(height)}
+          suppressHydrationWarning
+        />
+      </div>
     </div>
   )
 }
