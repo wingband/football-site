@@ -158,13 +158,13 @@ function PlayerCard({
   const rows = (tab === "scorers" ? scorers : assists).slice(0, 5)
   const unit = tab === "scorers" ? "골" : "도움"
   return (
-    <div className="bg-pitch-night/50 border border-turf-line/40 rounded-none p-3 self-start">
-      <div className="grid grid-cols-2 gap-1 p-1 mb-2 rounded-lg bg-turf/50">
+    <div className="bg-pitch-night/50 border border-turf-line/40 rounded-none p-3 flex flex-col lg:self-stretch">
+      <div className="grid grid-cols-2 gap-1 p-1 mb-3 bg-turf/50">
         {([["scorers", "득점 순위"], ["assists", "도움 순위"]] as const).map(([k, l]) => (
           <button
             key={k}
             onClick={() => onTab(k)}
-            className={`text-sm py-1.5 rounded-md transition-colors ${tab === k ? "bg-score-amber text-pitch-night font-bold" : "text-floodlight/70 hover:text-floodlight"}`}
+            className={`text-sm py-1.5 transition-colors ${tab === k ? "bg-score-amber text-pitch-night font-bold" : "text-floodlight/70 hover:text-floodlight"}`}
           >
             {l}
           </button>
@@ -173,7 +173,7 @@ function PlayerCard({
       {rows.length === 0 ? (
         <p className="text-sm text-floodlight/60 py-4 text-center">아직 기록이 없어요.</p>
       ) : (
-        <ol className="space-y-1.5">
+        <ol className="flex-1 flex flex-col justify-between gap-1.5">
           {rows.map((p, i) => (
             <li key={p.id}>
               <Link href={`/players/${p.id}`} className="flex items-center gap-2 text-sm hover:text-score-amber">
