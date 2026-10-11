@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}))
   const slug = typeof body?.slug === "string" ? body.slug : ""
   if (!isValidColumnSlug(slug)) return done
-  if (await isAdmin()) return done
+  if (await isAdmin()) return NextResponse.json({ ok: true, admin: true }, { headers: { "Cache-Control": "no-store" } })
   const column = await getColumnBySlug(slug)
   if (!column?.published) return done
   await incrementColumnView(slug)

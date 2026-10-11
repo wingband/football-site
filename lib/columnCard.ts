@@ -51,5 +51,12 @@ export function columnCardInfo(c: { title: string; summary: string; content: str
     break
   }
   if (!lead) lead = summary
-  return { badge, title, rating, lead: cut(lead, 150) }
+  // 카드에는 한 문장만, 잘림표(…) 없이 끝까지 보이게 짧게
+  let one = lead.split(/(?<=[다요]\.)\s+/)[0].trim()
+  if (one.length > 60) {
+    const part = one.slice(0, 60)
+    const i = Math.max(part.lastIndexOf(", "), part.lastIndexOf("고 "), part.lastIndexOf("며 "))
+    one = i > 25 ? part.slice(0, i + 1).replace(/,$/, "") + "." : part.replace(/\s+\S*$/, "") + "."
+  }
+  return { badge, title, rating, lead: one }
 }

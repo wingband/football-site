@@ -68,7 +68,7 @@ export default function HomeResults({ tabs, results }: { tabs: Tab[]; results: H
             {shown.map((r) => (
               <li key={r.fixtureId}>
                 <Link href={matchLinkHref(r.slugSource)} className="block py-2 px-1 hover:bg-turf-line/20 rounded">
-                  <p className="flex items-center gap-1.5 text-xs text-floodlight/65 mb-1 justify-center">
+                  <p className="flex items-center gap-1.5 text-xs text-floodlight/65 mb-1 justify-start">
                     <Logo src={r.leagueLogo} alt="" className="w-3.5 h-3.5 shrink-0" />
                     <span className="text-floodlight/85">{r.leagueName}</span>
                     <span className="text-floodlight/30">·</span>

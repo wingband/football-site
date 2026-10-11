@@ -99,7 +99,7 @@ export default function ColumnBody({ content }: { content: string }) {
   // 초안용 "✍️ 내 의견:" 표시는 화면에 보여주지 않는다 (이미 발행된 예전 글에도 적용)
   const blocks = parseBlocks(content.replace(/✍️\s*내\s*의견\s*[:：]\s*(?!\(여기에)/g, ""))
   return (
-    <div className="flow-root text-sm leading-[1.8] text-floodlight/85 space-y-4 max-w-4xl">
+    <div className="flow-root text-sm leading-[1.8] text-floodlight/85 space-y-4 break-keep">
       {blocks.map((b, i) => {
         const k = `b${i}`
         switch (b.type) {
