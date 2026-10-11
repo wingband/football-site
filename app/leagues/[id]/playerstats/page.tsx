@@ -21,9 +21,10 @@ export async function generateMetadata({
   let data = await getLeagueStandings(id, euroSeason)
   if (!data) data = await getLeagueStandings(id, new Date().getFullYear())
 
-  if (!data) return { title: "플레이어 통계" }
+  if (!data) return { title: "플레이어 통계", robots: { index: false, follow: true } }
 
   return {
+    alternates: { canonical: `/leagues/${id}/playerstats` },
     title: `${data.league.name} 플레이어 통계`,
     description: `${data.league.name} 선수들의 득점, 도움, 평점, 출전 시간 순위를 확인하세요.`,
   }

@@ -14,9 +14,10 @@ export async function generateMetadata({
   let data = await getLeagueStandings(id, euroSeason)
   if (!data) data = await getLeagueStandings(id, new Date().getFullYear())
 
-  if (!data) return { title: "순위표를 찾을 수 없습니다" }
+  if (!data) return { title: "순위표를 찾을 수 없습니다", robots: { index: false, follow: true } }
 
   return {
+    alternates: { canonical: `/leagues/${id}/table` },
     title: `${data.league.name} 순위표`,
     description: `${data.league.name}(${data.league.country}) ${data.league.season} 시즌 전체/홈/원정 순위표를 확인하세요.`,
   }

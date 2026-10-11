@@ -277,6 +277,19 @@ async function findFallbackFixtures(
   return null
 }
 
+// (2026-10-11) Search Console "사용자가 선택한 표준이 없는 중복 페이지" 대응.
+// /matches?date=... 날짜별 주소는 검색 유입용으로 열어두되 각자 자기 자신을 정규 URL로 밝히고,
+// 오늘 날짜(=날짜 없는 /matches와 같은 화면)와 잘못된 값은 /matches로 모은다.
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ date?: string }>
+}): Promise<Metadata> {
+  const { date } = await searchParams
+  const valid = typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date) && date !== getTodayStr()
+  return { alternates: { canonical: valid ? `/matches?date=${date}` : "/matches" } }
+}
+
 export default async function MatchesPage({
   searchParams,
 }: {

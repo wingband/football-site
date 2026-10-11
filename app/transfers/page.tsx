@@ -6,6 +6,7 @@ import type { Metadata } from "next"
 import Logo from "@/components/Logo"
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/transfers" },
   title: "이적 센터 — GoalLine",
   description: "최신 축구 이적 소식. 주요 클럽 선수 이동 현황을 확인하세요.",
 }

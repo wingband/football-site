@@ -188,9 +188,11 @@ export async function generateMetadata({
     if (!data && thisYear !== euroSeason) data = await getLeagueStandings(id, thisYear)
     if (!data) data = await getLeagueStandings(id, euroSeason - 1)
   }
-  if (!data) return { title: "리그 정보를 찾을 수 없습니다" }
+  if (!data) return { title: "리그 정보를 찾을 수 없습니다", robots: { index: false, follow: true } }
   const leagueNameKo = LEAGUE_NAME_KO[data.league.name] ?? data.league.name
   return {
+    // ?season= 값만 다른 주소가 중복으로 잡히지 않게 기본 주소를 정규 URL로 지정 (2026-10-11 Search Console 대응)
+    alternates: { canonical: `/leagues/${id}` },
     title: `${leagueNameKo} 순위 · ${data.league.season} 시즌 일정 · 득점 순위`,
     description: `${leagueNameKo} ${data.league.season} 시즌 실시간 순위표, 예정 경기 일정, 득점 순위, 도움 순위를 확인하세요.`,
   }

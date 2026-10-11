@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation"
+import { redirect, notFound } from "next/navigation"
 import { getArticleBySlug } from "@/lib/articles"
 import type { Metadata } from "next"
 
@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic"
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
   const a = await getArticleBySlug(slug)
-  if (!a) return { title: "기사를 찾을 수 없습니다" }
+  if (!a) return { title: "기사를 찾을 수 없습니다", robots: { index: false, follow: false } }
 
   const score = a.homeScore !== null && a.awayScore !== null ? `${a.homeScore}-${a.awayScore}` : "vs"
   const title = `${a.homeTeam} ${score} ${a.awayTeam} 경기 리뷰 — ${a.leagueName}`
@@ -26,13 +26,8 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
   const { slug } = await params
   const article = await getArticleBySlug(slug)
 
-  if (!article) {
-    return (
-      <main className="min-h-screen bg-pitch-night text-floodlight p-8 font-sans">
-        <p className="text-floodlight/50">기사를 찾을 수 없습니다.</p>
-      </main>
-    )
-  }
+  // 없는 기사는 200 + "찾을 수 없음" 화면(Soft 404) 대신 진짜 404로 (2026-10-11 Search Console 대응)
+  if (!article) notFound()
 
   // 경기 상세 페이지로 이동 — from=review 파라미터로 "뒤로" 버튼을 "리뷰"로 표시
   redirect(`/matches/${article.matchId}?from=review`)

@@ -14,9 +14,10 @@ export async function generateMetadata({
   let data = await getLeagueStandings(id, euroSeason)
   if (!data) data = await getLeagueStandings(id, new Date().getFullYear())
 
-  if (!data) return { title: "경기 일정" }
+  if (!data) return { title: "경기 일정", robots: { index: false, follow: true } }
 
   return {
+    alternates: { canonical: `/leagues/${id}/fixtures` },
     title: `${data.league.name} 경기 일정`,
     description: `${data.league.name} ${data.league.season} 시즌 전체 경기 일정과 결과를 날짜별/라운드별/팀별로 확인하세요.`,
   }

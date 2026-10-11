@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { getLeaderboard } from "@/lib/predictions"
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/predictions" },
   title: "예측 랭킹",
   description: "GoalLine 스코어 예측 게임 순위표. 정확히 맞히면 3점, 승/무/패만 맞혀도 1점을 획득합니다.",
 }

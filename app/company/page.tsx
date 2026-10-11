@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/company" },
   title: "회사소개 — GoalLine",
   description: "GoalLine 서비스 소개입니다.",
 }

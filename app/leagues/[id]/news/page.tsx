@@ -12,9 +12,10 @@ export async function generateMetadata({
   let data = await getLeagueStandings(id, euroSeason)
   if (!data) data = await getLeagueStandings(id, new Date().getFullYear())
 
-  if (!data) return { title: "리그 뉴스" }
+  if (!data) return { title: "리그 뉴스", robots: { index: false, follow: true } }
 
   return {
+    alternates: { canonical: `/leagues/${id}/news` },
     title: `${data.league.name} 뉴스`,
     description: `${data.league.name} 관련 최신 뉴스를 확인하세요.`,
   }

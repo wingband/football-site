@@ -5,6 +5,7 @@ import Logo from "@/components/Logo"
 import { fetchNewsData } from "@/lib/newsData"
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/news" },
   title: "축구 뉴스 — GoalLine",
   description: "프리미어리그, 챔피언스리그, 라리가 등 전 세계 축구 최신 뉴스",
 }

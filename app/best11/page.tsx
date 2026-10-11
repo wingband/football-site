@@ -28,6 +28,7 @@ export async function generateMetadata({
   const league = resolveLeague((await searchParams).league)
 
   return {
+    alternates: { canonical: league === LEAGUES[0] ? "/best11" : `/best11?league=${league.id}` },
     title: `이번 주 ${league.name} 베스트 11 — GoalLine`,
     description: `이번 주 ${league.name} 최고 평점 선수 베스트 11. 주간 베스트팀을 확인하세요.`,
   }
