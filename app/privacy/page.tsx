@@ -11,9 +11,9 @@ export default function PrivacyPage() {
   const today = new Date().toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })
 
   return (
-    <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
-        <Link href="/" className="text-xs text-floodlight/40 hover:text-score-amber mb-8 inline-block">
+    <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6 text-floodlight">
+      <div className="bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5 space-y-6">
+        <Link href="/" className="text-xs text-floodlight/50 hover:text-score-amber inline-block">
           ← GoalLine 홈으로
         </Link>
 
@@ -121,10 +121,6 @@ export default function PrivacyPage() {
             </p>
           </section>
 
-        </div>
-
-        <div className="mt-12 pt-6 border-t border-turf-line/30 text-xs text-floodlight/30 text-center">
-          © {new Date().getFullYear()} GoalLine. All rights reserved.
         </div>
       </div>
     </main>
