@@ -68,9 +68,9 @@ export default function KoreanWeekHub({ weeks }: { weeks: PlayerWeek[] }) {
   const benched = [...new Set(all.filter(({ m }) => !m.played).map(({ w }) => w.player.name))]
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 items-start">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 items-stretch">
       {/* 최근 7일 활약 */}
-      <section className={CARD}>
+      <section className={`${CARD} flex flex-col`}>
         <h2 className="text-base font-semibold text-floodlight">최근 7일 활약</h2>
         <p className="text-sm text-floodlight/70 mt-1 mb-2">출전한 경기만 · 평점과 출전 시간</p>
         {played.length === 0 ? (
@@ -103,7 +103,7 @@ export default function KoreanWeekHub({ weeks }: { weeks: PlayerWeek[] }) {
           </ul>
         )}
         {benched.length > 0 && (
-          <p className="text-sm text-floodlight/65 mt-3 pt-3 border-t border-turf-line/40">출전 기록 없음: {benched.join(", ")}</p>
+          <p className="text-sm text-floodlight/65 mt-auto pt-3 border-t border-turf-line/40">출전 기록 없음: {benched.join(", ")}</p>
         )}
       </section>
 
