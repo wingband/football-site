@@ -17,7 +17,8 @@ import ColumnCard from "@/components/ColumnCard"
 // 메인 화면 (2026-10-11 개편). 예전엔 / → /matches 영구 이동이었는데,
 // "들어오자마자 할 게 없다"는 문제로 해외파 · 게시판 · 칼럼 · 결과 · K리그를 한 화면에 모았다.
 // 되돌리려면 git 브랜치 backup/before-home-redesign 참고.
-export const dynamic = "force-dynamic"
+// 매 방문마다 서버에서 다시 그리면 DB를 여러 번 오가느라 2~6초가 걸렸다. 1분마다 한 번만 만들어 두고 모두에게 보여준다.
+export const revalidate = 60
 
 export const metadata: Metadata = {
   title: { absolute: "GoalLine - 해외파 · 경기 결과 · 축구 칼럼 · 게시판" },

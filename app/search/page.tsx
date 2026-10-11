@@ -127,22 +127,22 @@ export default async function SearchPage({
   const totalResults = teams.length + leagues.length + players.length
 
   return (
-    <main className="max-w-3xl mx-auto px-4 sm:px-6 py-6 text-floodlight">
-      <div>
-        <p className="text-sm text-floodlight/75 mb-4">
-          &apos;{q}&apos; 검색 결과 {totalResults}건
-        </p>
+    <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 text-floodlight">
+      <div className="space-y-6">
+        <h1 className="text-xl font-display text-floodlight">
+          &apos;{q}&apos; 검색 결과 <span className="text-score-amber font-data">{totalResults}</span>건
+        </h1>
 
 
         {leagues.length > 0 && (
-          <section className="mb-6">
-            <h2 className="font-display uppercase text-sm text-floodlight/80 mb-2">리그</h2>
-            <div className="bg-turf/40 border-l-2 border-score-amber">
+          <section className="bg-turf/40 border border-turf-line/60 p-4 sm:p-5">
+            <h2 className="text-base font-semibold text-floodlight mb-2">리그 <span className="text-sm font-normal text-floodlight/65 font-data">{leagues.length}</span></h2>
+            <div className="divide-y divide-turf-line/40">
               {leagues.map((l) => (
                 <Link
                   key={l.league.id}
                   href={`/leagues/${l.league.id}`}
-                  className="flex items-center gap-3 px-4 py-3 hover:bg-turf-line/40 border-b border-turf-line/40 last:border-b-0"
+                  className="flex items-center gap-3 px-1 py-3 hover:bg-turf-line/20"
                 >
                   <Logo src={l.league.logo} alt="" className="w-6 h-6" />
                   <span className="text-sm">{leagueKo(l.league.name)}</span>
@@ -154,14 +154,14 @@ export default async function SearchPage({
         )}
 
         {teams.length > 0 && (
-          <section className="mb-6">
-            <h2 className="font-display uppercase text-sm text-floodlight/80 mb-2">팀</h2>
-            <div className="bg-turf/40 border-l-2 border-score-amber">
+          <section className="bg-turf/40 border border-turf-line/60 p-4 sm:p-5">
+            <h2 className="text-base font-semibold text-floodlight mb-2">팀 <span className="text-sm font-normal text-floodlight/65 font-data">{teams.length}</span></h2>
+            <div className="divide-y divide-turf-line/40">
               {teams.map((t) => (
                 <Link
                   key={t.team.id}
                   href={teamHref(t.team.id)} prefetch={false}
-                  className="flex items-center gap-3 px-4 py-3 hover:bg-turf-line/40 border-b border-turf-line/40 last:border-b-0"
+                  className="flex items-center gap-3 px-1 py-3 hover:bg-turf-line/20"
                 >
                   <Logo src={t.team.logo} alt="" className="w-6 h-6" />
                   <span className="text-sm">{teamKo(t.team.name)}</span>
@@ -173,16 +173,16 @@ export default async function SearchPage({
         )}
 
         {players.length > 0 && (
-          <section className="mb-6">
-            <h2 className="font-display uppercase text-sm text-floodlight/80 mb-2">선수</h2>
-            <div className="bg-turf/40 border-l-2 border-score-amber">
+          <section className="bg-turf/40 border border-turf-line/60 p-4 sm:p-5">
+            <h2 className="text-base font-semibold text-floodlight mb-2">선수 <span className="text-sm font-normal text-floodlight/65 font-data">{players.length}</span></h2>
+            <div className="divide-y divide-turf-line/40">
               {players.map((p) => (
                 <Link
                   key={p.player.id}
                   href={`/players/${p.player.id}`}
-                  className="flex items-center gap-3 px-4 py-3 hover:bg-turf-line/40 border-b border-turf-line/40 last:border-b-0"
+                  className="flex items-center gap-3 px-1 py-3 hover:bg-turf-line/20"
                 >
-                  <PlayerAvatar src={p.player.photo} alt={p.player.name} className="w-8 h-8 rounded-full" />
+                  <PlayerAvatar src={p.player.photo} alt={p.player.name} className="w-10 h-10 rounded-full ring-2 ring-score-amber/60" />
                   <span className="text-sm">{p.player.name}</span>
                   <span className="text-xs text-floodlight/65 ml-auto">{p.player.nationality}</span>
                 </Link>
