@@ -67,7 +67,7 @@ export default function LeagueHub({ tabs, initial }: { tabs: Tab[]; initial: Lea
       </nav>
 
       {!data ? (
-        <p className="text-sm text-floodlight/40 py-10 text-center">{loading ? "불러오는 중…" : "순위 정보를 불러오지 못했어요."}</p>
+        <p className="text-sm text-floodlight/40 py-10 text-center min-h-[560px]">{loading ? "불러오는 중…" : "순위 정보를 불러오지 못했어요."}</p>
       ) : (
         <div className={`grid gap-5 lg:grid-cols-[1fr_300px] transition-opacity ${loading ? "opacity-60" : ""}`}>
           {/* 전체 순위표 */}
