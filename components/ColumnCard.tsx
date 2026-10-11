@@ -3,7 +3,7 @@ import Logo from "@/components/Logo"
 import PlayerAvatar from "@/components/PlayerAvatar"
 import { columnCardInfo } from "@/lib/columnCard"
 import { draftKindOf } from "@/lib/draftKinds"
-import { readingMinutes, type Column } from "@/lib/columns"
+import type { Column } from "@/lib/columns"
 
 // 칼럼 카드 (메인·칼럼 목록 공용, 2026-10-12): 말머리 배지 · 평점 강조 · 핵심 내용 · 제목은 잘리지 않는다
 const CDN = "https://media.api-sports.io/football"
@@ -77,7 +77,7 @@ export default function ColumnCard({ column: c, extra }: { column: Column; extra
       {info.lead && <p className="text-sm leading-relaxed text-floodlight/80 line-clamp-4">{info.lead}</p>}
 
       <p className="mt-auto text-xs text-floodlight/55">
-        {mdKst(c.createdAt)} · {readingMinutes(c.content)}분 읽기
+        {mdKst(c.createdAt)}
         {extra}
       </p>
     </Link>

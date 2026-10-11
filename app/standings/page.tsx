@@ -5,6 +5,7 @@ import { getSeasonYear, formatSeasonLabel } from "@/lib/season"
 import { getLeagueStandings } from "@/lib/leagueData"
 import SeasonSelect from "@/components/SeasonSelect"
 import Logo from "@/components/Logo"
+import { teamKo } from "@/lib/koreanNames"
 
 // 드롭다운에 띄울 가장 오래된 시즌. 위쪽 끝은 현재 시즌이라 해가 넘어가면 자동으로 늘어남
 const FIRST_SEASON = 2020
@@ -66,7 +67,9 @@ const LEAGUES = [
   { id: 98,  name: "J리그",        nameEn: "J1 League",      country: "Japan",   logo: "https://media.api-sports.io/football/leagues/98.png" },
 ]
 
-function qualColor(desc: string | null | undefined) {
+function qualColor(desc: string | null | undefined, leagueId?: number, rank?: number) {
+  // K리그1: API가 7~12위를 전부 "Relegation Round"(하위 스플릿)로 주므로 11·12위만 강등권으로 본다
+  if (leagueId === 292) return rank !== undefined && rank >= 11 ? "bg-red-600" : ""
   if (!desc) return ""
   const d = desc.toLowerCase()
   if (d.includes("champions league")) return "bg-blue-500"
@@ -121,24 +124,24 @@ export default async function StandingsPage({
   const monthName = new Date().toLocaleDateString("ko-KR", { month: "long" })
 
   return (
-    <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
-      <div className="max-w-4xl mx-auto px-4 pb-16">
-        <div className="pt-8 pb-4 border-b border-turf-line/40 mb-6">
-          <h1 className="font-display uppercase text-xl text-score-amber">
+    <main className="text-floodlight font-sans">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        <div className="bg-turf/40 border border-turf-line/60 rounded-2xl p-4 sm:p-5">
+          <h1 className="font-display text-2xl text-floodlight">
             {formatSeasonLabel(season)} 리그 순위표
           </h1>
-          <p className="text-xs text-floodlight/40 mt-1">
+          <p className="text-sm text-floodlight/70 mt-1.5">
             {isCurrentSeason ? `${monthName} ${week}주차 기준 · 매일 업데이트` : "종료된 시즌 최종 순위"}
           </p>
         </div>
 
         {/* 시즌 선택 + 리그 탭 */}
-        <div className="flex gap-2 overflow-x-auto pb-3 mb-6 [scrollbar-width:none]">
+        <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
           <SeasonSelect seasons={seasonOptions} current={season} />
           <span className="shrink-0 w-px bg-turf-line/40 my-1" />
           {LEAGUES.map(l => (
             <a key={l.id} href={`#league-${l.id}`}
-              className="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-turf-line/30 hover:bg-turf-line/50 rounded-full text-xs text-floodlight/70 hover:text-floodlight transition-colors">
+              className="shrink-0 flex items-center gap-1.5 px-3.5 py-2 border border-turf-line hover:border-score-amber/60 rounded-full text-sm text-floodlight/85 hover:text-score-amber transition-colors">
               <Logo src={l.logo} alt="" className="w-4 h-4" />
               {l.name}
             </a>
@@ -147,7 +150,7 @@ export default async function StandingsPage({
 
         {/* 해당 시즌 데이터가 아예 없을 때 (예: API 플랜이 커버하지 않는 과거 시즌) */}
         {!hasAnyStandings && (
-          <div className="bg-turf/30 border border-turf-line/30 px-5 py-8 text-center">
+          <div className="bg-turf/40 border border-turf-line/60 rounded-2xl px-5 py-8 text-center">
             <p className="text-sm text-floodlight/50">
               {formatSeasonLabel(season)} 시즌 순위표 데이터가 없습니다.
             </p>
@@ -156,25 +159,25 @@ export default async function StandingsPage({
         )}
 
         {/* 각 리그 순위표 */}
-        <div className="space-y-10">
+        <div className="space-y-6">
           {allData.map(({ id, name, nameEn, logo, data }) => {
             if (!data) return null
             const standings = data.league.standings
             if (!standings?.length) return null
 
             return (
-              <section key={id} id={`league-${id}`}>
+              <section key={id} id={`league-${id}`} className="bg-turf/40 border border-turf-line/60 rounded-2xl p-4 sm:p-5 scroll-mt-20">
                 {/* 리그 헤더 */}
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2.5">
                     <Logo src={logo} alt="" className="w-7 h-7" />
                     <div>
-                      <h2 className="font-display uppercase text-base text-floodlight font-bold">{name}</h2>
-                      <p className="text-[10px] text-floodlight/30">{nameEn} {data.league.season}</p>
+                      <h2 className="font-display text-xl text-floodlight">{name}</h2>
+                      <p className="text-xs text-floodlight/60">{nameEn} {data.league.season}</p>
                     </div>
                   </div>
                   <Link href={`/leagues/${id}`}
-                    className="text-xs text-score-amber hover:underline">
+                    className="text-sm text-score-amber hover:underline">
                     전체 보기 →
                   </Link>
                 </div>
@@ -187,9 +190,9 @@ export default async function StandingsPage({
                         {group[0]?.group}
                       </p>
                     )}
-                    <div className="bg-turf/30 border border-turf-line/30 overflow-hidden">
+                    <div className="overflow-hidden rounded-xl border border-turf-line/40">
                       {/* 컬럼 헤더 */}
-                      <div className="grid grid-cols-[24px_1fr_32px_32px_32px_32px_40px_48px_80px] gap-1 px-3 py-2 text-[10px] text-floodlight/30 uppercase border-b border-turf-line/20">
+                      <div className="grid grid-cols-[24px_1fr_32px_32px_32px_32px_40px_48px_80px] gap-1 px-3 py-2 text-xs text-floodlight/60 border-b border-turf-line/20">
                         <span>#</span>
                         <span>팀</span>
                         <span className="text-center">경기</span>
@@ -203,7 +206,7 @@ export default async function StandingsPage({
 
                       {/* 팀 행 */}
                       {group.slice(0, 20).map((row, idx) => {
-                        const color = qualColor(row.description)
+                        const color = qualColor(row.description, id, row.rank)
                         const form = (row.form ?? "").split("").slice(-5)
 
                         return (
@@ -219,14 +222,14 @@ export default async function StandingsPage({
                             {/* 팀명 */}
                             <span className="flex items-center gap-2 min-w-0">
                               <Logo src={row.team.logo} alt="" className="w-5 h-5 shrink-0" />
-                              <span className="truncate text-xs font-medium">{row.team.name}</span>
+                              <span className="truncate text-sm font-medium">{teamKo(row.team.name)}</span>
                             </span>
 
-                            <span className="text-center text-xs text-floodlight/60 font-data">{row.all.played}</span>
-                            <span className="text-center text-xs text-floodlight/50 font-data hidden sm:block">{row.all.win}</span>
-                            <span className="text-center text-xs text-floodlight/50 font-data hidden sm:block">{row.all.draw}</span>
-                            <span className="text-center text-xs text-floodlight/50 font-data hidden sm:block">{row.all.lose}</span>
-                            <span className="text-center text-xs text-floodlight/60 font-data">
+                            <span className="text-center text-sm text-floodlight/80 font-data">{row.all.played}</span>
+                            <span className="text-center text-sm text-floodlight/75 font-data hidden sm:block">{row.all.win}</span>
+                            <span className="text-center text-sm text-floodlight/75 font-data hidden sm:block">{row.all.draw}</span>
+                            <span className="text-center text-sm text-floodlight/75 font-data hidden sm:block">{row.all.lose}</span>
+                            <span className="text-center text-sm text-floodlight/80 font-data">
                               {row.goalsDiff > 0 ? `+${row.goalsDiff}` : row.goalsDiff}
                             </span>
                             <span className="text-center text-sm font-bold font-data text-floodlight">{row.points}</span>
@@ -251,7 +254,7 @@ export default async function StandingsPage({
                         ].map(l => (
                           <div key={l.label} className="flex items-center gap-1.5">
                             <span className={`w-2 h-2 rounded-full ${l.color}`} />
-                            <span className="text-[10px] text-floodlight/30">{l.label}</span>
+                            <span className="text-xs text-floodlight/65">{l.label}</span>
                           </div>
                         ))}
                       </div>
@@ -264,9 +267,9 @@ export default async function StandingsPage({
         </div>
 
         {/* SEO 텍스트 */}
-        <section className="mt-12 pt-8 border-t border-turf-line/30">
-          <h2 className="font-semibold text-sm text-floodlight/60 mb-2">유럽 축구 리그 순위표 안내</h2>
-          <p className="text-xs text-floodlight/40 leading-relaxed">
+        <section className="bg-turf/40 border border-turf-line/60 rounded-2xl p-4 sm:p-5">
+          <h2 className="font-display text-lg text-floodlight mb-2">유럽 축구 리그 순위표 안내</h2>
+          <p className="text-sm text-floodlight/70 leading-relaxed">
             본 페이지에서는 {formatSeasonLabel(season)} 시즌 프리미어리그(잉글랜드), 라리가(스페인),
             분데스리가(독일), 세리에A(이탈리아), 리그1(프랑스) 순위표를 제공합니다.
             각 팀의 경기수, 승·무·패, 득실차, 승점과 최근 5경기 폼을 확인할 수 있습니다.

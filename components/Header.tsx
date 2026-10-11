@@ -19,7 +19,6 @@ const NAV_LINKS = [
 
 // (2026-09-21) NewsData.io 크레딧 소진으로 뉴스 페이지는 메뉴에서 숨김. 복구되면 { href: "/news", label: "뉴스" } 추가.
 const MORE_LINKS = [
-  { href: "/predictions", label: "예측" },
   { href: "/standings", label: "순위표" },
   { href: "/compare", label: "선수 비교" },
   { href: "/best11", label: "베스트11" },

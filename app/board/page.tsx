@@ -54,20 +54,6 @@ function formatBoardDate(dateStr: string) {
   return `${dParts.year.slice(2)}.${dParts.month}.${dParts.day}`
 }
 
-// 게시판별 아이콘 — 목록에서 한눈에 구분되도록 (2026-10-12 게시판 개편)
-const CATEGORY_ICON: Record<string, string> = {
-  free: "💬",
-  abroad: "🌍",
-  epl: "🇬🇧",
-  laliga: "🇪🇸",
-  bundesliga: "🇩🇪",
-  seriea: "🇮🇹",
-  ligue1: "🇫🇷",
-  ucl: "🏆",
-  kleague: "🏟️",
-  national: "🇰🇷",
-}
-
 // 24시간 안에 올라온 글인지 (서버 렌더 시각 기준)
 function isFresh(iso: string) {
   return Date.now() - new Date(iso).getTime() < 24 * 3600_000
@@ -92,134 +78,134 @@ export default async function BoardPage({
   const pageWindowEnd = Math.min(totalPages, pageWindowStart + 9)
   const pageNumbers = Array.from({ length: pageWindowEnd - pageWindowStart + 1 }, (_, i) => pageWindowStart + i)
 
-  const tabs = [{ key: null as string | null, label: "전체", icon: "📋" }, ...BOARD_CATEGORIES.map((c) => ({ key: c.key as string | null, label: c.label, icon: CATEGORY_ICON[c.key] ?? "⚽" }))]
+  const tabs = [{ key: null as string | null, label: "전체" }, ...BOARD_CATEGORIES.map((c) => ({ key: c.key as string | null, label: c.label }))]
 
   return (
-    <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6 text-floodlight">
-      {/* 히어로 */}
-      <section className="relative overflow-hidden rounded-2xl border border-score-amber/40 bg-gradient-to-br from-turf via-turf/70 to-pitch-night p-5 sm:p-7">
-        <div className="absolute -right-6 -top-6 text-[120px] sm:text-[160px] leading-none opacity-10 select-none" aria-hidden>⚽</div>
-        <div className="relative flex flex-wrap items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs sm:text-sm font-semibold text-score-amber tracking-wide">GOALLINE 축구 팬 놀이터</p>
-            <h1 className="font-display text-3xl sm:text-4xl text-floodlight mt-1">
-              {CATEGORY_ICON[category ?? ""] ?? "💬"} {cat ? cat.title : "게시판"}
-            </h1>
-            <p className="text-sm sm:text-base text-floodlight/80 mt-2">{cat ? cat.desc : "경기 얘기, 이적 루머, 응원하는 팀 자랑까지 — 아무 얘기나 편하게 남겨보세요"}</p>
-            <p className="text-sm text-floodlight/65 mt-2">
-              {cat ? cat.label : "전체"} 게시글 <b className="text-score-amber font-data">{total.toLocaleString("ko-KR")}</b>개
-            </p>
-          </div>
-          <Link
-            href={writeHref}
-            className="shrink-0 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-score-amber text-pitch-night text-base font-bold shadow-lg shadow-score-amber/20 hover:bg-floodlight transition-colors"
-          >
-            ✏️ 글쓰기
-          </Link>
+    <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 text-floodlight">
+      {/* 게시판 이름 + 글쓰기 */}
+      <div className="flex items-end justify-between gap-3 mb-3">
+        <div className="min-w-0">
+          <h1 className="font-display text-2xl sm:text-3xl text-floodlight">{cat ? cat.title : "게시판"}</h1>
+          <p className="text-sm text-floodlight/70 mt-1 truncate">
+            {cat ? cat.desc : "축구 이야기를 자유롭게 나누는 곳"} · 글 <b className="text-score-amber font-data">{total.toLocaleString("ko-KR")}</b>
+          </p>
         </div>
-      </section>
+        <Link href={writeHref} className="shrink-0 px-5 py-2 rounded-lg bg-score-amber text-pitch-night text-sm font-bold hover:bg-floodlight transition-colors">
+          ✏️ 글쓰기
+        </Link>
+      </div>
 
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[220px_minmax(0,1fr)] items-start">
-        {/* 게시판 목록 — 데스크톱은 왼쪽 세로 메뉴, 모바일은 가로 스크롤 */}
-        <nav aria-label="게시판 분류" className="min-w-0 lg:sticky lg:top-20 rounded-2xl lg:border lg:border-turf-line/60 lg:bg-turf/40 lg:p-2">
-          <ul className="flex lg:flex-col gap-1.5 lg:gap-0.5 overflow-x-auto lg:overflow-visible -mx-4 px-4 lg:mx-0 lg:px-0 pb-1 lg:pb-0 [scrollbar-width:none]">
-            {tabs.map((t) => {
-              const active = t.key === category
+      {/* 게시판 탭 (커뮤니티식 가로 탭) */}
+      <nav aria-label="게시판 분류" className="bg-turf/40 border border-turf-line/60 rounded-t-xl border-b-0">
+        <ul className="flex flex-wrap">
+          {tabs.map((t) => {
+            const active = t.key === category
+            return (
+              <li key={t.key ?? "all"}>
+                <Link
+                  href={t.key ? `/board?category=${t.key}` : "/board"}
+                  className={`block px-3.5 py-2.5 text-sm border-b-2 transition-colors ${
+                    active ? "border-score-amber text-score-amber font-bold" : "border-transparent text-floodlight/80 hover:text-floodlight"
+                  }`}
+                >
+                  {t.label}
+                </Link>
+              </li>
+            )
+          })}
+        </ul>
+      </nav>
+
+      {/* 글 목록 — 표 형태 */}
+      <div className="border border-turf-line/60 rounded-b-xl overflow-hidden bg-turf/20">
+        <div className="hidden sm:grid grid-cols-[88px_minmax(0,1fr)_120px_64px_56px_48px] gap-2 px-3 py-2 text-xs text-floodlight/60 bg-turf/50 border-b border-turf-line/60 text-center">
+          <span>분류</span>
+          <span>제목</span>
+          <span>글쓴이</span>
+          <span>날짜</span>
+          <span>조회</span>
+          <span>추천</span>
+        </div>
+
+        {posts.length === 0 ? (
+          <div className="text-center py-14 px-4">
+            <p className="text-base font-semibold text-floodlight">{cat ? `${cat.title}에 아직 글이 없어요` : "아직 게시글이 없어요"}</p>
+            <p className="text-sm text-floodlight/70 mt-1">첫 글의 주인공이 되어보세요!</p>
+            <Link href={writeHref} className="inline-block mt-4 px-5 py-2 rounded-lg bg-score-amber text-pitch-night text-sm font-bold hover:bg-floodlight transition-colors">
+              ✏️ 첫 글 쓰기
+            </Link>
+          </div>
+        ) : (
+          <ul>
+            {posts.map((post) => {
+              const fresh = isFresh(post.createdAt)
+              const hot = post.likeCount >= 3 || post.commentCount >= 5 || post.viewCount >= 100
+              const title = (
+                <span className="min-w-0">
+                  <span className="text-[15px] text-floodlight group-hover:text-score-amber transition-colors">{post.title}</span>
+                  {post.commentCount > 0 && <span className="ml-1.5 text-score-amber text-xs font-bold font-data">[{post.commentCount}]</span>}
+                  {fresh && <span className="ml-1.5 text-[10px] font-bold px-1 py-px rounded bg-red-500 text-white align-middle">N</span>}
+                  {hot && <span className="ml-1 text-[10px] font-bold px-1 py-px rounded bg-score-amber text-pitch-night align-middle">HOT</span>}
+                </span>
+              )
               return (
-                <li key={t.key ?? "all"} className="shrink-0">
-                  <Link
-                    href={t.key ? `/board?category=${t.key}` : "/board"}
-                    className={`flex items-center gap-2 px-3.5 py-2 lg:py-2.5 rounded-full lg:rounded-xl border lg:border-0 text-sm transition-colors ${
-                      active
-                        ? "bg-score-amber text-pitch-night border-score-amber font-bold"
-                        : "border-turf-line text-floodlight/85 hover:text-floodlight hover:border-floodlight/40 lg:hover:bg-turf-line/40"
-                    }`}
-                  >
-                    <span aria-hidden>{t.icon}</span>
-                    {t.label}
+                <li key={post.id} className="border-b border-turf-line/40 last:border-b-0">
+                  <Link href={`/board/${post.id}`} className="group block hover:bg-turf-line/20 transition-colors">
+                    {/* 데스크톱 */}
+                    <div className="hidden sm:grid grid-cols-[88px_minmax(0,1fr)_120px_64px_56px_48px] gap-2 px-3 py-2.5 items-center text-sm">
+                      <span className="text-center text-xs text-floodlight/75">{categoryLabel(post.category)}</span>
+                      {title}
+                      <span className="text-center truncate text-floodlight/85">{post.nickname}</span>
+                      <span className="text-center font-data text-xs text-floodlight/65">{formatBoardDate(post.createdAt)}</span>
+                      <span className="text-center font-data text-xs text-floodlight/65">{post.viewCount}</span>
+                      <span className={`text-center font-data text-xs ${post.likeCount > 0 ? "text-score-amber font-bold" : "text-floodlight/65"}`}>{post.likeCount}</span>
+                    </div>
+                    {/* 모바일 */}
+                    <div className="sm:hidden px-3 py-2.5">
+                      <p className="leading-snug">
+                        <span className="text-xs text-score-amber/90 mr-1.5">[{categoryLabel(post.category)}]</span>
+                        {title}
+                      </p>
+                      <p className="mt-1 flex items-center gap-2 text-xs text-floodlight/65">
+                        <span className="text-floodlight/85">{post.nickname}</span>
+                        <span className="font-data">{formatBoardDate(post.createdAt)}</span>
+                        <span>조회 {post.viewCount}</span>
+                        <span className={post.likeCount > 0 ? "text-score-amber font-semibold" : ""}>추천 {post.likeCount}</span>
+                      </p>
+                    </div>
                   </Link>
                 </li>
               )
             })}
           </ul>
-        </nav>
+        )}
+      </div>
 
-        {/* 글 목록 */}
-        <div className="min-w-0">
-          {posts.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-score-amber/50 bg-turf/30 text-center py-14 px-4">
-              <p className="text-4xl mb-3">📝</p>
-              <p className="text-base sm:text-lg font-semibold text-floodlight">
-                {cat ? `${cat.title}에 아직 글이 없어요` : "아직 게시글이 없어요"}
-              </p>
-              <p className="text-sm text-floodlight/70 mt-1">첫 글의 주인공이 되어보세요!</p>
-              <Link href={writeHref} className="inline-block mt-5 px-6 py-2.5 rounded-full bg-score-amber text-pitch-night font-bold hover:bg-floodlight transition-colors">
-                ✏️ 첫 글 쓰기
-              </Link>
-            </div>
-          ) : (
-            <ul className="space-y-3">
-              {posts.map((post) => {
-                const fresh = isFresh(post.createdAt)
-                const hot = post.likeCount >= 3 || post.commentCount >= 5 || post.viewCount >= 100
-                return (
-                  <li key={post.id}>
-                    <Link
-                      href={`/board/${post.id}`}
-                      className="block rounded-2xl border border-turf-line/60 bg-turf/40 p-4 sm:p-5 hover:border-score-amber/60 hover:bg-turf/60 transition-colors"
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xs sm:text-sm font-semibold px-2.5 py-0.5 rounded-full bg-turf-line/70 text-floodlight/90">
-                          {CATEGORY_ICON[post.category] ?? "⚽"} {categoryLabel(post.category)}
-                        </span>
-                        {fresh && <span className="text-[11px] font-bold px-1.5 py-0.5 rounded bg-red-500 text-white">NEW</span>}
-                        {hot && <span className="text-[11px] font-bold px-1.5 py-0.5 rounded bg-score-amber text-pitch-night">HOT</span>}
-                        <span className="ml-auto text-xs sm:text-sm text-floodlight/65 font-data">{formatBoardDate(post.createdAt)}</span>
-                      </div>
-                      <h2 className="text-base sm:text-lg font-semibold leading-snug text-floodlight">
-                        {post.title}
-                        {post.commentCount > 0 && <span className="ml-1.5 text-score-amber text-sm font-bold">[{post.commentCount}]</span>}
-                      </h2>
-                      <p className="mt-2 flex items-center gap-3 text-xs sm:text-sm text-floodlight/70">
-                        <span className="font-semibold text-floodlight/85">{post.nickname}</span>
-                        <span>👁 {post.viewCount}</span>
-                        <span className={post.likeCount > 0 ? "text-score-amber font-semibold" : ""}>👍 {post.likeCount}</span>
-                        <span>💬 {post.commentCount}</span>
-                      </p>
-                    </Link>
-                  </li>
-                )
-              })}
-            </ul>
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-1 mt-6 text-sm">
+          {pageWindowStart > 1 && (
+            <Link href={qs(Math.max(1, page - 10))} className="px-3 py-1.5 text-floodlight/70 hover:text-floodlight">
+              ‹ 이전
+            </Link>
           )}
-
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-1.5 mt-8 text-sm">
-              {pageWindowStart > 1 && (
-                <Link href={qs(Math.max(1, page - 10))} className="px-3 py-1.5 text-floodlight/70 hover:text-floodlight">
-                  ‹ 이전
-                </Link>
-              )}
-              {pageNumbers.map((p) => (
-                <Link
-                  key={p}
-                  href={qs(p)}
-                  className={`w-9 h-9 flex items-center justify-center rounded-full border ${
-                    p === page ? "bg-score-amber text-pitch-night border-score-amber font-bold" : "border-turf-line text-floodlight/75 hover:border-floodlight/40"
-                  }`}
-                >
-                  {p}
-                </Link>
-              ))}
-              {pageWindowEnd < totalPages && (
-                <Link href={qs(Math.min(totalPages, page + 10))} className="px-3 py-1.5 text-floodlight/70 hover:text-floodlight">
-                  다음 ›
-                </Link>
-              )}
-            </div>
+          {pageNumbers.map((p) => (
+            <Link
+              key={p}
+              href={qs(p)}
+              className={`min-w-8 h-8 px-2 flex items-center justify-center rounded border ${
+                p === page ? "bg-score-amber text-pitch-night border-score-amber font-bold" : "border-turf-line text-floodlight/75 hover:border-floodlight/40"
+              }`}
+            >
+              {p}
+            </Link>
+          ))}
+          {pageWindowEnd < totalPages && (
+            <Link href={qs(Math.min(totalPages, page + 10))} className="px-3 py-1.5 text-floodlight/70 hover:text-floodlight">
+              다음 ›
+            </Link>
           )}
         </div>
-      </div>
+      )}
     </main>
   )
 }

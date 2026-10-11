@@ -51,7 +51,10 @@ type ScorerEntry = {
   statistics: { team: { name: string; logo: string }; goals: { total: number | null; assists: number | null } }[]
 }
 
-function zoneOf(desc: string | null | undefined): BoardTeamRow["zone"] {
+function zoneOf(desc: string | null | undefined, leagueId?: number, rank?: number): BoardTeamRow["zone"] {
+  // K리그1은 33라운드 뒤 상·하위 스플릿으로 갈려서 API가 7~12위를 전부 "Relegation Round"로 준다.
+  // 실제 강등권은 11위(승강 PO)·12위(자동 강등)뿐이라 순위로 직접 정한다.
+  if (leagueId === 292) return rank !== undefined && rank >= 11 ? "releg" : null
   if (!desc) return null
   const d = desc.toLowerCase()
   if (d.includes("relegation")) return "releg"
@@ -112,7 +115,7 @@ export async function getLeagueBoard(leagueId: number): Promise<LeagueBoardData 
       lose: r.all.lose,
       gd: r.goalsDiff,
       points: r.points,
-      zone: zoneOf(r.description),
+      zone: zoneOf(r.description, leagueId, r.rank),
     })),
     scorers: scorersTop.map((e) => toRow(e, "total")),
     assists: assistsTop.map((e) => toRow(e, "assists")),
