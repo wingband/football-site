@@ -124,7 +124,7 @@ function ColumnList({ columns, type, page, views }: { columns: ColumnItem[]; typ
 
   return (
     <>
-      <nav className="flex gap-1.5 overflow-x-auto [scrollbar-width:none]">
+      <nav className="flex flex-wrap gap-1.5">
         {tabs.map((t) => (
           <Link
             key={t.key ?? "all"}

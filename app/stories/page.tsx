@@ -147,7 +147,7 @@ export default function StoriesPage() {
         <p className="text-xs text-floodlight/65 mt-1">주요 경기 분석 · {articles.length}개</p>
 
         {/* 리그 탭 필터 */}
-        <div className="flex gap-1.5 overflow-x-auto pt-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex flex-wrap gap-1.5 pt-3">
           {/* 전체 탭 */}
           <button
             onClick={() => { setShown(20); setActiveTab("전체") }}
