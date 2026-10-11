@@ -5,6 +5,8 @@ import { detailText, seasonLineFor } from "@/lib/weeklyContext"
 import { getColumnBySlug, saveColumn } from "@/lib/columns"
 import { getMatchPhase } from "@/lib/matchStatus"
 import { renderPlayerCard } from "@/lib/weeklyCard"
+import { goalTimeline, nameHintsOf } from "@/lib/goalTimeline"
+import { koPlayerNames } from "@/lib/playerNameKo"
 import { COMMON_RULES, DRAFT_KINDS, callOpenAI, shapeDraftText, uploadPng, cleanTags } from "@/lib/draftEngine"
 
 // 경기 직후 해외파 선수 리포트 초안 (3시간마다 크론, 2026-10-11).
@@ -147,10 +149,8 @@ async function makeReport(
     },
   } as WeeklyMatch)
 
-  const goalEvents = events.filter((e) => e.type === "Goal" && e.detail !== "Missed Penalty")
-  const goalFlow = goalEvents
-    .map((e) => `${minute(e.time)} ${e.detail === "Own Goal" ? `자책골(${koTeam(e.team.name)} 기록)` : `${e.player.name ?? "?"}(${koTeam(e.team.name)}${e.detail === "Penalty" ? ", PK" : ""})`}`)
-    .join(", ")
+  const ko = await koPlayerNames(nameHintsOf(events))
+  const goalFlow = goalTimeline(events, fx.teams.home, fx.teams.away, fx.goals, ko).join(" / ")
   const mine: string[] = []
   for (const e of events) {
     if (e.type === "Goal" && e.detail !== "Missed Penalty" && e.detail !== "Own Goal" && e.player.id === p.id) mine.push(`${minute(e.time)} 골`)
@@ -175,6 +175,8 @@ async function makeReport(
   const prompt = `너는 한국 축구 사이트 GoalLine의 칼럼 초안 작성자다. 아래 데이터로 "${p.name} ${oppKo}전 경기 리포트" 초안을 써라.
 
 ${COMMON_RULES}
+- 선수 이름은 데이터에 적힌 한글 표기 그대로 써라.
+- 득점 순서의 "→ 스코어"가 그 골 직후 스코어다. 선제골·동점골·역전골은 이 스코어로 판단해라. "골 A, 도움 B"에서 득점자는 A다.
 
 [본문 구성]
 - 도입 2문장: 경기 결과와 ${p.name}의 핵심 기록(출전 시간, 평점, 공격포인트)

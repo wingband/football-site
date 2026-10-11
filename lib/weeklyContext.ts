@@ -1,6 +1,8 @@
 import { apiFetch } from "@/lib/matchApi"
 import { getCachedPlayerStat } from "@/lib/playerStatCache"
 import { koTeam, type PlayerWeek, type WeeklyMatch } from "@/lib/koreanWeekly"
+import { goalTimeline, nameHintsOf } from "@/lib/goalTimeline"
+import { koPlayerNames } from "@/lib/playerNameKo"
 
 // 주간 해외파 칼럼 초안에 넣을 "추가 재료" (2026-10-11).
 // 출전 시간·평점만으로는 글이 빈약해서, 실제 데이터로 확인되는 것만 더 모은다:
@@ -34,7 +36,7 @@ async function getEvents(fixtureId: number): Promise<RawEvent[]> {
 }
 
 export type MatchContext = {
-  goalFlow: string // "23분 케인(바이에른 뮌헨), 67분 자책골(아우크스부르크)…" 또는 ""
+  goalFlow: string // "23분 골 케인(바이에른 뮌헨) → 바이에른 뮌헨 1:0 아우크스부르크 / …" 또는 ""
   myEvents: string // "54분 골, 81분 도움, 30분 경고" 또는 ""
 }
 
@@ -67,16 +69,12 @@ export async function buildWeeklyContext(weeks: PlayerWeek[]) {
 
   const events = new Map<number, RawEvent[]>()
   await Promise.all([...fixtureIds].map(async (id) => events.set(id, await getEvents(id))))
+  // 상대·동료 선수의 영문 이름은 한글로 (DB 저장, 다음 주에도 같은 표기)
+  const ko = await koPlayerNames([...events.values()].flatMap(nameHintsOf))
 
   const matchCtx = (playerId: number, m: WeeklyMatch): MatchContext => {
     const evs = events.get(m.fixtureId) ?? []
-    const goals = evs.filter((e) => e.type === "Goal" && e.detail !== "Missed Penalty")
-    const goalFlow = goals
-      .map((e) => {
-        const who = e.detail === "Own Goal" ? `자책골(${koTeam(e.team.name)} 기록)` : `${e.player.name ?? "?"}(${koTeam(e.team.name)}${e.detail === "Penalty" ? ", PK" : ""})`
-        return `${minuteText(e.time)} ${who}`
-      })
-      .join(", ")
+    const goalFlow = goalTimeline(evs, { name: m.homeName }, { name: m.awayName }, { home: m.homeScore, away: m.awayScore }, ko).join(" / ")
     const mine: string[] = []
     for (const e of evs) {
       if (e.type === "Goal" && e.detail !== "Missed Penalty" && e.detail !== "Own Goal" && e.player.id === playerId) mine.push(`${minuteText(e.time)} 골${e.detail === "Penalty" ? "(PK)" : ""}`)

@@ -3,6 +3,8 @@ import { getSeasonYear } from "@/lib/season"
 import { formatKickoffKst, koTeam } from "@/lib/koreanWeekly"
 import { getColumns, makeColumnSlug, saveColumn } from "@/lib/columns"
 import { getMatchPhase } from "@/lib/matchStatus"
+import { goalTimeline, nameHintsOf } from "@/lib/goalTimeline"
+import { koPlayerNames } from "@/lib/playerNameKo"
 import { COMMON_RULES, DRAFT_KINDS, callOpenAI, shapeDraftText, insertBefore, cleanTags, type DraftResult } from "@/lib/draftEngine"
 
 // K리그1 라운드 정리 칼럼 초안 (월요일 크론, 2026-10-11).
@@ -46,23 +48,29 @@ export async function generateKLeagueRoundDraft({ refreshDraft = false } = {}): 
   const rounds = [...new Set(done.map((f) => f.league.round).filter(Boolean))] as string[]
   const roundLabel = rounds.map((r) => r.replace(/Regular Season - /, "").replace(/Championship Round - |Relegation Round - /, "")).join(", ")
 
-  const matchBlocks = await Promise.all(
+  const eventsById = new Map<number, RawEvent[]>()
+  await Promise.all(
     done.map(async (f) => {
-      let events: RawEvent[] = []
       try {
-        events = ((await apiFetch(`/fixtures/events?fixture=${f.fixture.id}`, 86400)) as RawEvent[]) ?? []
-      } catch {}
-      const goals = events
-        .filter((e) => e.type === "Goal" && e.detail !== "Missed Penalty")
-        .map((e) => `${minute(e.time)} ${e.detail === "Own Goal" ? `자책골(${koTeam(e.team.name)} 기록)` : `${e.player.name ?? "?"}(${koTeam(e.team.name)}${e.detail === "Penalty" ? ", PK" : ""}${e.assist.name ? `, 도움 ${e.assist.name}` : ""})`}`)
-      const reds = events.filter((e) => e.type === "Card" && e.detail.includes("Red")).map((e) => `${minute(e.time)} ${e.player.name ?? "?"}(${koTeam(e.team.name)}) 퇴장`)
-      return [
-        `- ${formatKickoffKst(f.fixture.date)} | ${koTeam(f.teams.home.name)} ${f.goals.home}:${f.goals.away} ${koTeam(f.teams.away.name)}`,
-        goals.length ? `  · 득점: ${goals.join(", ")}` : "  · 득점: 없음(무득점) 또는 데이터 없음",
-        reds.length ? `  · ${reds.join(", ")}` : "",
-      ].filter(Boolean).join("\n")
+        eventsById.set(f.fixture.id, ((await apiFetch(`/fixtures/events?fixture=${f.fixture.id}`, 86400)) as RawEvent[]) ?? [])
+      } catch {
+        eventsById.set(f.fixture.id, [])
+      }
     })
   )
+  // 영문 선수 이름은 한글로 (DB에 저장해 다음 라운드에도 같은 표기)
+  const ko = await koPlayerNames([...eventsById.values()].flatMap(nameHintsOf))
+
+  const matchBlocks = done.map((f) => {
+    const events = eventsById.get(f.fixture.id) ?? []
+    const timeline = goalTimeline(events, f.teams.home, f.teams.away, f.goals, ko)
+    const reds = events.filter((e) => e.type === "Card" && e.detail.includes("Red")).map((e) => `${minute(e.time)} ${ko(e.player.name)}(${koTeam(e.team.name)}) 퇴장`)
+    return [
+      `- ${formatKickoffKst(f.fixture.date)} | ${koTeam(f.teams.home.name)} ${f.goals.home}:${f.goals.away} ${koTeam(f.teams.away.name)}`,
+      ...(timeline.length ? timeline.map((t) => `  · ${t}`) : ["  · 득점 없음 또는 데이터 없음"]),
+      ...reds.map((r) => `  · ${r}`),
+    ].join("\n")
+  })
 
   const groups = await getStandings(LEAGUE_ID, season)
   const tableRows = groups.flat().sort((a, b) => a.rank - b.rank)
@@ -73,13 +81,13 @@ export async function generateKLeagueRoundDraft({ refreshDraft = false } = {}): 
   const prompt = `너는 한국 축구 사이트 GoalLine의 칼럼 초안 작성자다. 아래 데이터로 "K리그1 ${roundLabel ? `${roundLabel}라운드` : "이번 라운드"} 정리" 칼럼 초안을 써라.
 
 ${COMMON_RULES}
-- 선수 이름은 데이터에 적힌 표기 그대로 써라(영문이면 영문 그대로). 한글로 옮기거나 추측하지 마라.
-- 팀 이름은 데이터에 적힌 한글 표기 그대로 써라.
+- 선수 이름과 팀 이름은 데이터에 적힌 한글 표기 그대로 써라.
+- 득점 줄의 "→ 스코어"가 그 골 직후 스코어다. 선제골·동점골·역전골·추가골은 반드시 이 스코어로 판단해라. "골 A, 도움 B"에서 득점자는 A다.
 - 지난 라운드 순위 데이터는 없다. "순위가 올랐다/내려갔다/지켰다" 같은 순위 변동은 쓰지 말고 현재 순위와 승점만 말해라.
 
 [본문 구성]
 - 도입 2~3문장: 이번 라운드 전체 흐름(경기 수, 큰 점수 차, 현재 선두 등 데이터로 확인되는 것만)
-- "## 경기별 결과": 경기마다 "### 홈팀 점수 원정팀" 소제목과 2~3문장(득점 순서, 퇴장 등)
+- "## 경기별 결과": 경기마다 "### 홈팀 점수 원정팀" 소제목과 2~3문장(득점 순서와 그때 스코어, 도움, 퇴장)
 - "## 순위 판도": 순위 데이터로 선두 경쟁과 하위권 상황 3~4문장 (순위표 자체는 따로 들어가니 전부 나열하지 마라)
 - 제목은 25~40자, "K리그1"과 라운드 또는 핵심 팀 이름이 들어가게
 
