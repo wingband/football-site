@@ -108,8 +108,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // 항상 존재하는 페이지. /search는 쿼리 기반이라 색인 가치가 없어서 제외 (robots에서도 차단)
   const staticRoutes: { path: string; priority: number; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"] }[] = [
-    // "/"는 /matches로 영구 이동하는 주소라 사이트맵에서 뺀다 (이동하는 주소를 넣으면 색인 경고)
-    { path: "/matches",         priority: 1,   changeFrequency: "hourly" },
+    // (2026-10-11) "/"가 리다이렉트가 아닌 진짜 메인 화면이 되어 다시 넣는다
+    { path: "/",                priority: 1,   changeFrequency: "hourly" },
+    { path: "/matches",         priority: 0.9, changeFrequency: "hourly" },
     { path: "/columns",         priority: 0.9, changeFrequency: "daily" },
     { path: "/stories",         priority: 0.9, changeFrequency: "hourly" },
     { path: "/standings",       priority: 0.8, changeFrequency: "daily" },
