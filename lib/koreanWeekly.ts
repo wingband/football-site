@@ -28,12 +28,39 @@ type RawFixturePlayers = {
   players: {
     player: { id: number }
     statistics: {
-      games?: { minutes: number | null; rating: string | null; substitute?: boolean | null }
-      goals?: { total: number | null; assists: number | null }
+      games?: { minutes: number | null; rating: string | null; substitute?: boolean | null; position?: string | null; captain?: boolean | null }
+      goals?: { total: number | null; assists: number | null; saves?: number | null; conceded?: number | null }
       cards?: { yellow: number | null; red: number | null }
+      shots?: { total: number | null; on: number | null }
+      passes?: { total: number | null; key: number | null }
+      dribbles?: { attempts: number | null; success: number | null }
+      tackles?: { total: number | null; interceptions: number | null; blocks: number | null }
+      duels?: { total: number | null; won: number | null }
+      fouls?: { drawn: number | null; committed: number | null }
     }[]
   }[]
 }[]
+
+// 경기 세부 기록 (값이 없으면 null). 주간 칼럼 초안에 재료로 쓴다 (2026-10-11)
+export type MatchDetail = {
+  position: string | null
+  captain: boolean
+  shots: number | null
+  shotsOn: number | null
+  passes: number | null
+  keyPasses: number | null
+  dribbleAttempts: number | null
+  dribbleSuccess: number | null
+  tackles: number | null
+  interceptions: number | null
+  blocks: number | null
+  duels: number | null
+  duelsWon: number | null
+  foulsDrawn: number | null
+  foulsCommitted: number | null
+  saves: number | null
+  conceded: number | null
+}
 
 export type WeeklyMatch = {
   fixtureId: number
@@ -59,6 +86,7 @@ export type WeeklyMatch = {
   yellow: number
   red: number
   substitute: boolean | null
+  detail: MatchDetail | null
   // matchLinkHref에 넘기기 위한 원본 형태
   slugSource: { fixture: { id: number; date: string }; teams: { home: { name: string }; away: { name: string } } }
 }
@@ -201,6 +229,27 @@ export const getKoreanPlayersWeek = cache(async function getKoreanPlayersWeek(da
           yellow: stat?.cards?.yellow ?? 0,
           red: stat?.cards?.red ?? 0,
           substitute: stat?.games?.substitute ?? null,
+          detail: stat
+            ? {
+                position: stat.games?.position ?? null,
+                captain: stat.games?.captain === true,
+                shots: stat.shots?.total ?? null,
+                shotsOn: stat.shots?.on ?? null,
+                passes: stat.passes?.total ?? null,
+                keyPasses: stat.passes?.key ?? null,
+                dribbleAttempts: stat.dribbles?.attempts ?? null,
+                dribbleSuccess: stat.dribbles?.success ?? null,
+                tackles: stat.tackles?.total ?? null,
+                interceptions: stat.tackles?.interceptions ?? null,
+                blocks: stat.tackles?.blocks ?? null,
+                duels: stat.duels?.total ?? null,
+                duelsWon: stat.duels?.won ?? null,
+                foulsDrawn: stat.fouls?.drawn ?? null,
+                foulsCommitted: stat.fouls?.committed ?? null,
+                saves: stat.goals?.saves ?? null,
+                conceded: stat.goals?.conceded ?? null,
+              }
+            : null,
           slugSource: slugSourceOf(fx),
         }
       })
