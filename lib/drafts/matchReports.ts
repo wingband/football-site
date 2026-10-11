@@ -199,6 +199,7 @@ ${data}`
       const kstDay = new Date(fx.fixture.date).toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul", month: "long", day: "numeric" })
       const png = await renderPlayerCard({
         name: p.name,
+        photo: `https://media.api-sports.io/football/players/${p.id}.png`,
         team: teamKo,
         scoreLine: `${koTeam(fx.teams.home.name)} ${fx.goals.home} : ${fx.goals.away} ${koTeam(fx.teams.away.name)}`,
         meta: `${kstDay} · ${leagueKo} · ${isHome ? "홈" : "원정"} ${result}`,

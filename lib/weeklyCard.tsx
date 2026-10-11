@@ -218,6 +218,7 @@ export type PlayerCardData = {
   meta: string // "10월 10일 · 라리가"
   rating: number | null
   stats: { label: string; value: string }[] // 최대 6개
+  photo?: string | null // 선수 얼굴 사진 URL
 }
 
 export async function renderPlayerCard(d: PlayerCardData, fontOverride?: FontOverride): Promise<ArrayBuffer> {
@@ -231,7 +232,11 @@ export async function renderPlayerCard(d: PlayerCardData, fontOverride?: FontOve
       <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", backgroundColor: BG, padding: "40px 56px", fontFamily: "NotoKR, sans-serif", color: TEXT }}>
         <div style={{ display: "flex", fontSize: 22, color: GOLD, fontWeight: 700, letterSpacing: "0.08em" }}>GOALLINE 경기 리포트</div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 14 }}>
-          <div style={{ display: "flex", flexDirection: "column" }}>
+          {d.photo && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={d.photo} width={150} height={150} style={{ width: 150, height: 150, borderRadius: 75, objectFit: "cover", marginRight: 28, border: `3px solid ${GOLD}`, backgroundColor: PANEL }} />
+          )}
+          <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
             <div style={{ display: "flex", alignItems: "baseline" }}>
               <span style={{ fontSize: 64, fontWeight: 700 }}>{d.name}</span>
               <span style={{ fontSize: 28, color: MUTED, marginLeft: 18 }}>{d.team}</span>

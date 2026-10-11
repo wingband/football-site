@@ -125,10 +125,8 @@ export default function ColumnBody({ content }: { content: string }) {
           case "hr":
             return <hr key={k} className="border-turf-line/50" />
           case "img":
-            // 자동 생성되던 큼직한 기록 카드 이미지는 보여주지 않는다 (본문 텍스트에 같은 내용이 있다)
-            if (/— GoalLine/.test(b.alt)) return null
             return (
-              <figure key={k} className="my-2">
+              <figure key={k} className={/— GoalLine/.test(b.alt) ? "my-2 max-w-md" : "my-2"}>
                 {/* 칼럼 이미지는 업로드 시점에 이미 줄여서 저장하므로 next/image 최적화 없이 그대로 쓴다 */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={b.src} alt={b.alt} loading="lazy" className="w-full h-auto rounded border border-turf-line/30" />

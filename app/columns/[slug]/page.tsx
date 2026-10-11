@@ -83,23 +83,17 @@ export default async function ColumnPage({ params }: { params: Promise<{ slug: s
       {column.published && <ColumnViewBeacon slug={column.slug} />}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
-      <article className="bg-turf/40 border border-turf-line/60 rounded-none p-5 sm:p-8">
+      <article className="max-w-4xl mx-auto">
         <Link href="/columns" className="text-xs text-floodlight/50 hover:text-floodlight transition-colors">
           ← 칼럼 목록
         </Link>
 
         <header className="mt-5 pb-6 border-b border-turf-line/40">
-          {column.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-3">
-              {column.tags.map((t) => (
-                <span key={t} className="text-xs text-score-amber/80">#{t}</span>
-              ))}
-            </div>
-          )}
+          <p className="text-xs font-semibold tracking-wide text-score-amber mb-2">GOALLINE 칼럼</p>
           <h1 className="text-xl font-bold leading-snug text-floodlight">{column.title}</h1>
           {column.summary && <p className="text-sm text-floodlight/60 mt-3 leading-relaxed">{column.summary}</p>}
           <p className="text-xs text-floodlight/40 mt-4">
-            GoalLine 칼럼 · {formatDate(column.createdAt)}
+            GoalLine 편집부 · {formatDate(column.createdAt)}
             {edited && ` (수정 ${formatDate(column.updatedAt)})`}
             {!column.published && " · 비공개"}
             {admin && column.published && (
@@ -117,6 +111,13 @@ export default async function ColumnPage({ params }: { params: Promise<{ slug: s
           <ColumnBody content={column.content} />
         </div>
 
+          {column.tags.length > 0 && (
+            <div className="flex flex-wrap gap-x-3 gap-y-1 pt-6">
+              {column.tags.map((t) => (
+                <span key={t} className="text-xs text-floodlight/45">#{t}</span>
+              ))}
+            </div>
+          )}
         {column.published && <CoupangBanner className="pb-8" />}
 
         {column.published && (
