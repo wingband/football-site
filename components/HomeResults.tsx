@@ -47,6 +47,8 @@ export default function HomeResults({ tabs, results }: { tabs: Tab[]; results: H
             className={`flex-1 min-w-0 h-10 flex items-center justify-center gap-1 border-b-2 transition-colors ${
               active === t.id
                 ? "border-score-amber bg-turf-line/20"
+                : t.n === 0
+                ? "border-transparent opacity-30"
                 : "border-transparent opacity-60 hover:opacity-100 hover:bg-turf-line/10"
             }`}
           >
@@ -67,15 +69,13 @@ export default function HomeResults({ tabs, results }: { tabs: Tab[]; results: H
           <ul className={`divide-y divide-turf-line/40 ${open ? "max-h-[420px] overflow-y-auto overscroll-contain pr-2 scroll-dark" : ""}`}>
             {shown.map((r) => (
               <li key={r.fixtureId}>
-                <Link href={matchLinkHref(r.slugSource)} className="block py-2 px-1 hover:bg-turf-line/20 rounded">
-                  <p className="flex items-center gap-1.5 text-xs text-floodlight/65 mb-1 justify-start">
-                    <Logo src={r.leagueLogo} alt="" className="w-3.5 h-3.5 shrink-0" />
-                    <span className="text-floodlight/85">{r.leagueName}</span>
-                    <span className="text-floodlight/30">·</span>
+                <Link href={matchLinkHref(r.slugSource)} className="flex flex-col gap-1 py-2.5 px-1 hover:bg-turf-line/20 rounded sm:flex-row sm:items-center sm:gap-4">
+                  <p className="flex items-center gap-1.5 text-xs text-floodlight/65 sm:w-32 sm:shrink-0">
+                    {active === "all" && <Logo src={r.leagueLogo} alt={r.leagueName} className="w-4 h-4 shrink-0" />}
                     <span className={r.whenLabel === "오늘" ? "text-score-amber" : ""}>{r.whenLabel}</span>
                     <span className="font-data">{r.time}</span>
                   </p>
-                  <div className="grid grid-cols-[minmax(0,1fr)_auto_1fr] items-center gap-2">
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:flex-1">
                     <span className="flex items-center justify-end gap-2 min-w-0 text-sm text-floodlight">
                       <span className="truncate">{r.home.name}</span>
                       <Logo src={r.home.logo} alt="" className="w-5 h-5 shrink-0" />
