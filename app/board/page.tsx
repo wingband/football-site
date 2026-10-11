@@ -118,7 +118,8 @@ export default async function BoardPage({
 
       {/* 글 목록 — 표 형태 */}
       <div>
-        <div className="hidden sm:grid grid-cols-[88px_minmax(0,1fr)_120px_64px_56px_48px] gap-2 px-3 py-2 text-xs text-floodlight/55 border-b border-turf-line/50 text-center">
+        <div className="hidden sm:grid grid-cols-[48px_88px_minmax(0,1fr)_120px_64px_56px_48px] gap-2 px-3 py-2 text-xs text-floodlight/55 border-b border-turf-line/50 text-center">
+          <span>번호</span>
           <span>분류</span>
           <span>제목</span>
           <span>글쓴이</span>
@@ -137,7 +138,8 @@ export default async function BoardPage({
           </div>
         ) : (
           <ul>
-            {posts.map((post) => {
+            {posts.map((post, idx) => {
+              const no = total - (page - 1) * 20 - idx
               const fresh = isFresh(post.createdAt)
               const hot = post.likeCount >= 3 || post.commentCount >= 5 || post.viewCount >= 100
               const title = (
@@ -152,7 +154,8 @@ export default async function BoardPage({
                 <li key={post.id} className="border-b border-turf-line/30">
                   <Link href={`/board/${post.id}`} className="group block hover:bg-turf-line/20 transition-colors">
                     {/* 데스크톱 */}
-                    <div className="hidden sm:grid grid-cols-[88px_minmax(0,1fr)_120px_64px_56px_48px] gap-2 px-3 py-2.5 items-center text-sm">
+                    <div className="hidden sm:grid grid-cols-[48px_88px_minmax(0,1fr)_120px_64px_56px_48px] gap-2 px-3 py-2.5 items-center text-sm">
+                      <span className="text-center font-data text-xs text-floodlight/55">{no}</span>
                       <span className="text-center text-xs text-floodlight/75">{categoryLabel(post.category)}</span>
                       {title}
                       <span className="text-center truncate text-floodlight/85">{post.nickname}</span>
@@ -163,6 +166,7 @@ export default async function BoardPage({
                     {/* 모바일 */}
                     <div className="sm:hidden px-3 py-2.5">
                       <p className="leading-snug">
+                        <span className="text-xs font-data text-floodlight/50 mr-1.5">{no}</span>
                         <span className="text-xs text-score-amber/90 mr-1.5">[{categoryLabel(post.category)}]</span>
                         {title}
                       </p>
