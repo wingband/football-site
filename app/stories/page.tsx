@@ -4,7 +4,6 @@ import Link from "next/link"
 import Image from "next/image"
 import { useEffect, useState, useMemo } from "react"
 import type { Article } from "@/lib/articles"
-import DateTabs from "@/components/DateTabs"
 import Logo from "@/components/Logo"
 import { teamKo, leagueKo } from "@/lib/koreanNames"
 import { withJosa } from "@/lib/josa"
@@ -96,7 +95,6 @@ function shortDate(iso: string) {
 export default function StoriesPage() {
   const [articles, setArticles] = useState<ArticleWithLogos[]>([])
   const [loading, setLoading] = useState(true)
-  const [date, setDate] = useState<string | null>(null)
   const [shown, setShown] = useState(20)
   const [activeTab, setActiveTab] = useState<string>("전체")
 
@@ -122,16 +120,7 @@ export default function StoriesPage() {
     let list = articles
     if (activeTab === "그 외") list = articles.filter((a) => !featuredLabels.has(a.leagueName))
     else if (activeTab !== "전체") list = articles.filter((a) => a.leagueName.includes(activeTab) || activeTab.includes(a.leagueName.split(" ")[0]))
-    if (date) list = list.filter((a) => kstDate(a.createdAt).toISOString().slice(0, 10) === date)
     return list
-  }, [articles, activeTab, date])
-
-  // 달력에 점으로 표시할 날짜 (현재 리그 탭 기준)
-  const markedDates = useMemo(() => {
-    let list = articles
-    if (activeTab === "그 외") list = articles.filter((a) => !featuredLabels.has(a.leagueName))
-    else if (activeTab !== "전체") list = articles.filter((a) => a.leagueName.includes(activeTab) || activeTab.includes(a.leagueName.split(" ")[0]))
-    return Array.from(new Set(list.map((a) => kstDate(a.createdAt).toISOString().slice(0, 10))))
   }, [articles, activeTab])
 
   // 날짜별 묶음 (최신순 유지)
@@ -207,23 +196,6 @@ export default function StoriesPage() {
             </button>
           )}
         </div>
-
-        {/* 날짜 선택 */}
-        <div className="flex items-center gap-2 pt-3">
-          <button
-            onClick={() => { setShown(20); setDate(null) }}
-            className={`shrink-0 px-2.5 py-1 rounded-full border text-xs transition-colors ${
-              date === null
-                ? "bg-score-amber text-pitch-night border-score-amber font-bold"
-                : "border-turf-line text-floodlight/75 hover:text-floodlight hover:border-floodlight/40"
-            }`}
-          >
-            전체 날짜
-          </button>
-          <div className="flex-1 min-w-0 sm:flex-none sm:w-72">
-            <DateTabs selectedDate={date} marked={markedDates} onSelect={(d) => { setShown(20); setDate(d) }} />
-          </div>
-        </div>
       </section>
 
       {/* 기사 목록 */}
@@ -238,12 +210,12 @@ export default function StoriesPage() {
       ) : (
         <div className="space-y-6">
           {groups.map(([key, items]) => (
-            <section key={key} className="bg-turf/40 border border-turf-line/60 rounded-none">
-              <h2 className="flex items-baseline gap-2 px-4 py-3 border-b border-turf-line/60 text-base font-semibold text-floodlight">
+            <section key={key}>
+              <h2 className="flex items-baseline gap-2 pb-2 text-base font-semibold text-floodlight">
                 {dateLabel(items[0].createdAt)}
                 <span className="text-xs font-normal text-floodlight/50">{items.length}경기</span>
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 md:divide-x divide-turf-line/40">
+              <div className="grid grid-cols-1 md:grid-cols-2 md:gap-x-8 border-t border-turf-line/50">
                 {items.map((a) => {
                   const leagueLogo = Object.entries(LEAGUE_LOGOS).find(([k]) =>
                     a.leagueName.includes(k) || k.includes(a.leagueName.split(" ")[0])
@@ -254,7 +226,7 @@ export default function StoriesPage() {
                       key={a.slug}
                       href={`/stories/${a.slug}`}
                       title={leagueKo(a.leagueName)}
-                      className="flex items-center gap-3 px-4 py-3 border-b border-turf-line/30 hover:bg-turf-line/20 transition-colors"
+                      className="flex items-center gap-3 px-1 py-3 border-b border-turf-line/30 hover:bg-turf-line/20 transition-colors"
                     >
                       {leagueLogo ? <Logo src={leagueLogo} alt="" className="w-4 h-4 shrink-0" /> : <span className="w-4 h-4 rounded-full bg-turf-line inline-block shrink-0" />}
                       <div className="flex-1 min-w-0 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
