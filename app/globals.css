@@ -79,3 +79,12 @@ body {
   animation: sparkle 1.4s ease-in-out infinite;
   animation-delay: 0.4s;
 }
+/* 목록 안쪽 스크롤바 — 흰 기본 막대 대신 사이트 색에 맞춘 얇은 막대 */
+.scroll-dark {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-turf-line) transparent;
+}
+.scroll-dark::-webkit-scrollbar { width: 6px; }
+.scroll-dark::-webkit-scrollbar-track { background: transparent; }
+.scroll-dark::-webkit-scrollbar-thumb { background: var(--color-turf-line); border-radius: 9999px; }
+.scroll-dark::-webkit-scrollbar-thumb:hover { background: var(--color-score-amber); }
