@@ -1,9 +1,8 @@
 import Link from "next/link"
-import Logo from "@/components/Logo"
 import PlayerAvatar from "@/components/PlayerAvatar"
 import { matchLinkHref } from "@/lib/slug"
-import AddToCalendar from "@/components/AddToCalendar"
-import { koTeam, type PlayerWeek } from "@/lib/koreanWeekly"
+import UpcomingList, { type UpcomingRow } from "@/components/UpcomingList"
+import { koTeam, koLeague, type PlayerWeek } from "@/lib/koreanWeekly"
 
 // 해외파 허브: "이번 주 경기 일정" + "최근 7일 활약". /korean-players 상단에 들어간다.
 // (2026-10-10) "손흥민 오늘 경기", "이강인 경기 일정" 같은 매일 반복되는 검색을
@@ -37,6 +36,29 @@ export default function KoreanWeekHub({ weeks }: { weeks: PlayerWeek[] }) {
   const upcoming = weeks
     .filter((w) => w.next)
     .sort((a, b) => new Date(a.next!.date).getTime() - new Date(b.next!.date).getTime())
+
+  const MAIN = ["프리미어리그", "라리가", "분데스리가", "세리에A", "리그1"]
+  const rows: UpcomingRow[] = upcoming.map(({ player, teamNameKo, next }) => {
+    const t = shortKst(next!.date)
+    const lg = koLeague(next!.leagueName)
+    const group = MAIN.includes(lg) ? lg : /챔피언스리그|유로파|컨퍼런스/.test(lg) ? "유럽대항전" : "그 외"
+    return {
+      id: player.id,
+      name: player.name,
+      teamKo: teamNameKo,
+      oppKo: koTeam(next!.opponentName),
+      oppLogo: next!.isHome ? next!.awayLogo : next!.homeLogo,
+      home: next!.isHome,
+      group,
+      leagueKo: lg,
+      time: t.time,
+      date: t.date,
+      href: matchLinkHref(next!.slugSource),
+      calTitle: `${player.name} · ${koTeam(next!.homeName)} vs ${koTeam(next!.awayName)}`,
+      startIso: next!.date,
+      calId: `${player.id}-${next!.fixtureId}`,
+    }
+  })
 
   const all = weeks
     .flatMap((w) => w.recent.map((m) => ({ w, m })))
@@ -92,38 +114,7 @@ export default function KoreanWeekHub({ weeks }: { weeks: PlayerWeek[] }) {
         {upcoming.length === 0 ? (
           <p className="text-sm text-floodlight/60 py-6">예정된 경기 정보를 불러오지 못했습니다.</p>
         ) : (
-          <ul className="divide-y divide-turf-line/40">
-            {upcoming.map(({ player, teamNameKo, next }) => {
-              const t = shortKst(next!.date)
-              return (
-                <li key={player.id} className="flex items-center gap-3 py-2.5">
-                  <Link href={`/players/${player.id}`} className="shrink-0">
-                    <PlayerAvatar src={photo(player.id)} alt={player.name} className="w-10 h-10 rounded-full ring-2 ring-score-amber/60" />
-                  </Link>
-                  <Link href={matchLinkHref(next!.slugSource)} className="flex-1 min-w-0 group">
-                    <p className="text-sm text-floodlight group-hover:text-score-amber transition-colors truncate">
-                      <span className="font-semibold">{player.name}</span>
-                      <span className="text-floodlight/65"> · {teamNameKo}</span>
-                    </p>
-                    <p className="text-sm text-floodlight/75 flex items-center gap-1.5 min-w-0">
-                      <Logo src={next!.isHome ? next!.awayLogo : next!.homeLogo} alt="" className="w-4 h-4 shrink-0" />
-                      <span className="truncate">{koTeam(next!.opponentName)} ({next!.isHome ? "홈" : "원정"})</span>
-                    </p>
-                  </Link>
-                  <div className="text-right shrink-0 leading-tight">
-                    <p className="text-sm text-score-amber font-data">{t.time}</p>
-                    <p className="text-xs text-floodlight/65">{t.date}</p>
-                  </div>
-                  <AddToCalendar
-                    compact
-                    title={`${player.name} · ${koTeam(next!.homeName)} vs ${koTeam(next!.awayName)}`}
-                    startIso={next!.date}
-                    id={`${player.id}-${next!.fixtureId}`}
-                  />
-                </li>
-              )
-            })}
-          </ul>
+          <UpcomingList rows={rows} />
         )}
       </section>
     </div>
