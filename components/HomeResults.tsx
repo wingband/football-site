@@ -32,7 +32,7 @@ export default function HomeResults({ tabs, results }: { tabs: Tab[]; results: H
         </Link>
       </div>
 
-      <nav className="flex gap-1.5 overflow-x-auto pb-3 -mx-4 px-4 sm:mx-0 sm:px-0 [scrollbar-width:none]">
+      <nav className="flex flex-wrap gap-1.5 pb-3">
         {[{ id: "all" as const, label: "전체", n: results.length }, ...tabs.map((t) => ({ id: t.id, label: t.label, n: countOf(t.id) }))].map((t) => (
           <button
             key={t.id}

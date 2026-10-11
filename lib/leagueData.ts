@@ -86,9 +86,9 @@ export const getLeagueStandings = cache(async function getLeagueStandings(
 
   try {
     // DB 캐시 경유 (2026-10-12): API 일일 한도가 소진돼도 마지막으로 받은 순위표를 보여주기 위함.
-    // 빈 응답은 에러로 던져서 캐시에 "없음"이 저장되지 않게 한다 (시즌 초 직전 시즌 대체 로직은 null을 받아 그대로 동작).
+    // 키는 다른 곳(teamData: 순위 배열만 저장)과 겹치면 형태가 달라 렌더가 터지므로 따로 둔다. 빈 응답은 에러로 던져서 캐시에 "없음"이 저장되지 않게 한다 (시즌 초 직전 시즌 대체 로직은 null을 받아 그대로 동작).
     const path = `/standings?league=${leagueId}&season=${season}`
-    return await getCachedOrFetch<LeagueResponse>(path, 3600, async () => {
+    return await getCachedOrFetch<LeagueResponse>(`standings-full:${leagueId}:${season}`, 3600, async () => {
       const response = await fetchApiFootball(path, { revalidate })
       if (!response[0]) throw new Error("순위표 응답 비어 있음")
       return response[0] as LeagueResponse
