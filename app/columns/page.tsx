@@ -4,6 +4,7 @@ import { getColumns } from "@/lib/columns"
 import ColumnCard from "@/components/ColumnCard"
 import { isAdmin } from "@/lib/admin"
 import DraftButtons from "./_components/DraftButtons"
+import { columnCardInfo } from "@/lib/columnCard"
 import { getColumnViews } from "@/lib/columnViews"
 import { DRAFT_KINDS, OPINION_PLACEHOLDER, draftKindOf } from "@/lib/draftKinds"
 
@@ -15,7 +16,16 @@ export const metadata: Metadata = {
   alternates: { canonical: "/columns" },
 }
 
-export default async function ColumnsPage() {
+// 칼럼 종류 — 말머리([경기 리포트] 등)로 나눈다. 순서가 곧 탭·섹션 순서.
+const GROUPS = [
+  { key: "report", label: "경기 리포트", desc: "해외파 선수 경기별 평점과 활약", test: (b: string) => b === "경기 리포트" },
+  { key: "kleague", label: "K리그1", desc: "라운드 결과와 순위 정리", test: (b: string) => b === "K리그1" },
+  { key: "abroad", label: "해외파 소식", desc: "주간 활약 정리와 주말 경기 일정", test: (b: string) => b.includes("해외파") },
+  { key: "column", label: "칼럼", desc: "GoalLine이 직접 쓰는 이야기", test: () => true },
+] as const
+
+export default async function ColumnsPage({ searchParams }: { searchParams: Promise<{ type?: string }> }) {
+  const { type } = await searchParams
   const admin = await isAdmin()
   const columns = await getColumns({ includeDrafts: admin })
   // 칼럼별 조회수 — 관리자에게만
@@ -28,8 +38,8 @@ export default async function ColumnsPage() {
       <section className="bg-turf/40 border border-turf-line/60 rounded-2xl p-4 sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="font-display text-2xl text-floodlight">GoalLine 칼럼</h1>
-            <p className="text-sm sm:text-base text-floodlight/75 mt-2">
+ <h1 className="text-xl font-display text-floodlight">GoalLine 칼럼</h1>
+            <p className="text-sm text-floodlight/75 mt-2">
               데이터만으로는 보이지 않는 이야기. 해외파 활약, 경기 흐름, 리그 판도를 직접 짚어봅니다.
             </p>
           </div>
@@ -77,20 +87,70 @@ export default async function ColumnsPage() {
       {columns.length === 0 ? (
         <p className="text-sm text-floodlight/60 py-16 text-center">아직 등록된 칼럼이 없습니다.</p>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {columns.map((c) => (
-            <ColumnCard
-              key={c.slug}
-              column={c}
-              extra={
-                views && c.published ? (
-                  <span className="text-score-amber"> · 조회 {views.get(c.slug)?.total ?? 0} (오늘 {views.get(c.slug)?.today ?? 0})</span>
-                ) : null
-              }
-            />
-          ))}
-        </div>
+        <ColumnList columns={columns} type={type} views={views} />
       )}
     </main>
+  )
+}
+
+type ColumnItem = Awaited<ReturnType<typeof getColumns>>[number]
+
+function groupOf(c: ColumnItem) {
+  const badge = columnCardInfo(c).badge
+  return GROUPS.find((g) => g.test(badge))!
+}
+
+function ColumnList({ columns, type, views }: { columns: ColumnItem[]; type?: string; views: Awaited<ReturnType<typeof getColumnViews>> | null }) {
+  const counts = new Map<string, number>()
+  for (const c of columns) counts.set(groupOf(c).key, (counts.get(groupOf(c).key) ?? 0) + 1)
+  const active = GROUPS.find((g) => g.key === type && counts.has(g.key))?.key ?? null
+  const tabs = [{ key: null as string | null, label: "전체", n: columns.length }, ...GROUPS.filter((g) => counts.has(g.key)).map((g) => ({ key: g.key as string | null, label: g.label, n: counts.get(g.key)! }))]
+
+  const card = (c: ColumnItem) => (
+    <ColumnCard
+      key={c.slug}
+      column={c}
+      extra={
+        views && c.published ? (
+          <span className="text-score-amber"> · 조회 {views.get(c.slug)?.total ?? 0} (오늘 {views.get(c.slug)?.today ?? 0})</span>
+        ) : null
+      }
+    />
+  )
+  const grid = "grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+
+  return (
+    <>
+      <nav className="flex gap-1.5 overflow-x-auto [scrollbar-width:none]">
+        {tabs.map((t) => (
+          <Link
+            key={t.key ?? "all"}
+            href={t.key ? `/columns?type=${t.key}` : "/columns"}
+            className={`shrink-0 text-sm px-3.5 py-1.5 rounded-full border transition-colors ${
+              t.key === active
+                ? "bg-score-amber text-pitch-night border-score-amber font-bold"
+                : "border-turf-line text-floodlight/80 hover:text-floodlight hover:border-floodlight/40"
+            }`}
+          >
+            {t.label}
+            <span className={`ml-1.5 font-data text-xs ${t.key === active ? "text-pitch-night/70" : "text-floodlight/50"}`}>{t.n}</span>
+          </Link>
+        ))}
+      </nav>
+
+      {active ? (
+        <div className={grid}>{columns.filter((c) => groupOf(c).key === active).map(card)}</div>
+      ) : (
+        GROUPS.filter((g) => counts.has(g.key)).map((g) => (
+          <section key={g.key}>
+            <div className="flex items-baseline gap-2 mb-3">
+              <h2 className="text-base font-semibold text-floodlight">{g.label}</h2>
+              <span className="text-sm text-floodlight/65">{g.desc}</span>
+            </div>
+            <div className={grid}>{columns.filter((c) => groupOf(c).key === g.key).map(card)}</div>
+          </section>
+        ))
+      )}
+    </>
   )
 }

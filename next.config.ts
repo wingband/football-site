@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
     return [{ source: "/predictions", destination: "/", permanent: true },
       { source: "/best11", destination: "/", permanent: true },
       { source: "/transfers", destination: "/", permanent: true },
+      { source: "/compare", destination: "/", permanent: true },
     ]
   },
   images: {

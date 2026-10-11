@@ -117,7 +117,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: "/standings",       priority: 0.8, changeFrequency: "daily" },
     { path: "/korean-players",  priority: 0.8, changeFrequency: "daily" },
     { path: "/news",            priority: 0.7, changeFrequency: "hourly" },
-    { path: "/compare",         priority: 0.6, changeFrequency: "weekly" },
     { path: "/company",         priority: 0.3, changeFrequency: "yearly" },
     { path: "/privacy",         priority: 0.3, changeFrequency: "yearly" },
   ]

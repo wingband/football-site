@@ -26,7 +26,7 @@ export default async function SchedulePage({ searchParams }: { searchParams: Pro
 
   return (
     <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
-      <h1 className="sr-only">축구 경기 일정 달력</h1>
+ <h1 className="text-xl sr-only">축구 경기 일정 달력</h1>
       <ScheduleCalendar
         month={month}
         today={today}

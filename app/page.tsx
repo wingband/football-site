@@ -152,13 +152,13 @@ export default async function Home() {
       {/* 이번 주 해외파 */}
       <section className="bg-turf/40 border border-turf-line/60 rounded-2xl p-4 sm:p-5">
         <div className="flex items-baseline justify-between mb-4">
-          <h2 className="font-display text-xl text-floodlight">이번 주 해외파</h2>
+ <h2 className="text-base font-semibold font-display text-floodlight">이번 주 해외파</h2>
           <Link href="/korean-players" className="text-xs text-floodlight/75 hover:text-score-amber">
             전체 보기 →
           </Link>
         </div>
 
-        <h3 className="text-sm font-semibold text-floodlight/90 mb-1">다가오는 경기</h3>
+ <h3 className="text-sm font-semibold text-floodlight/90 mb-1">다가오는 경기</h3>
         <p className="text-xs text-floodlight/65 mb-2">한국 시간 기준 · 📅 버튼을 누르면 <b className="text-floodlight/90 font-semibold">내 캘린더 앱</b>에 경기 시간과 30분 전 알림이 저장돼요</p>
         {upcoming.length === 0 ? (
           <p className="text-sm text-floodlight/65 py-4">7일 안에 잡힌 해외파 경기가 없어요.</p>
@@ -190,7 +190,7 @@ export default async function Home() {
           </ul>
         )}
 
-        <h3 className="text-sm font-semibold text-floodlight/90 mt-6 mb-2">최근 활약 <span className="font-normal text-floodlight/65">· 평점 높은 순</span></h3>
+ <h3 className="text-sm font-semibold text-floodlight/90 mt-6 mb-2">최근 활약 <span className="font-normal text-floodlight/65">· 평점 높은 순</span></h3>
         {recent.length === 0 ? (
           <p className="text-sm text-floodlight/65 py-4">최근 7일 동안 평점이 나온 경기가 없어요.</p>
         ) : (
@@ -234,7 +234,7 @@ export default async function Home() {
       {columns.length > 0 && (
         <section>
           <div className="flex items-baseline justify-between mb-3">
-            <h2 className="font-display text-xl text-floodlight">GoalLine 칼럼</h2>
+ <h2 className="text-base font-semibold font-display text-floodlight">GoalLine 칼럼</h2>
             <Link href="/columns" className="text-xs text-floodlight/75 hover:text-score-amber">
               전체 보기 →
             </Link>

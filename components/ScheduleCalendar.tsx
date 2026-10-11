@@ -64,7 +64,7 @@ export default function ScheduleCalendar({ month, today, prevMonth, nextMonth, i
       <div className="flex items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-2">
           <MonthLink month={prevMonth} label="‹" aria="이전 달" />
-          <h2 className="font-display text-2xl sm:text-3xl text-floodlight tabular-nums">
+ <h2 className="text-base font-semibold font-display text-floodlight tabular-nums">
             {y}년 {m}월
           </h2>
           <MonthLink month={nextMonth} label="›" aria="다음 달" />
@@ -168,7 +168,7 @@ export default function ScheduleCalendar({ month, today, prevMonth, nextMonth, i
 
       {/* 선택한 날짜 경기 목록 */}
       <section className="mt-5 bg-turf/40 border border-turf-line/60 rounded-2xl p-4 sm:p-5">
-        <h3 className="font-display text-lg text-floodlight mb-3">
+ <h3 className="text-sm font-semibold font-display text-floodlight mb-3">
           {Number(selected.slice(5, 7))}월 {Number(selected.slice(8))}일 ({WEEK[new Date(`${selected}T00:00:00Z`).getUTCDay()]}) 경기
           <span className="ml-2 text-xs text-floodlight/40 font-sans">한국 시간</span>
         </h3>

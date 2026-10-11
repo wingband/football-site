@@ -121,8 +121,8 @@ export default function StoriesPage() {
   return (
     <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6 text-floodlight">
       <section className="bg-turf/40 border border-turf-line/60 rounded-2xl p-4 sm:p-5">
-        <h1 className="font-display text-2xl text-floodlight">경기 리뷰</h1>
-        <p className="text-sm sm:text-base text-floodlight/75 mt-2">주요 경기 분석 · {articles.length}개</p>
+ <h1 className="text-xl font-display text-floodlight">경기 리뷰</h1>
+        <p className="text-sm text-floodlight/75 mt-2">주요 경기 분석 · {articles.length}개</p>
 
         {/* 리그 탭 필터 */}
         <div className="flex gap-1.5 overflow-x-auto pt-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -210,7 +210,7 @@ export default function StoriesPage() {
                 {/* 팀 엠블럼 + 스코어 */}
                 <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
                   <div className="flex items-center justify-end gap-2.5 min-w-0">
-                    <span className="text-sm sm:text-base font-semibold text-floodlight text-right leading-snug">{teamKo(a.homeTeam)}</span>
+                    <span className="text-sm font-semibold text-floodlight text-right leading-snug">{teamKo(a.homeTeam)}</span>
                     <TeamBadge name={a.homeTeam} logo={a.homeLogo} size="lg" />
                   </div>
                   <span className="font-data font-bold text-score-amber text-xl px-1">
@@ -218,7 +218,7 @@ export default function StoriesPage() {
                   </span>
                   <div className="flex items-center gap-2.5 min-w-0">
                     <TeamBadge name={a.awayTeam} logo={a.awayLogo} size="lg" />
-                    <span className="text-sm sm:text-base font-semibold text-floodlight leading-snug">{teamKo(a.awayTeam)}</span>
+                    <span className="text-sm font-semibold text-floodlight leading-snug">{teamKo(a.awayTeam)}</span>
                   </div>
                 </div>
 

@@ -85,7 +85,7 @@ export default async function BoardPage({
       {/* 게시판 이름 + 글쓰기 */}
       <div className="flex items-end justify-between gap-3 mb-3">
         <div className="min-w-0">
-          <h1 className="font-display text-2xl sm:text-3xl text-floodlight">{cat ? cat.title : "게시판"}</h1>
+ <h1 className="text-xl font-display text-floodlight">{cat ? cat.title : "게시판"}</h1>
           <p className="text-sm text-floodlight/70 mt-1 truncate">
             {cat ? cat.desc : "축구 이야기를 자유롭게 나누는 곳"} · 글 <b className="text-score-amber font-data">{total.toLocaleString("ko-KR")}</b>
           </p>
@@ -129,7 +129,7 @@ export default async function BoardPage({
 
         {posts.length === 0 ? (
           <div className="text-center py-14 px-4">
-            <p className="text-base font-semibold text-floodlight">{cat ? `${cat.title}에 아직 글이 없어요` : "아직 게시글이 없어요"}</p>
+            <p className="text-sm font-semibold text-floodlight">{cat ? `${cat.title}에 아직 글이 없어요` : "아직 게시글이 없어요"}</p>
             <p className="text-sm text-floodlight/70 mt-1">첫 글의 주인공이 되어보세요!</p>
             <Link href={writeHref} className="inline-block mt-4 px-5 py-2 rounded-lg bg-score-amber text-pitch-night text-sm font-bold hover:bg-floodlight transition-colors">
               ✏️ 첫 글 쓰기

@@ -73,7 +73,7 @@ export default function KoreanWeekHub({ weeks }: { weeks: PlayerWeek[] }) {
       <div className="grid gap-6 lg:grid-cols-2 items-start">
         {/* 다음 경기 일정 */}
         <section className={CARD}>
-          <h2 className="font-display text-xl text-floodlight">다음 경기 일정</h2>
+ <h2 className="text-base font-semibold font-display text-floodlight">다음 경기 일정</h2>
           <p className="text-xs sm:text-sm text-floodlight/70 mt-1 mb-3">
             한국 시간 기준 · 📅 버튼은 <b className="text-floodlight/90 font-semibold">내 캘린더 앱</b>에 일정과 30분 전 알림을 저장해요
           </p>
@@ -87,7 +87,7 @@ export default function KoreanWeekHub({ weeks }: { weeks: PlayerWeek[] }) {
                     <PlayerAvatar src={photo(player.id)} alt={player.name} className="w-11 h-11 rounded-full ring-2 ring-score-amber/60" />
                   </Link>
                   <Link href={matchLinkHref(next!.slugSource)} className="flex-1 min-w-0 group">
-                    <p className="text-sm sm:text-base text-floodlight group-hover:text-score-amber transition-colors">
+                    <p className="text-sm text-floodlight group-hover:text-score-amber transition-colors">
                       <span className="font-semibold">{player.name}</span>
                       <span className="text-floodlight/70"> · {teamNameKo}</span>
                     </p>
@@ -112,7 +112,7 @@ export default function KoreanWeekHub({ weeks }: { weeks: PlayerWeek[] }) {
 
         {/* 최근 7일 활약 */}
         <section className={CARD}>
-          <h2 className="font-display text-xl text-floodlight">최근 7일 활약</h2>
+ <h2 className="text-base font-semibold font-display text-floodlight">최근 7일 활약</h2>
           <p className="text-xs sm:text-sm text-floodlight/70 mt-1 mb-3">경기별 출전 시간 · 평점 · 공격포인트</p>
           {performances.length === 0 ? (
             <p className="text-sm text-floodlight/60 py-6">최근 7일 동안 치른 공식 경기가 없습니다. (A매치 휴식기일 수 있어요)</p>
@@ -126,7 +126,7 @@ export default function KoreanWeekHub({ weeks }: { weeks: PlayerWeek[] }) {
                   >
                     <PlayerAvatar src={photo(w.player.id)} alt={w.player.name} className="w-11 h-11 rounded-full ring-2 ring-score-amber/60 shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm sm:text-base font-semibold text-floodlight group-hover:text-score-amber transition-colors">
+                      <p className="text-sm font-semibold text-floodlight group-hover:text-score-amber transition-colors">
                         {w.player.name}
                         {m.goals > 0 && <span className="ml-1.5 text-xs text-emerald-300">⚽×{m.goals}</span>}
                         {m.assists > 0 && <span className="ml-1.5 text-xs text-sky-300">🅰️×{m.assists}</span>}

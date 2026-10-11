@@ -256,16 +256,6 @@ export default async function PlayerPage({
           </div>
           <div className="flex flex-col items-end gap-2 shrink-0">
             <FollowButton />
-            {/* 이 선수를 선수1로 넣고 비교 페이지로 — 상대는 거기서 검색해서 고름 */}
-            <Link
-              href={`/compare?player1=${id}`}
-              // 상대 선수가 없는 미완성 비교 주소라 크롤러가 따라가지 않게 (선수 수만큼 수천 개가 크롤링되던 문제, 2026-10-11)
-              rel="nofollow"
-              prefetch={false}
-              className="whitespace-nowrap text-xs px-3 py-1.5 border border-score-amber/60 bg-score-amber/10 text-score-amber hover:bg-score-amber/20 rounded-full transition-colors"
-            >
-              이 선수와 비교하기
-            </Link>
           </div>
         </div>
 

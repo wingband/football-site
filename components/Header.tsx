@@ -15,14 +15,10 @@ const NAV_LINKS = [
   { href: "/columns", label: "칼럼" },
   { href: "/stories", label: "리뷰" },
   { href: "/board", label: "게시판" },
+  { href: "/standings", label: "순위표" },
 ]
 
 // (2026-09-21) NewsData.io 크레딧 소진으로 뉴스 페이지는 메뉴에서 숨김. 복구되면 { href: "/news", label: "뉴스" } 추가.
-const MORE_LINKS = [
-  { href: "/standings", label: "순위표" },
-  { href: "/compare", label: "선수 비교" },
-]
-
 const INFO_LINKS = [
   { href: "/company", label: "회사소개" },
   { href: "/advertise", label: "광고하기" },
@@ -65,7 +61,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 bg-pitch-night/95 backdrop-blur border-b border-turf-line/60">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-6 lg:gap-8">
         <Link href="/" className="font-display uppercase tracking-wide text-lg text-score-amber shrink-0 hover:text-floodlight transition-colors cursor-pointer">
           GoalLine
         </Link>
@@ -93,12 +89,12 @@ export default function Header() {
             </button>
             {infoOpen && (
               <div className="absolute top-full right-0 mt-2 w-36 bg-pitch-night border border-turf-line/60 rounded-lg shadow-lg overflow-hidden">
-                {[...MORE_LINKS, ...INFO_LINKS].map((link, i) => (
+                {INFO_LINKS.map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}
                     onClick={() => setInfoOpen(false)}
-                    className={`block px-4 py-2.5 text-sm text-floodlight/70 hover:bg-turf-line/40 hover:text-floodlight transition-colors${i === MORE_LINKS.length ? " border-t border-turf-line/40" : ""}`}
+                    className="block px-4 py-2.5 text-sm text-floodlight/70 hover:bg-turf-line/40 hover:text-floodlight transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -109,7 +105,7 @@ export default function Header() {
         </nav>
 
         {/* 데스크톱 검색창 */}
-        <form onSubmit={handleSearch} className="flex-1 max-w-xs hidden md:block">
+        <form onSubmit={handleSearch} className="flex-1 max-w-sm hidden md:block">
           <input
             type="text"
             value={query}
@@ -120,7 +116,7 @@ export default function Header() {
         </form>
 
         {/* 로그인·회원가입 / 유저 버튼 */}
-        <div className="hidden md:flex items-center gap-2 shrink-0">
+        <div className="hidden md:flex items-center gap-2 shrink-0 ml-auto">
           {isSignedIn ? (
             <UserButton
               appearance={{
@@ -197,7 +193,7 @@ export default function Header() {
             />
           </form>
           <nav className="flex flex-col gap-1 text-sm">
-            {[...NAV_LINKS, ...MORE_LINKS].map((link) => (
+            {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}

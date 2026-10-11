@@ -21,7 +21,6 @@ const isPublicRoute = createRouteMatcher([
   "/korean-players(.*)",
   "/board(.*)",
   "/api/board(.*)",
-  "/compare(.*)",
   "/privacy(.*)",
   "/company(.*)",
   "/advertise(.*)",
@@ -69,7 +68,6 @@ const isPublicRoute = createRouteMatcher([
 const RATE_LIMIT_RULES: { pattern: RegExp; max: number }[] = [
   { pattern: /^\/matches\//, max: 15 },
   { pattern: /^\/players\//, max: 40 },
-  { pattern: /^\/compare/, max: 40 },
   { pattern: /^\/teams\//, max: 40 },
   { pattern: /^\/leagues\//, max: 40 },
   { pattern: /^\/matches/, max: 40 },

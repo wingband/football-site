@@ -64,8 +64,8 @@ export default async function KoreanPlayersPage() {
     <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6 text-floodlight">
       {/* 헤더 */}
       <section className={CARD}>
-        <h1 className="font-display text-2xl text-floodlight">🇰🇷 해외파 경기 일정 · 결과</h1>
-        <p className="text-sm sm:text-base text-floodlight/75 leading-relaxed mt-2">
+ <h1 className="text-xl font-display text-floodlight">🇰🇷 해외파 경기 일정 · 결과</h1>
+        <p className="text-sm text-floodlight/75 leading-relaxed mt-2">
           해외 무대에서 뛰는 한국 선수들의 다음 경기 일정(한국 시간)과 최근 경기 평점·공격포인트를 한 곳에서 확인하세요.
         </p>
         <div className="flex flex-wrap gap-2 mt-4">
@@ -91,13 +91,13 @@ export default async function KoreanPlayersPage() {
 
       {/* 리그별 선수 목록 */}
       <section>
-        <h2 className="font-display text-xl text-floodlight mb-3">선수별 소속팀</h2>
+ <h2 className="text-base font-semibold font-display text-floodlight mb-3">선수별 소속팀</h2>
         <div className="space-y-6">
           {sorted.map(({ league, players }) => (
             <div key={league} className={CARD}>
               <div className="flex items-center gap-2 mb-3">
                 <Logo src={LEAGUE_LOGO_LOCAL[league] ?? players[0].leagueLogo} alt="" className="w-6 h-6 shrink-0" />
-                <h3 className="font-display text-lg text-floodlight">{leagueKo(league)}</h3>
+ <h3 className="text-sm font-semibold font-display text-floodlight">{leagueKo(league)}</h3>
                 <span className="text-sm text-floodlight/65 ml-1">{players.length}명</span>
               </div>
 
@@ -116,7 +116,7 @@ export default async function KoreanPlayersPage() {
                         className="w-14 h-14 rounded-full ring-2 ring-score-amber/60 shrink-0"
                       />
                       <div className="flex-1 min-w-0">
-                        <h4 className="text-base font-bold text-floodlight group-hover:text-score-amber transition-colors">
+ <h4 className="text-sm font-bold text-floodlight group-hover:text-score-amber transition-colors">
                           {intro?.nameKo ?? p.name}
                         </h4>
                         <div className="flex items-center gap-1.5 mt-0.5">
@@ -136,7 +136,7 @@ export default async function KoreanPlayersPage() {
 
       {/* SEO 텍스트 블록 */}
       <section className={CARD}>
-        <h2 className="font-display text-lg text-floodlight mb-2">한국 축구 해외파 현황</h2>
+ <h2 className="text-base font-semibold font-display text-floodlight mb-2">한국 축구 해외파 현황</h2>
         <p className="text-sm text-floodlight/70 leading-relaxed">
           현재 유럽 무대에서 활약 중인 한국 선수는 라리가의 이강인(아틀레티코 마드리드),
           분데스리가의 김민재(바이에른 뮌헨)·황희찬(샬케04)·이재성·정우영·옌스 카스트로프 등이 있습니다.

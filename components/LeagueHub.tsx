@@ -49,7 +49,7 @@ export default function LeagueHub({ tabs, initial }: { tabs: Tab[]; initial: Lea
   return (
     <section className="bg-turf/40 border border-turf-line/60 rounded-2xl p-4 sm:p-5">
       <div className="flex items-center justify-between gap-3 mb-3">
-        <h2 className="font-display text-xl text-floodlight shrink-0">리그 순위</h2>
+ <h2 className="text-base font-semibold font-display text-floodlight shrink-0">리그 순위</h2>
         <Link href={`/leagues/${active}`} className="text-xs text-floodlight/50 hover:text-score-amber shrink-0">
           {label} 자세히 →
         </Link>
