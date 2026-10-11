@@ -315,7 +315,10 @@ export default async function PlayerPage({
             {/* 헤더: 리그명 + 시즌 선택 */}
             <div className="flex items-center justify-between mb-4">
               <div>
-                <p className="text-sm font-semibold">{stat.league.name}</p>
+                <p className="text-sm font-semibold flex items-center gap-2">
+                  {stat.league.logo && <Logo src={stat.league.logo} alt="" className="w-5 h-5 shrink-0" />}
+                  {stat.league.name}
+                </p>
                 <p className="text-xs text-floodlight/65">{season}/{season + 1} 시즌</p>
               </div>
               <div className="flex gap-1">

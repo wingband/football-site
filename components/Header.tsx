@@ -105,13 +105,16 @@ export default function Header() {
         </nav>
 
         {/* 데스크톱 검색창 */}
-        <form onSubmit={handleSearch} className="flex-1 max-w-sm hidden md:block">
+        <form onSubmit={handleSearch} className="flex-1 max-w-sm hidden md:block relative">
+          <button type="submit" aria-label="검색" className="absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full text-score-amber hover:bg-score-amber/15 transition-colors">
+            <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" /><path d="M13 13l4 4" /></svg>
+          </button>
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="팀, 선수, 리그 검색"
-            className="w-full bg-turf/60 border border-turf-line rounded-full px-4 py-1.5 text-sm text-floodlight placeholder:text-floodlight/30 focus:outline-none focus:border-score-amber transition-colors"
+            className="w-full bg-turf/60 border border-turf-line rounded-full pl-4 pr-10 py-1.5 text-sm text-floodlight placeholder:text-floodlight/30 focus:outline-none focus:border-score-amber transition-colors"
           />
         </form>
 
@@ -183,13 +186,16 @@ export default function Header() {
       {/* 모바일 드롭다운 */}
       {menuOpen && (
         <div className="md:hidden border-t border-turf-line/60 bg-pitch-night px-4 py-4 space-y-4">
-          <form onSubmit={handleSearch}>
+          <form onSubmit={handleSearch} className="relative">
+            <button type="submit" aria-label="검색" className="absolute right-1.5 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full text-score-amber">
+              <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" /><path d="M13 13l4 4" /></svg>
+            </button>
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="팀, 선수, 리그 검색"
-              className="w-full bg-turf/60 border border-turf-line rounded-full px-4 py-2 text-sm text-floodlight placeholder:text-floodlight/30 focus:outline-none focus:border-score-amber transition-colors"
+              className="w-full bg-turf/60 border border-turf-line rounded-full pl-4 pr-11 py-2 text-sm text-floodlight placeholder:text-floodlight/30 focus:outline-none focus:border-score-amber transition-colors"
             />
           </form>
           <nav className="flex flex-col gap-1 text-sm">
