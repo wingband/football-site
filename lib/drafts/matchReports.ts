@@ -39,6 +39,7 @@ type RawStat = {
   fouls?: { drawn: number | null; committed: number | null }
 }
 type RawFixturePlayers = { team: { id: number }; players: { player: { id: number }; statistics: RawStat[] }[] }[]
+type RawTeamStats = { team: { id: number }; statistics: { type: string; value: number | string | null }[] }[]
 type RawEvent = {
   time: { elapsed: number | null; extra: number | null }
   team: { id: number; name: string }
@@ -85,6 +86,7 @@ export async function generateMatchReportDrafts(): Promise<{ ok: true; created: 
 
       const fxPlayers = (await safe<RawFixturePlayers>(`/fixtures/players?fixture=${fx.fixture.id}`, 3600)) ?? []
       const events = (await safe<RawEvent[]>(`/fixtures/events?fixture=${fx.fixture.id}`, 3600)) ?? []
+      const teamStats = (await safe<RawTeamStats>(`/fixtures/statistics?fixture=${fx.fixture.id}`, 3600)) ?? []
       const nextFx = (await safe<RawFixture[]>(`/fixtures?team=${teamId}&next=1`, 10800))?.[0] ?? null
 
       for (const p of pending) {
@@ -101,7 +103,7 @@ export async function generateMatchReportDrafts(): Promise<{ ok: true; created: 
           skipped++
           continue
         }
-        const slug = await makeReport(p, fx, stat!, events, nextFx)
+        const slug = await makeReport(p, fx, stat!, events, nextFx, teamStats)
         if (slug) created.push(slug)
       }
     }
@@ -114,7 +116,8 @@ async function makeReport(
   fx: RawFixture,
   stat: RawStat,
   events: RawEvent[],
-  nextFx: RawFixture | null
+  nextFx: RawFixture | null,
+  teamStats: RawTeamStats = []
 ): Promise<string | null> {
   const isHome = fx.teams.home.id === p.teamId
   const my = isHome ? fx.teams.home : fx.teams.away
@@ -160,6 +163,29 @@ async function makeReport(
   }
   const season = await seasonLineFor(p.id)
 
+  // 팀 기록 비교 (점유율·슈팅·유효슈팅·코너킥·파울·패스 성공률) — 데이터가 있는 항목만
+  const statOf = (teamId: number, type: string) => teamStats.find((t) => t.team.id === teamId)?.statistics?.find((x) => x.type === type)?.value ?? null
+  const teamLine = (() => {
+    const items: [string, string][] = [
+      ["점유율", "Ball Possession"], ["슈팅", "Total Shots"], ["유효슈팅", "Shots on Goal"],
+      ["코너킥", "Corner Kicks"], ["파울", "Fouls"], ["패스 성공률", "Passes %"],
+    ]
+    const parts: string[] = []
+    for (const [label, type] of items) {
+      const a = statOf(my.id, type), b = statOf(opp.id, type)
+      if (a != null && b != null) parts.push(`${label} ${teamKo} ${a} 대 ${oppKo} ${b}`)
+    }
+    return parts.join(", ")
+  })()
+  // 경기 중 교체·경고 (선수 본인 교체 + 양 팀 경고/퇴장)
+  const subs = events
+    .filter((e) => e.type === "subst" || e.type === "Subst")
+    .filter((e) => e.player.id === p.id || e.assist.id === p.id)
+    .map((e) => (e.player.id === p.id ? `${minute(e.time)} 교체 아웃` : `${minute(e.time)} 교체 투입`))
+  const cards = events
+    .filter((e) => e.type === "Card")
+    .map((e) => `${minute(e.time)} ${e.team.id === p.teamId ? teamKo : oppKo} ${e.detail.includes("Red") ? "퇴장" : "경고"}`)
+
   const data = [
     `- 선수: ${p.name} (${teamKo}, ${leagueKo})`,
     `- 경기: ${formatKickoffKst(fx.fixture.date)} ${leagueKo}${fx.league.round ? ` ${fx.league.round}` : ""} | ${koTeam(fx.teams.home.name)} ${fx.goals.home}:${fx.goals.away} ${koTeam(fx.teams.away.name)} (${teamKo} ${isHome ? "홈" : "원정"} ${result})`,
@@ -167,6 +193,9 @@ async function makeReport(
     `- ${p.name} 기록: ${minutes}분 출전${stat.games?.substitute === true ? "(교체 투입)" : ""}, 평점 ${rating?.toFixed(1) ?? "없음"}, ${goals}골 ${assists}도움`,
     mine.length ? `- ${p.name}의 경기 중 기록: ${mine.join(", ")}` : "",
     detail ? `- 세부 기록: ${detail}` : "",
+    subs.length ? `- ${p.name} 교체: ${subs.join(", ")}` : "",
+    teamLine ? `- 팀 기록 비교: ${teamLine}` : "",
+    cards.length ? `- 경고·퇴장: ${cards.slice(0, 8).join(", ")}` : "",
     season ? `- ${season}` : "",
     nextFx && getMatchPhase(nextFx.fixture.status.short) !== "finished"
       ? `- 다음 경기: ${formatKickoffKst(nextFx.fixture.date)} vs ${koTeam((nextFx.teams.home.id === p.teamId ? nextFx.teams.away : nextFx.teams.home).name)} (${nextFx.teams.home.id === p.teamId ? "홈" : "원정"}, ${koLeague(nextFx.league.name)})`
@@ -179,18 +208,20 @@ ${COMMON_RULES}
 - 선수 이름은 데이터에 적힌 한글 표기 그대로 써라.
 - 득점 순서의 "→ 스코어"가 그 골 직후 스코어다. 선제골·동점골·역전골은 이 스코어로 판단해라. "골 A, 도움 B"에서 득점자는 A다.
 
-[본문 구성]
-- 도입 2문장: 경기 결과와 ${p.name}의 핵심 기록(출전 시간, 평점, 공격포인트)
-- "## 경기 흐름": 득점 순서 데이터를 시간 순서대로 2~4문장
-- "## ${p.name}의 기록": 세부 기록과 경기 중 기록(골·도움·카드 시간)을 3~5문장. 기록이 없는 항목은 언급하지 마라
-- "## 시즌 흐름과 다음 경기": 시즌 기록과 다음 경기 일정 2~3문장 (데이터 없으면 있는 것만)
+[본문 구성] — 전체 분량은 공백 포함 1,400~2,000자 정도로 충실하게 쓴다. 데이터에 없는 사실은 절대 만들어내지 말고, 데이터가 있는 항목만 풀어 써라.
+- 도입 3문장: 경기 결과, ${p.name}의 핵심 기록(출전 시간, 평점, 공격포인트), 이 경기가 팀과 선수에게 갖는 의미(데이터로 확인되는 범위에서)
+- "## 경기 개요": 대회·라운드, 킥오프 시각(한국 시간), 홈/원정, 최종 스코어를 2~3문장
+- "## 경기 흐름": 득점 순서 데이터를 시간 순서대로 3~5문장. 경고·퇴장 데이터가 있으면 흐름에 영향을 준 부분만 덧붙인다
+- "## 팀 기록으로 본 경기": 팀 기록 비교 데이터가 있을 때만, 점유율·슈팅·패스 등을 2~4문장으로 해석한다. 데이터가 없으면 이 섹션은 통째로 생략
+- "## ${p.name}의 기록": 세부 기록, 경기 중 기록(골·도움·카드 시간), 교체 정보를 4~6문장. 수치는 정확히 옮기고 기록이 없는 항목은 언급하지 마라
+- "## 시즌 흐름과 다음 경기": 시즌 기록과 다음 경기 일정 3~4문장 (데이터 없으면 있는 것만)
 - 제목은 20~40자, "${p.name}"과 상대팀, 평점 또는 공격포인트가 들어가게
 
 [데이터]
 ${data}`
 
   try {
-    const raw = await callOpenAI(prompt, 2000)
+    const raw = await callOpenAI(prompt, 3500)
     if (!raw) return null
     const shaped = shapeDraftText(raw, { prefix: "[경기 리포트]", fallbackTitle: `${p.name}, ${oppKo}전 ${minutes}분 평점 ${rating?.toFixed(1) ?? "-"}` })
     let content = shaped.content
