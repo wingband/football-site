@@ -1,7 +1,7 @@
 import { getColumns } from "@/lib/columns"
 import { SITE_URL } from "@/lib/siteConfig"
 
-// 칼럼 RSS 피드 (2026-10-11). 네이버 서치어드바이저 "RSS 제출"에 https://goalline.me/rss.xml 로 등록해서
+// 칼럼 RSS 피드 (2026-10-11). 네이버 서치어드바이저 "RSS 제출"에 https://www.goalline.me/rss.xml 로 등록 (사이트 정규 주소가 www라서 네이버에도 www 사이트로 등록해야 함)해서
 // 새 칼럼을 발행하면 네이버가 알아서 수집하게 한다. 공개된 칼럼만 최신 50개.
 
 export const revalidate = 600
@@ -29,7 +29,11 @@ export async function GET() {
   const items = columns
     .map((c) => {
       const url = `${base}/columns/${c.slug}`
-      const image = c.content.match(/^!\[[^\]]*\]\((https:\/\/[^\s)]+)\)\s*$/m)?.[1]
+      // 네이버는 피드 안의 모든 URL이 소유확인된 도메인이어야 받아준다.
+      // 카드 이미지는 Vercel Blob(다른 도메인)에 있어서 enclosure로 넣으면 "형식이 올바르지 않습니다"로 거절됨 →
+      // 우리 도메인 주소일 때만 넣는다. (이미지는 칼럼 페이지의 og:image로 어차피 수집됨)
+      const found = c.content.match(/^!\[[^\]]*\]\((https:\/\/[^\s)]+)\)\s*$/m)?.[1]
+      const image = found?.startsWith(base) ? found : undefined
       return `    <item>
       <title>${esc(c.title)}</title>
       <link>${url}</link>
