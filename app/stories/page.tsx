@@ -40,7 +40,7 @@ const FEATURED_TABS = [
 // 팀 이니셜 원형 (로고 없을 때 fallback)
 function TeamBadge({ name, logo, size = "sm" }: { name: string; logo?: string | null; size?: "sm" | "lg" }) {
   const [imgError, setImgError] = useState(false)
-  const sz = size === "lg" ? "w-7 h-7 text-[10px]" : "w-6 h-6 text-[10px]"
+  const sz = size === "lg" ? "w-8 h-8 text-xs" : "w-6 h-6 text-[10px]"
 
   if (logo && !imgError) {
     return (
@@ -49,7 +49,7 @@ function TeamBadge({ name, logo, size = "sm" }: { name: string; logo?: string | 
           src={logo}
           alt={name}
           fill
-          sizes="28px"
+          sizes="32px"
           className="object-contain rounded-full"
           onError={() => setImgError(true)}
         />
@@ -86,6 +86,7 @@ function shortDate(iso: string) {
 export default function StoriesPage() {
   const [articles, setArticles] = useState<ArticleWithLogos[]>([])
   const [loading, setLoading] = useState(true)
+  const [shown, setShown] = useState(12)
   const [activeTab, setActiveTab] = useState<string>("전체")
 
   useEffect(() => {
@@ -128,7 +129,7 @@ export default function StoriesPage() {
         <div className="flex gap-1.5 overflow-x-auto pt-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {/* 전체 탭 */}
           <button
-            onClick={() => setActiveTab("전체")}
+            onClick={() => { setShown(12); setActiveTab("전체") }}
             className={`shrink-0 px-2.5 py-1 rounded-full border text-xs transition-colors ${
               activeTab === "전체"
                 ? "bg-score-amber text-pitch-night border-score-amber font-bold"
@@ -146,7 +147,7 @@ export default function StoriesPage() {
             return (
               <button
                 key={tab.label}
-                onClick={() => setActiveTab(tab.label)}
+                onClick={() => { setShown(12); setActiveTab(tab.label) }}
                 className={`shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs transition-colors ${
                   activeTab === tab.label
                     ? "bg-score-amber text-pitch-night border-score-amber font-bold"
@@ -163,7 +164,7 @@ export default function StoriesPage() {
           {/* 그 외 탭 */}
           {hasOther && (
             <button
-              onClick={() => setActiveTab("그 외")}
+              onClick={() => { setShown(12); setActiveTab("그 외") }}
               className={`shrink-0 px-2.5 py-1 rounded-full border text-xs transition-colors ${
                 activeTab === "그 외"
                   ? "bg-score-amber text-pitch-night border-score-amber font-bold"
@@ -179,7 +180,7 @@ export default function StoriesPage() {
 
       {/* 기사 목록 */}
       {loading ? (
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="bg-turf/30 border border-turf-line/40 animate-pulse h-28 rounded-none" />
           ))}
@@ -187,8 +188,8 @@ export default function StoriesPage() {
       ) : displayed.length === 0 ? (
         <p className="text-floodlight/60 text-sm py-8 text-center">해당 리그 리뷰가 없습니다.</p>
       ) : (
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-          {displayed.map((a) => {
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {displayed.slice(0, shown).map((a) => {
             const leagueLogo = Object.entries(LEAGUE_LOGOS).find(([k]) =>
               a.leagueName.includes(k) || k.includes(a.leagueName.split(" ")[0])
             )?.[1]
@@ -198,10 +199,10 @@ export default function StoriesPage() {
               <Link
                 key={a.slug}
                 href={`/stories/${a.slug}`}
-                className="group block bg-turf/40 border border-turf-line/60 rounded-none p-3.5 hover:border-score-amber/60 transition-colors"
+                className="group block bg-turf/40 border border-turf-line/60 rounded-none p-4 hover:border-score-amber/60 transition-colors"
               >
                 {/* 리그 · 날짜 */}
-                <div className="flex items-center gap-1.5 mb-2.5">
+                <div className="flex items-center gap-1.5 mb-4">
                   {leagueLogo ? <Logo src={leagueLogo} alt="" className="w-4 h-4" /> : <span className="w-4 h-4 rounded-full bg-turf-line inline-block" />}
                   <span className="text-xs font-semibold text-floodlight/90">{leagueKo(a.leagueName)}</span>
                   <span className="text-[11px] text-floodlight/55 ml-auto">{shortDate(a.createdAt)}</span>
@@ -210,7 +211,7 @@ export default function StoriesPage() {
                 {/* 팀 엠블럼 + 스코어 */}
                 <div className="grid grid-cols-[minmax(0,1fr)_auto_1fr] items-center gap-2">
                   <div className="flex items-center justify-end gap-1.5 min-w-0">
-                    <span className="text-xs font-semibold text-floodlight text-right leading-snug">{teamKo(a.homeTeam)}</span>
+                    <span className="text-sm font-semibold text-floodlight text-right leading-snug">{teamKo(a.homeTeam)}</span>
                     <TeamBadge name={a.homeTeam} logo={a.homeLogo} size="lg" />
                   </div>
                   <span className="font-data font-bold text-score-amber text-base px-1">
@@ -218,17 +219,21 @@ export default function StoriesPage() {
                   </span>
                   <div className="flex items-center gap-1.5 min-w-0">
                     <TeamBadge name={a.awayTeam} logo={a.awayLogo} size="lg" />
-                    <span className="text-xs font-semibold text-floodlight leading-snug">{teamKo(a.awayTeam)}</span>
+                    <span className="text-sm font-semibold text-floodlight leading-snug">{teamKo(a.awayTeam)}</span>
                   </div>
                 </div>
-
-                {/* 한 줄 요약 */}
-                <p className="mt-2.5 text-xs text-floodlight/70 leading-relaxed line-clamp-2">{oneLiner(a)}</p>
-                <p className="mt-2 text-xs font-semibold text-score-amber">리뷰 보기 →</p>
               </Link>
             )
           })}
         </div>
+      )}
+      {!loading && displayed.length > shown && (
+        <button
+          onClick={() => setShown((n) => n + 12)}
+          className="block mx-auto px-5 py-2 border border-turf-line text-sm text-floodlight/80 hover:text-floodlight hover:border-floodlight/40 transition-colors"
+        >
+          더 보기 ({displayed.length - shown})
+        </button>
       )}
     </main>
   )
