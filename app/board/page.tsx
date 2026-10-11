@@ -12,7 +12,7 @@ export async function generateMetadata({
   const cat = boardCategory(category)
   return {
     title: cat ? cat.title : "게시판",
-    description: cat ? `GoalLine ${cat.title} — ${cat.desc}` : "GoalLine 축구 팬 게시판 — 자유, 해외파, 리그별 이야기를 나눠보세요.",
+    description: cat ? `GoalLine ${cat.title} — ${cat.desc}` : "GoalLine 축구 팬 게시판 — 자유, PL, K리그, 국가대표 이야기를 나눠보세요.",
     alternates: { canonical: cat ? `/board?category=${cat.key}` : "/board" },
   }
 }

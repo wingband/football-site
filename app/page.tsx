@@ -121,9 +121,9 @@ export default async function Home() {
             <div className="flex flex-wrap gap-1.5 mb-3">
               {[
                 ["free", "자유"],
-                ["abroad", "해외파"],
-                ["epl", "프리미어리그"],
+                ["epl", "PL"],
                 ["kleague", "K리그"],
+                ["national", "국가대표"],
               ].map(([key, label]) => (
                 <Link
                   key={key}

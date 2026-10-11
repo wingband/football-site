@@ -173,7 +173,7 @@ export default function BoardWritePage() {
 
         <div className="rounded-lg border border-turf-line/60 bg-pitch-night/60 px-4 py-3 text-sm text-floodlight/75 leading-relaxed">
           <p>· 서로 매너를 지켜주세요. 욕설·도배·분쟁 유발 글은 예고 없이 삭제되고 이용이 제한될 수 있어요.</p>
-          <p>· 경기 이야기는 해당 리그 게시판에, 해외파 선수 이야기는 해외파 게시판에 써주세요.</p>
+          <p>· 경기 이야기는 PL·K리그 게시판에, 대표팀 이야기는 국가대표 게시판에 써주세요.</p>
         </div>
 
         {(error || notice) && <p className={`text-sm ${error ? "text-red-400" : "text-score-amber"}`}>{error || notice}</p>}
