@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import MobileTabBar from "@/components/MobileTabBar";
 import AdSlot from "@/components/AdSlot";
 import KakaoAdBanner from "@/components/KakaoAdBanner";
+import PageCoupang from "@/components/PageCoupang";
 import Script from "next/script";
 import { GoogleTagManager, GoogleAnalytics } from '@next/third-parties/google';
 import { ClerkProvider } from "@clerk/nextjs";
@@ -144,6 +145,7 @@ export default function RootLayout({
           </div>
         </div>
         <div className="flex-1">{children}</div>
+        <PageCoupang />
         <Footer />
         <MobileTabBar />
       </body>

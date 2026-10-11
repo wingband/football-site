@@ -7,7 +7,6 @@ import { SITE_URL } from "@/lib/siteConfig"
 import ColumnBody from "@/components/ColumnBody"
 import ShareButtons from "@/components/ShareButtons"
 import ColumnViewBeacon from "@/components/ColumnViewBeacon"
-import CoupangBanner from "@/components/CoupangBanner"
 import { getColumnViews } from "@/lib/columnViews"
 
 export const dynamic = "force-dynamic"
@@ -118,8 +117,6 @@ export default async function ColumnPage({ params }: { params: Promise<{ slug: s
               ))}
             </div>
           )}
-        {column.published && <CoupangBanner className="pb-8" />}
-
         {column.published && (
           <div className="pb-8">
             <p className="text-sm text-floodlight/70 mb-3">이 글이 도움이 됐다면 축구 좋아하는 친구에게 공유해 주세요 ⚽</p>

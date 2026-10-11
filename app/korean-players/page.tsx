@@ -1,5 +1,4 @@
 import type { Metadata } from "next"
-import CoupangBanner from "@/components/CoupangBanner"
 import Link from "next/link"
 import { KOREAN_PLAYERS_ABROAD } from "@/lib/koreanPlayersAbroad"
 import Logo from "@/components/Logo"
@@ -106,7 +105,6 @@ export default async function KoreanPlayersPage() {
         </div>
       </section>
 
-      <CoupangBanner />
     </main>
   )
 }
