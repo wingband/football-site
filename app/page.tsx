@@ -103,7 +103,6 @@ export default async function Home() {
 
   return (
     <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-      <h1 className="sr-only">GoalLine 해외파 경기 결과 · 축구 칼럼 · 게시판</h1>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         {/* 최근 경기 결과 — 리그 탭 · 날짜/시각 */}
         <HomeResults tabs={HOME_LEAGUE_TABS.map((t) => ({ id: t.id, label: t.label }))} results={results} />
@@ -259,6 +258,7 @@ export default async function Home() {
           </div>
         </section>
       )}
+      <h1 className="sr-only">GoalLine 해외파 경기 결과 · 축구 칼럼 · 게시판</h1>
     </main>
   )
 }
