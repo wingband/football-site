@@ -47,7 +47,14 @@ function fill(content: string, placeholder: string, opinions: string[], fallback
 
 export default function OpinionQuickPublish({ slug, title, summary, content, tags, placeholder, onEditFull }: Props) {
   const router = useRouter()
-  const slots = useMemo(() => findSlots(content, placeholder), [content, placeholder])
+  // 의견 칸은 맨 끝(한 줄 총평) 하나만 받는다. 예전 초안에 남은 다른 의견 자리 줄은 지운다
+  const body = useMemo(() => {
+    const lines = content.split("\n")
+    const idxs = lines.map((l, i) => (l.includes(placeholder) ? i : -1)).filter((i) => i >= 0)
+    const keep = idxs[idxs.length - 1]
+    return lines.filter((l, i) => !l.includes(placeholder) || i === keep).join("\n").replace(/\n{3,}/g, "\n\n")
+  }, [content, placeholder])
+  const slots = useMemo(() => findSlots(body, placeholder), [body, placeholder])
   const [opinions, setOpinions] = useState<string[]>(() => slots.map(() => ""))
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
@@ -72,7 +79,7 @@ export default function OpinionQuickPublish({ slug, title, summary, content, tag
 
   const withPhoto = (body: string) =>
     photo ? `![${photo.caption.replace(/[\[\]]/g, "").trim()}](${photo.url})\n\n${body}` : body
-  const preview = withPhoto(fill(content, placeholder, opinions, () => "…"))
+  const preview = withPhoto(fill(body, placeholder, opinions, () => "…"))
   const allFilled = opinions.every((o) => o.trim().length >= 5)
 
   async function publish() {
@@ -90,7 +97,7 @@ export default function OpinionQuickPublish({ slug, title, summary, content, tag
           slug,
           title,
           summary,
-          content: withPhoto(fill(content, placeholder, opinions, () => "")),
+          content: withPhoto(fill(body, placeholder, opinions, () => "")),
           tags,
           published: true,
         }),
@@ -121,7 +128,7 @@ export default function OpinionQuickPublish({ slug, title, summary, content, tag
         <div className="border border-score-amber/40 bg-score-amber/5 p-4 mb-6">
           <p className="text-sm font-semibold text-score-amber">✍️ AI가 이번 주 초안을 써 뒀어요</p>
           <p className="text-xs text-floodlight/60 mt-1 leading-relaxed">
-            아래 칸 {slots.length}개에 한 줄씩만 생각을 적고 발행을 누르면 끝이에요. 반말·짧은 말투도 괜찮아요.
+            아래 칸에 이번 주 총평을 한두 줄 적고 발행을 누르면 끝이에요. 태그는 발행할 때 자동으로 붙어요. 반말·짧은 말투도 괜찮아요.
             발행 전에 아래 미리보기에서 틀린 내용이 없는지 한 번만 훑어봐 주세요.
           </p>
         </div>
@@ -129,12 +136,12 @@ export default function OpinionQuickPublish({ slug, title, summary, content, tag
         <div className="space-y-4">
           {slots.map((slot, i) => (
             <label key={i} className="block">
-              <span className="text-xs text-floodlight/60">{slot.label}에 대한 내 한마디</span>
+              <span className="text-xs text-floodlight/60">{slot.label === "한 줄 총평" ? "이번 주 한 줄 총평" : `${slot.label}에 대한 내 한마디`}</span>
               <textarea
                 value={opinions[i]}
                 onChange={(e) => setOpinions((prev) => prev.map((v, j) => (j === i ? e.target.value.slice(0, 300) : v)))}
                 rows={2}
-                placeholder={i === 0 ? "예) 이 정도면 주전 경쟁은 끝났다고 본다" : "예) 다음 주는 이강인 선발 여부가 관전 포인트"}
+                placeholder="예) 대표팀에 못 간 선수들이 소속팀에서 더 빛난 한 주였다"
                 className="mt-1 w-full bg-turf/30 border border-turf-line px-3 py-2 text-sm text-floodlight placeholder:text-floodlight/30 focus:outline-none focus:border-score-amber/60 resize-none"
               />
             </label>

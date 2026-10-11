@@ -10,7 +10,7 @@ import {
   COLUMN_SUMMARY_MAX,
   COLUMN_CONTENT_MAX,
 } from "@/lib/columns"
-import { OPINION_PLACEHOLDER } from "@/lib/generateWeeklyColumn"
+import { OPINION_PLACEHOLDER, WEEKLY_SLUG_MARK, weeklyAutoTags } from "@/lib/generateWeeklyColumn"
 
 // 칼럼 저장(새 글 작성 + 기존 글 수정). 관리자만 가능.
 export async function POST(req: NextRequest) {
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
   const content = body.content.trim()
   const summary = typeof body.summary === "string" ? body.summary.trim() : ""
   const tags: string[] = Array.isArray(body.tags)
-    ? body.tags.filter((t: unknown): t is string => typeof t === "string").map((t: string) => t.trim()).filter(Boolean).slice(0, 10)
+    ? body.tags.filter((t: unknown): t is string => typeof t === "string").map((t: string) => t.trim()).filter(Boolean).slice(0, 30)
     : []
   const published = body.published !== false
 
@@ -64,7 +64,10 @@ export async function POST(req: NextRequest) {
     slug = makeColumnSlug(title)
   }
 
-  await saveColumn({ slug, title, summary, content: finalContent, tags, published })
+  // 주간 해외파 칼럼은 발행할 때 본문에서 선수·팀·리그 태그를 자동으로 채운다
+  const finalTags = published && slug.includes(WEEKLY_SLUG_MARK) ? weeklyAutoTags(finalContent, tags) : tags
+
+  await saveColumn({ slug, title, summary, content: finalContent, tags: finalTags, published })
   revalidatePath("/columns")
   revalidatePath(`/columns/${slug}`)
   revalidatePath("/sitemap.xml")

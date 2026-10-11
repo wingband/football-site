@@ -1,12 +1,13 @@
 import { getKoreanPlayersWeek, formatKickoffKst, koLeague, koTeam, type PlayerWeek, type WeeklyMatch } from "@/lib/koreanWeekly"
 import { buildWeeklyContext, detailText, numbersSection } from "@/lib/weeklyContext"
+import { KOREAN_PLAYERS_ABROAD } from "@/lib/koreanPlayersAbroad"
 import { getColumns, makeColumnSlug, saveColumn } from "@/lib/columns"
 import { put } from "@vercel/blob"
 import { pickTopRows, renderWeeklyCard, periodLabel } from "@/lib/weeklyCard"
 
 // 주간 해외파 칼럼 "초안" 자동 생성 (2026-10-10 신설).
 // 데이터(경기 결과·출전 시간·평점·공격포인트)로 뼈대를 AI가 쓰고, 선수별 섹션마다
-// 운영자가 직접 의견을 적을 자리 2곳(최고 활약 선수, 한 줄 총평)을 남긴 채 "비공개"로 저장한다. 운영자가 의견을
+// 운영자가 직접 의견을 적을 자리 1곳(한 줄 총평)을 남긴 채 "비공개"로 저장한다. 운영자가 의견을
 // 채워 넣어야만 공개할 수 있다(app/api/columns/route.ts의 발행 검사).
 // → 순수 자동 생성 글이 아니라 사람의 시각이 들어간 글이 되도록 하는 장치.
 
@@ -170,7 +171,7 @@ export async function generateWeeklyKoreanDraft({ refreshDraft = false } = {}): 
     title: title.slice(0, 120),
     summary: summary.slice(0, 200),
     content,
-    tags: ["해외파", "주간정리"],
+    tags: weeklyAutoTags(content),
     published: false,
   })
   return { ok: true, slug, created: true }
@@ -205,13 +206,8 @@ export function shapeDraft(raw: string): { title: string; summary: string; conte
   // 모델이 만든 "한 줄 총평" 섹션은 통째로 제거 (운영자 몫)
   let text = body.join("\n").replace(/\n##\s*한\s*줄\s*총평[\s\S]*?(?=\n##\s|$)/, "").trim()
 
+  // 운영자 의견 자리는 맨 끝 "한 줄 총평" 한 곳만 둔다 (2026-10-11 운영자 요청)
   const slot = `> ✍️ 내 의견: ${OPINION_PLACEHOLDER}`
-  // "이번 주 최고 활약" 섹션 끝(다음 ## 앞)에 의견 자리
-  const mvp = text.match(/\n?##\s*이번\s*주\s*최고\s*활약[^\n]*\n[\s\S]*?(?=\n##\s|$)/)
-  if (mvp && mvp.index !== undefined) {
-    const end = mvp.index + mvp[0].length
-    text = `${text.slice(0, end).trimEnd()}\n\n${slot}\n${text.slice(end)}`
-  }
   text = `${text.trim()}\n\n## 한 줄 총평\n${slot}`
   return { title, summary, content: text }
 }
@@ -232,4 +228,21 @@ async function makeWeeklyCard(weeks: Awaited<ReturnType<typeof getKoreanPlayersW
     console.error("주간 카드 이미지 생성 실패:", err)
     return null
   }
+}
+
+// 주간 칼럼 발행 시 붙일 태그를 본문에서 뽑는다 (2026-10-11 운영자 요청: 태그 최대한 많이).
+// "### 선수이름 (소속팀)" 소제목 = 이번 주 출전 선수. 선수명·소속팀·리그 + 검색용 고정 키워드.
+export function weeklyAutoTags(content: string, existing: string[] = []): string[] {
+  const tags: string[] = [...existing]
+  const leagues: string[] = []
+  for (const m of content.matchAll(/^###\s+(.+?)\s*\((.+?)\)\s*$/gm)) {
+    const name = m[1].trim()
+    const team = m[2].trim()
+    tags.push(name, team, `${name} 경기`, `${name} 평점`)
+    const p = KOREAN_PLAYERS_ABROAD.find((kp) => kp.name === name)
+    if (p) leagues.push(koLeague(p.league))
+  }
+  tags.push(...leagues)
+  tags.push("해외파", "한국인 해외파", "해외파 경기 결과", "해외파 평점", "주간정리", "해외축구", "축구 칼럼", "GoalLine")
+  return [...new Set(tags.map((t) => t.replace(/[#,]/g, "").trim()).filter((t) => t && t.length <= 30))].slice(0, 30)
 }
