@@ -1,9 +1,7 @@
 import { apiFetch, getVenueInfo, getRoundFixtures, buildInsights } from "@/lib/matchApi"
 import type { TeamFixture } from "@/lib/matchApi"
 import MatchSidebar from "@/components/MatchSidebar"
-import MatchVote from "@/components/MatchVote"
 import MatchComments from "@/components/MatchComments"
-import MatchPrediction from "@/components/MatchPrediction"
 
 type Prediction = {
   predictions: {
@@ -105,16 +103,6 @@ export default async function SidebarDeferredSection({
           : null
       }
     >
-      {isFinished && <MatchVote matchId={fixtureId} />}
-      {!isFinished && (
-        <MatchPrediction
-          matchId={fixtureId}
-          homeTeam={homeTeamName}
-          awayTeam={awayTeamName}
-          kickoffAt={kickoffAt}
-          isStarted={isStarted}
-        />
-      )}
       <MatchComments
         matchId={fixtureId}
         homeTeam={homeTeamName}

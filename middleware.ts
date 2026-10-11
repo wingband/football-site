@@ -45,6 +45,7 @@ const isPublicRoute = createRouteMatcher([
   "/api/korean-abroad(.*)",
   "/api/league-board(.*)",
   "/schedule(.*)",
+  "/search(.*)",
   "/api/player-search(.*)",
   "/api/players(.*)",
   "/api/pageview(.*)",
@@ -71,7 +72,7 @@ const RATE_LIMIT_RULES: { pattern: RegExp; max: number }[] = [
   { pattern: /^\/teams\//, max: 40 },
   { pattern: /^\/leagues\//, max: 40 },
   { pattern: /^\/matches/, max: 40 },
-  { pattern: /^\/transfers/, max: 40 },
+  { pattern: /^\/search/, max: 20 },
   { pattern: /^\/api\/players\//, max: 40 },
 ]
 const RATE_LIMIT_WINDOW_MS = 60_000
