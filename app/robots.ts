@@ -12,7 +12,7 @@ export default function robots(): MetadataRoute.Robots {
         // (2026-10-11) /compare?player1=... 조합 주소는 noindex인데도 수천 개가 크롤링돼
         // 크롤 예산을 낭비했다. 빈 /compare 랜딩만 허용하고 파라미터 붙은 주소는 막는다.
         // /columns/write, /board/write 같은 작성 화면도 막는다.
-        disallow: ["/api/", "/search", "/sign-in", "/sign-up", "/compare?", "/columns/write", "/board/write"],
+        disallow: ["/api/", "/search", "/sign-in", "/sign-up", "/compare?", "/columns/write", "/columns/names", "/board/write"],
       },
     ],
     sitemap: `${SITE_URL}/sitemap.xml`,

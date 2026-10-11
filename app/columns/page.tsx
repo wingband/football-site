@@ -69,7 +69,10 @@ export default async function ColumnsPage() {
                 )
               })}
             </ul>
-            <p className="text-[11px] text-floodlight/40 mt-3">경기 리포트 초안은 7일 안에 발행하지 않으면 자동으로 지워져요.</p>
+            <p className="text-[11px] text-floodlight/40 mt-3">
+              경기 리포트 초안은 7일 안에 발행하지 않으면 자동으로 지워져요. 선수 이름 표기가 틀렸으면{" "}
+              <Link href="/columns/names" className="underline hover:text-floodlight">이름 표기 고치기</Link>
+            </p>
           </section>
         )}
 
