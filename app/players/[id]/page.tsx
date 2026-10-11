@@ -272,7 +272,7 @@ export default async function PlayerPage({
         )}
 
         {/* ── 기본 정보 ── */}
-        <div className="grid sm:grid-cols-2 gap-x-10 gap-y-2 bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-2 bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5">
           <div className="space-y-2.5 text-sm">
             {player.height && (
               <div className="flex justify-between">
@@ -386,7 +386,7 @@ export default async function PlayerPage({
               시즌 상세 통계
               <span className="text-xs text-floodlight/65 ml-2">{stat.league.name} {season}/{season + 1}</span>
             </p>
-            <div className="grid sm:grid-cols-2 gap-x-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8">
               <div>
                 <p className="text-xs text-floodlight/65 mb-1">슈팅</p>
                 <StatRow label="슈팅" value={stat.shots.total ?? "-"} />

@@ -68,7 +68,7 @@ export default function KoreanWeekHub({ weeks }: { weeks: PlayerWeek[] }) {
   const benched = [...new Set(all.filter(({ m }) => !m.played).map(({ w }) => w.player.name))]
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2 items-start">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 items-start">
       {/* 최근 7일 활약 */}
       <section className={CARD}>
         <h2 className="text-base font-semibold text-floodlight">최근 7일 활약</h2>

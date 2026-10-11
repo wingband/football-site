@@ -27,7 +27,7 @@ export default async function TeamNewsPage({ params }: { params: Promise<{ id: s
         )}
 
         {hero && (
-          <div className="grid lg:grid-cols-2 gap-6 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             <a
               href={hero.link}
               target="_blank"
@@ -66,7 +66,7 @@ export default async function TeamNewsPage({ params }: { params: Promise<{ id: s
         )}
 
         {rest.length > 4 && (
-          <div className="grid sm:grid-cols-2 gap-x-8 gap-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
             {rest.slice(4, 16).map((a, i) => (
               <a
                 key={i}

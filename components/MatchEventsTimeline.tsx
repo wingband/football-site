@@ -211,7 +211,7 @@ export default function MatchEventsTimeline({
     }
 
     rows.push(
-      <div key={idx} className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+      <div key={idx} className="grid grid-cols-[minmax(0,1fr)_auto_1fr] items-center gap-3">
         <div className="flex justify-end min-w-0">
           {isHome && <EventContent ev={ev} isHome={true} score={score} />}
         </div>

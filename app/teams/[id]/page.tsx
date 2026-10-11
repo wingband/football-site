@@ -169,7 +169,7 @@ export default async function TeamOverviewPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(sportsTeamJsonLd) }}
       />
         {/* 상단: 팀 기록 + 다음 경기 */}
-        <div className="grid sm:grid-cols-2 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
           <div className="bg-turf/40 border border-turf-line/40 rounded-md p-4">
             <p className="text-sm font-medium mb-3">팀 기록</p>
             <RecentFormBadges fixtures={fixtures} teamId={info.team.id} />
@@ -208,7 +208,7 @@ export default async function TeamOverviewPage({
           )}
         </div>
 
-        <div className="grid lg:grid-cols-[1fr_320px] gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6 items-start">
           {/* 리그 순위표 */}
           <div>
             {standingsData && standingsData.league.standings.length > 0 ? (
@@ -305,7 +305,7 @@ export default async function TeamOverviewPage({
             {news.length === 0 ? (
               <p className="text-floodlight/40 text-sm py-4">뉴스를 일시적으로 불러올 수 없습니다.</p>
             ) : (
-            <div className="grid sm:grid-cols-2 gap-x-8 gap-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
               {news.slice(0, 4).map((a, i) => (
                 <a
                   key={i}

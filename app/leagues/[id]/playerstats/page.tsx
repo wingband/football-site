@@ -161,7 +161,7 @@ export default async function LeaguePlayerStatsPage({
         <SeasonDropdown currentSeason={displaySeason} />
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <LeaderCard title="득점" rows={goalRows} />
         <LeaderCard title="도움" rows={assistRows} />
         <LeaderCard title="득점 + 도움" rows={gaRows} />

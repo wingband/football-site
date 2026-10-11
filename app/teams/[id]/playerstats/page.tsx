@@ -96,7 +96,7 @@ export default async function TeamPlayerStatsPage({
             선수 통계 정보가 없습니다.
           </p>
         ) : (
-          <div className="grid sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <LeaderCard title="득점" rows={goals} />
             <LeaderCard title="도움" rows={assists} />
             <LeaderCard title="평점" rows={ratings} />

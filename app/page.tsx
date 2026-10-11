@@ -103,7 +103,7 @@ export default async function Home() {
 
   return (
     <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         {/* 최근 경기 결과 — 리그 탭 · 날짜/시각 */}
         <HomeResults tabs={HOME_LEAGUE_TABS.map((t) => ({ id: t.id, label: t.label }))} results={results} />
 
@@ -251,7 +251,7 @@ export default async function Home() {
               전체 보기 →
             </Link>
           </div>
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
             {columns.map((c) => (
               <ColumnCard key={c.slug} column={c} />
             ))}

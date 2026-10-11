@@ -64,7 +64,7 @@ export default function HomeResults({ tabs, results }: { tabs: Tab[]; results: H
                     <span className={r.whenLabel === "오늘" ? "text-score-amber" : ""}>{r.whenLabel}</span>
                     <span className="font-data">{r.time}</span>
                   </p>
-                  <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto_1fr] items-center gap-2">
                     <span className="flex items-center justify-end gap-2 min-w-0 text-sm text-floodlight">
                       <span className="truncate">{r.home.name}</span>
                       <Logo src={r.home.logo} alt="" className="w-5 h-5 shrink-0" />

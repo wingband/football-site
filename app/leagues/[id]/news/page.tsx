@@ -49,7 +49,7 @@ export default async function LeagueNewsPage({
         )}
 
         {hero && (
-          <div className="grid lg:grid-cols-2 gap-6 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             {/* 히어로 기사 */}
             <a
               href={hero.link}
@@ -95,7 +95,7 @@ export default async function LeagueNewsPage({
 
         {/* 나머지 기사 그리드 */}
         {rest.length > 4 && (
-          <div className="grid sm:grid-cols-2 gap-x-8 gap-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
             {rest.slice(4, 16).map((a, i) => (
               <a
                 key={i}

@@ -622,7 +622,7 @@ export default async function MatchDetailPage({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(sportsEventJsonLd) }}
         />
       )}
-      <div className="max-w-5xl mx-auto pb-16 lg:grid lg:grid-cols-[1fr_320px] lg:gap-6 lg:items-start lg:px-4">
+      <div className="max-w-5xl mx-auto pb-16 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-6 lg:items-start lg:px-4">
       <div className="max-w-2xl mx-auto lg:mx-0 lg:max-w-none">
         {/* 상단 바 */}
         <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-turf-line/60">

@@ -92,3 +92,6 @@ body {
 .scroll-dark::-webkit-scrollbar-track { background: transparent; }
 .scroll-dark::-webkit-scrollbar-thumb { background: var(--color-turf-line); border-radius: 9999px; }
 .scroll-dark::-webkit-scrollbar-thumb:hover { background: var(--color-score-amber); }
+
+/* 모바일에서 가로로 삐져나가는 요소가 있어도 화면 전체가 줄어들거나 옆으로 밀리지 않게 */
+html, body { max-width: 100%; overflow-x: clip; }

@@ -248,7 +248,7 @@ export default async function LeagueOverviewPage({ params, searchParams }: { par
   return (
     <>
       {/* ── 메인 2컬럼 (FotMob 스타일) ── */}
-      <div className="grid lg:grid-cols-[1fr_300px] gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px] gap-6 items-start">
         {/* 좌: 순위표 */}
         <div>
           <StandingsWithFilter
@@ -267,7 +267,7 @@ export default async function LeagueOverviewPage({ params, searchParams }: { par
 
       {/* ── 득점/도움 순위 (하단 2열) ── */}
       {(goalRows.length > 0 || assistRows.length > 0) && (
-        <div className="grid sm:grid-cols-2 gap-4 mt-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
           <LeaderboardCard title="득점 순위" rows={goalRows} moreHref={`/leagues/${id}/topscorers`} />
           <LeaderboardCard title="도움 순위" rows={assistRows} />
         </div>
@@ -285,7 +285,7 @@ export default async function LeagueOverviewPage({ params, searchParams }: { par
             )}
           </div>
           {news.length > 0 ? (
-            <div className="grid sm:grid-cols-2 gap-x-8 gap-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
               {news.slice(0, 4).map((a, i) => (
                 <a key={i} href={a.link} target="_blank" rel="noopener noreferrer"
                   className="flex gap-3 items-start hover:bg-turf-line/20 transition-colors p-1 -m-1">

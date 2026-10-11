@@ -179,7 +179,7 @@ export default function StoriesPage() {
 
       {/* 기사 목록 */}
       {loading ? (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="bg-turf/30 border border-turf-line/40 animate-pulse h-36 rounded-none" />
           ))}
@@ -187,7 +187,7 @@ export default function StoriesPage() {
       ) : displayed.length === 0 ? (
         <p className="text-floodlight/60 text-sm py-8 text-center">해당 리그 리뷰가 없습니다.</p>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {displayed.map((a) => {
             const leagueLogo = Object.entries(LEAGUE_LOGOS).find(([k]) =>
               a.leagueName.includes(k) || k.includes(a.leagueName.split(" ")[0])
@@ -208,7 +208,7 @@ export default function StoriesPage() {
                 </div>
 
                 {/* 팀 엠블럼 + 스코어 */}
-                <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+                <div className="grid grid-cols-[minmax(0,1fr)_auto_1fr] items-center gap-3">
                   <div className="flex items-center justify-end gap-2.5 min-w-0">
                     <span className="text-sm font-semibold text-floodlight text-right leading-snug">{teamKo(a.homeTeam)}</span>
                     <TeamBadge name={a.homeTeam} logo={a.homeLogo} size="lg" />

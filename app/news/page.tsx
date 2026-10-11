@@ -54,7 +54,7 @@ function HeroSection({ articles }: { articles: Article[] }) {
   if (!hero) return null
 
   return (
-    <div className="grid lg:grid-cols-[1fr_400px] gap-6 mb-10">
+    <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_400px] gap-6 mb-10">
       {/* 히어로 */}
       <a href={hero.link} target="_blank" rel="noopener noreferrer"
         className="relative block overflow-hidden group">
@@ -139,7 +139,7 @@ function LeagueSection({
         <h2 className="text-base font-semibold text-floodlight">{label}</h2>
       </div>
 
-      <div className="grid lg:grid-cols-[1fr_480px]">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_480px]">
         {/* 좌: 기사 리스트 */}
         <div className="divide-y divide-turf-line/20 border-r border-turf-line/20">
           {list.map((a, i) => (

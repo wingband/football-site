@@ -183,7 +183,7 @@ export default async function TeamStatsPage({ params }: { params: Promise<{ id: 
       {allRows.length > 0 && (
         <div>
           <p className="text-xs text-floodlight/40 uppercase mb-3 tracking-wide">리그 내 비교</p>
-          <div className="grid sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <RankCard title="경기당 득점 상위 5팀" rows={goalsForRows} teamId={teamId} />
             <RankCard title="경기당 실점 하위 5팀" rows={goalsAgainstRows} teamId={teamId} />
           </div>
