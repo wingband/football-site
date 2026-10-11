@@ -24,9 +24,7 @@ export default function PageCoupang() {
   if (/^\/board\/[^/]+\/edit/.test(pathname)) return null
   return (
     <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 pb-8">
-      <div className="bg-turf/40 border border-turf-line/60 rounded-none p-3">
-        <CoupangBanner />
-      </div>
+      <CoupangBanner />
     </div>
   )
 }

@@ -19,7 +19,7 @@ export default function CoupangBanner({ className = "" }: { className?: string }
   useEffect(() => {
     const el = boxRef.current
     if (!el) return
-    const measure = () => setWidth(Math.min(680, Math.floor(el.clientWidth)))
+    const measure = () => setWidth(Math.min(1200, Math.floor(el.clientWidth)))
     measure()
     const ro = new ResizeObserver(measure)
     ro.observe(el)
