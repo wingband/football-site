@@ -96,7 +96,7 @@ export default async function ColumnPage({ params }: { params: Promise<{ slug: s
               ))}
             </div>
           )}
-          <h1 className="text-2xl font-bold leading-snug text-floodlight">{column.title}</h1>
+          <h1 className="text-xl font-bold leading-snug text-floodlight">{column.title}</h1>
           {column.summary && <p className="text-sm text-floodlight/60 mt-3 leading-relaxed">{column.summary}</p>}
           <p className="text-xs text-floodlight/40 mt-4">
             GoalLine 칼럼 · {formatDate(column.createdAt)}

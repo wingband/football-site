@@ -99,14 +99,14 @@ export default function ColumnBody({ content }: { content: string }) {
   // 초안용 "✍️ 내 의견:" 표시는 화면에 보여주지 않는다 (이미 발행된 예전 글에도 적용)
   const blocks = parseBlocks(content.replace(/✍️\s*내\s*의견\s*[:：]\s*(?!\(여기에)/g, ""))
   return (
-    <div className="text-[15px] leading-[1.85] text-floodlight/85 space-y-5">
+    <div className="text-sm leading-[1.8] text-floodlight/85 space-y-4 max-w-4xl">
       {blocks.map((b, i) => {
         const k = `b${i}`
         switch (b.type) {
           case "h2":
-            return <h2 key={k} className="text-lg font-bold text-floodlight pt-4">{renderInline(b.text, k)}</h2>
+            return <h2 key={k} className="text-base font-semibold text-floodlight pt-3">{renderInline(b.text, k)}</h2>
           case "h3":
-            return <h3 key={k} className="text-base font-semibold text-floodlight pt-2">{renderInline(b.text, k)}</h3>
+            return <h3 key={k} className="text-sm font-semibold text-floodlight pt-1">{renderInline(b.text, k)}</h3>
           case "quote":
             return (
               <blockquote key={k} className="border-l-2 border-score-amber/60 pl-4 text-floodlight/70 italic">
@@ -125,6 +125,8 @@ export default function ColumnBody({ content }: { content: string }) {
           case "hr":
             return <hr key={k} className="border-turf-line/50" />
           case "img":
+            // 자동 생성되던 큼직한 기록 카드 이미지는 보여주지 않는다 (본문 텍스트에 같은 내용이 있다)
+            if (/— GoalLine/.test(b.alt)) return null
             return (
               <figure key={k} className="my-2">
                 {/* 칼럼 이미지는 업로드 시점에 이미 줄여서 저장하므로 next/image 최적화 없이 그대로 쓴다 */}
