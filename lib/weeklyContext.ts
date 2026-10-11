@@ -40,6 +40,26 @@ export type MatchContext = {
 
 export type SeasonLine = string // "이번 시즌 분데스리가 7경기 2골 1도움, 평균 평점 7.0" 또는 ""
 
+// 시즌 누적 기록 한 줄 (player_stat_cache DB 값만 사용 — 추가 API 호출 없음)
+export async function seasonLineFor(playerId: number): Promise<SeasonLine> {
+  try {
+    const cached = await getCachedPlayerStat(playerId)
+    const club = (cached?.statistics ?? []).filter((s) => !NATIONAL_KW.some((kw) => (s.league?.name ?? "").includes(kw)))
+    if (!club.length) return ""
+    const best = club.reduce((a, b) => ((b.games?.minutes ?? 0) > (a.games?.minutes ?? 0) ? b : a))
+    const apps = best.games?.appearences ?? 0
+    if (!apps) return ""
+    const rating = best.games?.rating ? Number(best.games.rating) : null
+    return (
+      `이번 시즌 ${best.league.name} ${apps}경기 ${best.goals?.total ?? 0}골 ${best.goals?.assists ?? 0}도움` +
+      (rating && Number.isFinite(rating) ? `, 평균 평점 ${rating.toFixed(1)}` : "") +
+      " (사이트 저장 기준, 최근 경기가 아직 반영 안 됐을 수 있음)"
+    )
+  } catch {
+    return ""
+  }
+}
+
 export async function buildWeeklyContext(weeks: PlayerWeek[]) {
   // 해외파가 실제로 뛴 경기만 이벤트를 받아온다
   const fixtureIds = new Set<number>()
@@ -69,23 +89,8 @@ export async function buildWeeklyContext(weeks: PlayerWeek[]) {
   const seasonLines = new Map<number, SeasonLine>()
   await Promise.all(
     weeks.map(async (w) => {
-      try {
-        const cached = await getCachedPlayerStat(w.player.id)
-        const club = (cached?.statistics ?? []).filter((s) => !NATIONAL_KW.some((kw) => s.league.name.includes(kw)))
-        if (!club.length) return
-        const best = club.reduce((a, b) => ((b.games.minutes ?? 0) > (a.games.minutes ?? 0) ? b : a))
-        const apps = best.games.appearences ?? 0
-        if (!apps) return
-        const rating = best.games.rating ? Number(best.games.rating) : null
-        seasonLines.set(
-          w.player.id,
-          `이번 시즌 ${best.league.name} ${apps}경기 ${best.goals.total ?? 0}골 ${best.goals.assists ?? 0}도움` +
-            (rating && Number.isFinite(rating) ? `, 평균 평점 ${rating.toFixed(1)}` : "") +
-            " (사이트 저장 기준, 이번 주 경기가 아직 반영 안 됐을 수 있음)"
-        )
-      } catch {
-        // 시즌 기록은 있으면 좋은 재료라 실패해도 무시
-      }
+      const line = await seasonLineFor(w.player.id)
+      if (line) seasonLines.set(w.player.id, line)
     })
   )
 

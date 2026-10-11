@@ -152,3 +152,113 @@ export function periodLabel(now = new Date()): string {
   const fmt = (d: Date) => d.toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul", month: "long", day: "numeric" })
   return `${fmt(new Date(now.getTime() - 6 * 86400_000))} ~ ${fmt(now)}`
 }
+
+type FontOverride = { regular: ArrayBuffer; bold: ArrayBuffer }
+
+async function fontsFor(text: string, override?: FontOverride) {
+  const [regular, bold] = override
+    ? [override.regular, override.bold]
+    : await Promise.all([loadKoreanFont(text, 400), loadKoreanFont(text, 700)])
+  return [
+    ...(regular ? [{ name: "NotoKR", data: regular, weight: 400 as const, style: "normal" as const }] : []),
+    ...(bold ? [{ name: "NotoKR", data: bold, weight: 700 as const, style: "normal" as const }] : []),
+  ]
+}
+
+// ── 주말 해외파 일정 카드 (2026-10-11) ───────────────────────────────────────
+export type ScheduleRow = { when: string; name: string; team: string; vs: string }
+
+export async function renderScheduleCard(rows: ScheduleRow[], periodText: string, fontOverride?: FontOverride): Promise<ArrayBuffer> {
+  const shown = rows.slice(0, 6)
+  const more = rows.length - shown.length
+  const title = "이번 주말 해외파 경기 일정"
+  const allText = [title, periodText, "GOALLINE 주말 해외파", "goalline.me/korean-players", "한국 시간 기준", `외 ${more}경기`,
+    ...shown.flatMap((r) => [r.when, r.name, r.team, r.vs]), "0123456789:~·"].join("")
+  const fonts = await fontsFor(allText, fontOverride)
+  const rowH = shown.length > 5 ? 60 : 70
+
+  const res = new ImageResponse(
+    (
+      <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", backgroundColor: BG, padding: "34px 56px", fontFamily: "NotoKR, sans-serif", color: TEXT }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <div style={{ display: "flex", fontSize: 22, color: GOLD, fontWeight: 700, letterSpacing: "0.08em" }}>GOALLINE 주말 해외파</div>
+            <div style={{ display: "flex", fontSize: 44, fontWeight: 700, marginTop: 4 }}>{title}</div>
+          </div>
+          <div style={{ display: "flex", fontSize: 24, color: MUTED }}>{periodText}</div>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", marginTop: 18, flex: 1 }}>
+          {shown.map((r, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", height: rowH, padding: "0 22px", marginBottom: 6, backgroundColor: PANEL, border: `2px solid ${LINE}`, borderRadius: 10 }}>
+              <div style={{ display: "flex", width: 300, fontSize: 22, color: GOLD, fontWeight: 700 }}>{r.when}</div>
+              <div style={{ display: "flex", alignItems: "baseline", flex: 1 }}>
+                <span style={{ fontSize: 28, fontWeight: 700 }}>{r.name}</span>
+                <span style={{ fontSize: 20, color: MUTED, marginLeft: 12 }}>{r.team}</span>
+              </div>
+              <div style={{ display: "flex", fontSize: 20, color: TEXT }}>{r.vs}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 19, color: MUTED, marginTop: 4 }}>
+          <span>{more > 0 ? `한국 시간 기준 · 외 ${more}경기` : "한국 시간 기준"}</span>
+          <span style={{ color: GOLD }}>goalline.me/korean-players</span>
+        </div>
+      </div>
+    ),
+    { width: W, height: H, ...(fonts.length ? { fonts } : {}) }
+  )
+  return await res.arrayBuffer()
+}
+
+// ── 경기 직후 선수 리포트 카드 (2026-10-11) ─────────────────────────────────
+export type PlayerCardData = {
+  name: string
+  team: string
+  scoreLine: string // "아틀레티코 마드리드 2 : 1 알라베스"
+  meta: string // "10월 10일 · 라리가"
+  rating: number | null
+  stats: { label: string; value: string }[] // 최대 6개
+}
+
+export async function renderPlayerCard(d: PlayerCardData, fontOverride?: FontOverride): Promise<ArrayBuffer> {
+  const stats = d.stats.slice(0, 6)
+  const allText = ["GOALLINE 경기 리포트", "평점", "goalline.me/korean-players", "경기 데이터 평점 기준", d.name, d.team, d.scoreLine, d.meta,
+    ...stats.flatMap((s) => [s.label, s.value]), d.rating?.toFixed(1) ?? "-", "0123456789:."].join("")
+  const fonts = await fontsFor(allText, fontOverride)
+
+  const res = new ImageResponse(
+    (
+      <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", backgroundColor: BG, padding: "40px 56px", fontFamily: "NotoKR, sans-serif", color: TEXT }}>
+        <div style={{ display: "flex", fontSize: 22, color: GOLD, fontWeight: 700, letterSpacing: "0.08em" }}>GOALLINE 경기 리포트</div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 14 }}>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <div style={{ display: "flex", alignItems: "baseline" }}>
+              <span style={{ fontSize: 64, fontWeight: 700 }}>{d.name}</span>
+              <span style={{ fontSize: 28, color: MUTED, marginLeft: 18 }}>{d.team}</span>
+            </div>
+            <div style={{ display: "flex", fontSize: 30, marginTop: 10 }}>{d.scoreLine}</div>
+            <div style={{ display: "flex", fontSize: 22, color: MUTED, marginTop: 6 }}>{d.meta}</div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "14px 30px", border: `3px solid ${GOLD}`, borderRadius: 16, backgroundColor: "#1d3324" }}>
+            <span style={{ fontSize: 22, color: MUTED }}>평점</span>
+            <span style={{ fontSize: 76, fontWeight: 700, color: d.rating !== null ? ratingColor(d.rating) : MUTED }}>{d.rating !== null ? d.rating.toFixed(1) : "-"}</span>
+          </div>
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", marginTop: 30, flex: 1 }}>
+          {stats.map((s, i) => (
+            <div key={i} style={{ display: "flex", flexDirection: "column", width: "31%", marginRight: i % 3 === 2 ? 0 : "3.5%", marginBottom: 14, padding: "14px 20px", backgroundColor: PANEL, border: `2px solid ${LINE}`, borderRadius: 10 }}>
+              <span style={{ fontSize: 20, color: MUTED }}>{s.label}</span>
+              <span style={{ fontSize: 34, fontWeight: 700, marginTop: 2 }}>{s.value}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 19, color: MUTED }}>
+          <span>경기 데이터 평점 기준</span>
+          <span style={{ color: GOLD }}>goalline.me/korean-players</span>
+        </div>
+      </div>
+    ),
+    { width: W, height: H, ...(fonts.length ? { fonts } : {}) }
+  )
+  return await res.arrayBuffer()
+}

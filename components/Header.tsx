@@ -2,7 +2,8 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { usePathname } from "next/navigation"
 import { UserButton, SignInButton, SignUpButton, useUser } from "@clerk/nextjs"
 
 const NAV_LINKS = [
@@ -32,6 +33,26 @@ export default function Header() {
   const [infoOpen, setInfoOpen] = useState(false)
   const router = useRouter()
   const { isSignedIn } = useUser()
+  const pathname = usePathname()
+  // 관리자에게만 "칼럼" 옆에 총평 대기 초안 수를 띄운다 (관리자가 아니면 API가 0을 준다)
+  const [pending, setPending] = useState(0)
+  useEffect(() => {
+    if (!isSignedIn) return
+    let alive = true
+    fetch("/api/columns/pending", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : { count: 0 }))
+      .then((d) => alive && setPending(Number(d.count) || 0))
+      .catch(() => {})
+    return () => {
+      alive = false
+    }
+  }, [isSignedIn, pathname])
+  const badge = (href: string) =>
+    isSignedIn && href === "/columns" && pending > 0 ? (
+      <span className="ml-1 inline-flex items-center justify-center min-w-4 h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold align-top">
+        {pending}
+      </span>
+    ) : null
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
@@ -53,6 +74,7 @@ export default function Header() {
           {NAV_LINKS.map((link) => (
             <Link key={link.href} href={link.href} className="hover:text-floodlight transition-colors">
               {link.label}
+              {badge(link.href)}
             </Link>
           ))}
           <div className="relative">
@@ -141,8 +163,9 @@ export default function Header() {
           <button
             onClick={() => setMenuOpen((v) => !v)}
             aria-label="메뉴 열기"
-            className="p-2 text-floodlight/70 hover:text-floodlight"
+            className="relative p-2 text-floodlight/70 hover:text-floodlight"
           >
+            {isSignedIn && pending > 0 && !menuOpen && <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500" />}
             {menuOpen ? (
               <span className="text-xl leading-none">✕</span>
             ) : (
@@ -177,6 +200,7 @@ export default function Header() {
                 className="py-2.5 px-2 rounded text-floodlight/80 hover:bg-turf-line/40 hover:text-floodlight transition-colors"
               >
                 {link.label}
+                {badge(link.href)}
               </Link>
             ))}
           </nav>

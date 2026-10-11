@@ -72,6 +72,15 @@ export async function getColumns(opts: { includeDrafts?: boolean; limit?: number
   return rows.map(rowToColumn)
 }
 
+// 관리자 헤더 배지용: 한 줄 총평을 기다리는 비공개 AI 초안 수
+export async function countPendingDrafts(placeholder: string): Promise<number> {
+  if (!process.env.DATABASE_URL) return 0
+  await ensureTable()
+  const sql = getSql()
+  const rows = await sql`SELECT COUNT(*)::int AS n FROM columns WHERE published = false AND position(${placeholder} in content) > 0`
+  return Number(rows[0]?.n ?? 0)
+}
+
 export async function getColumnBySlug(slug: string): Promise<Column | null> {
   if (!process.env.DATABASE_URL) return null
   await ensureTable()

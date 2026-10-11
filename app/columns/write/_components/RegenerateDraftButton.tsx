@@ -1,9 +1,11 @@
 "use client"
 
 import { useState } from "react"
+import type { DraftKind } from "@/lib/draftKinds"
 
-// 주간 AI 초안을 최신 경기 데이터로 다시 쓴다 (같은 주소, 발행 전 초안만)
-export default function RegenerateDraftButton() {
+// AI 초안을 최신 경기 데이터로 다시 쓴다 (같은 주소, 발행 전 초안만)
+// 경기 리포트는 경기마다 따로 만들어지므로 다시 만들기 대상이 아니다.
+export default function RegenerateDraftButton({ kind = "weekly" }: { kind?: Exclude<DraftKind, "report"> }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
@@ -12,18 +14,17 @@ export default function RegenerateDraftButton() {
     setLoading(true)
     setError("")
     try {
-      const res = await fetch("/api/columns/generate-weekly", {
+      const res = await fetch("/api/columns/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refresh: true }),
+        body: JSON.stringify({ kind, refresh: true }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
         setError(data.error ?? "다시 만들기에 실패했습니다")
         return
       }
-      // 편집 화면 상태가 처음 받은 글 내용으로 초기화되므로, 같은 주소를 새로 불러와 새 초안을 보여준다
-      // (다시 쓰기는 같은 slug에 덮어쓴다)
+      // 다시 쓰기는 같은 slug에 덮어쓰므로 같은 주소를 새로 불러온다
       window.location.reload()
     } finally {
       setLoading(false)

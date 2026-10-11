@@ -2,8 +2,8 @@ import { getKoreanPlayersWeek, formatKickoffKst, koLeague, koTeam, type PlayerWe
 import { buildWeeklyContext, detailText, numbersSection } from "@/lib/weeklyContext"
 import { KOREAN_PLAYERS_ABROAD } from "@/lib/koreanPlayersAbroad"
 import { getColumns, makeColumnSlug, saveColumn } from "@/lib/columns"
-import { put } from "@vercel/blob"
 import { pickTopRows, renderWeeklyCard, periodLabel } from "@/lib/weeklyCard"
+import { OPINION_PLACEHOLDER, DRAFT_KINDS, callOpenAI, shapeDraftText, insertBefore, uploadPng, cleanTags, weekLabel, type DraftResult } from "@/lib/draftEngine"
 
 // 주간 해외파 칼럼 "초안" 자동 생성 (2026-10-10 신설).
 // 데이터(경기 결과·출전 시간·평점·공격포인트)로 뼈대를 AI가 쓰고, 선수별 섹션마다
@@ -11,8 +11,9 @@ import { pickTopRows, renderWeeklyCard, periodLabel } from "@/lib/weeklyCard"
 // 채워 넣어야만 공개할 수 있다(app/api/columns/route.ts의 발행 검사).
 // → 순수 자동 생성 글이 아니라 사람의 시각이 들어간 글이 되도록 하는 장치.
 
-export const OPINION_PLACEHOLDER = "(여기에 직접 한두 줄 의견을 써주세요)"
-export const WEEKLY_SLUG_MARK = "weekly-korean-abroad"
+// 공통 엔진(lib/draftEngine.ts)으로 옮김 — 기존 import 경로 호환용 재수출
+export { OPINION_PLACEHOLDER }
+export const WEEKLY_SLUG_MARK = DRAFT_KINDS.weekly.mark
 
 type Ctx = Awaited<ReturnType<typeof buildWeeklyContext>>
 
@@ -91,38 +92,9 @@ ${idle.map((w) => w.player.name).join(", ") || "(없음)"}
 ${upcoming.join("\n") || "(정보 없음)"}`
 }
 
-async function callOpenAI(prompt: string): Promise<string> {
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: "gpt-4o-mini",
-      max_tokens: 4500,
-      temperature: 0.3,
-      messages: [{ role: "user", content: prompt }],
-    }),
-  })
-  const data = await res.json()
-  if (!res.ok) {
-    console.error("주간 칼럼 OpenAI 에러:", data)
-    throw new Error("AI 초안 생성에 실패했습니다")
-  }
-  return data.choices?.[0]?.message?.content ?? ""
-}
 
-function weekLabel(now = new Date()): string {
-  const kst = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Seoul" }))
-  const month = kst.getMonth() + 1
-  const week = Math.ceil(kst.getDate() / 7)
-  return `${month}월 ${week}주차`
-}
 
-export type WeeklyDraftResult =
-  | { ok: true; slug: string; created: boolean }
-  | { ok: false; error: string }
+export type WeeklyDraftResult = DraftResult
 
 // 최근 5일 안에 만든 주간 초안이 이미 있으면:
 //  - refreshDraft=false(관리자 버튼): 새로 만들지 않고 그 초안을 돌려준다 (OpenAI 중복 호출 방지)
@@ -143,7 +115,7 @@ export async function generateWeeklyKoreanDraft({ refreshDraft = false } = {}): 
   }
 
   const ctx = await buildWeeklyContext(weeks)
-  const raw = (await callOpenAI(buildPrompt(weeks, ctx))).trim()
+  const raw = await callOpenAI(buildPrompt(weeks, ctx), 4500)
   if (!raw) return { ok: false, error: "AI 응답이 비어 있습니다" }
 
   const shaped = shapeDraft(raw)
@@ -151,12 +123,7 @@ export async function generateWeeklyKoreanDraft({ refreshDraft = false } = {}): 
   let content = shaped.content
 
   // "숫자로 보는 이번 주"는 코드가 계산해서 "다음 경기 일정" 앞에 넣는다
-  const numbers = numbersSection(weeks)
-  if (numbers) {
-    const at = content.search(/\n##\s*다음\s*경기\s*일정/)
-    const at2 = at >= 0 ? at : content.search(/\n##\s*한\s*줄\s*총평/)
-    content = at2 >= 0 ? `${content.slice(0, at2)}\n\n${numbers}\n${content.slice(at2)}` : `${content}\n\n${numbers}`
-  }
+  content = insertBefore(content, /\n##\s*다음\s*경기\s*일정/, numbersSection(weeks))
 
   // 글 맨 위에 "평점 TOP 5" 카드 이미지를 붙인다. 이미지 저장소가 없거나 그리기에
   // 실패해도 초안 자체는 그대로 만든다(카드는 있으면 좋은 부가 요소).
@@ -177,39 +144,8 @@ export async function generateWeeklyKoreanDraft({ refreshDraft = false } = {}): 
   return { ok: true, slug, created: true }
 }
 
-// 모델 출력 → 제목/요약/본문으로 정리하고, 운영자 의견 자리 2곳을 코드로 직접 넣는다.
-// (2026-10-11) 의견 자리를 모델에게 맡겼더니 모델이 그 자리에 스스로 의견을 써 넣어서
-// "사람 의견 없이 발행 불가" 장치가 무력화됐다. 이제 모델이 쓴 의견 줄은 전부 지우고
-// 의견 자리는 항상 코드가 넣는다. 제목/요약도 "# 제목:", "**제목:**" 같은 변형을 모두 받는다.
-export function shapeDraft(raw: string): { title: string; summary: string; content: string } {
-  let title = `[주간 해외파] ${weekLabel()} 해외파 활약 정리`
-  let summary = ""
-  const body: string[] = []
-  let seenHeading = false
-  for (const line of raw.split("\n")) {
-    const clean = line.replace(/^[\s#>*_-]+/, "").replace(/\*\*/g, "").trim()
-    const t = !seenHeading && clean.match(/^제목\s*[:：]\s*(.+)$/)
-    const sm = !seenHeading && clean.match(/^요약\s*[:：]\s*(.+)$/)
-    if (t) {
-      title = `[주간 해외파] ${t[1].replace(/^["'\[(]+|["'\])]+$/g, "").trim()}`
-      continue
-    }
-    if (sm) {
-      summary = sm[1].trim()
-      continue
-    }
-    if (/^#{2,3}\s/.test(line)) seenHeading = true
-    if (/내\s*의견/.test(line)) continue // 모델이 쓴 의견 줄 제거
-    body.push(line)
-  }
-
-  // 모델이 만든 "한 줄 총평" 섹션은 통째로 제거 (운영자 몫)
-  let text = body.join("\n").replace(/\n##\s*한\s*줄\s*총평[\s\S]*?(?=\n##\s|$)/, "").trim()
-
-  // 운영자 의견 자리는 맨 끝 "한 줄 총평" 한 곳만 둔다 (2026-10-11 운영자 요청)
-  const slot = `> ✍️ 내 의견: ${OPINION_PLACEHOLDER}`
-  text = `${text.trim()}\n\n## 한 줄 총평\n${slot}`
-  return { title, summary, content: text }
+export function shapeDraft(raw: string) {
+  return shapeDraftText(raw, { prefix: "[주간 해외파]", fallbackTitle: `${weekLabel()} 해외파 활약 정리` })
 }
 
 async function makeWeeklyCard(weeks: Awaited<ReturnType<typeof getKoreanPlayersWeek>>): Promise<string | null> {
@@ -217,13 +153,7 @@ async function makeWeeklyCard(weeks: Awaited<ReturnType<typeof getKoreanPlayersW
   const rows = pickTopRows(weeks, 5)
   if (rows.length < 2) return null // 1명뿐이면 "TOP" 카드가 어색해서 생략
   try {
-    const png = await renderWeeklyCard(rows, periodLabel())
-    const blob = await put(`columns/weekly-card-${new Date().toISOString().slice(0, 10)}.png`, png, {
-      access: "public",
-      addRandomSuffix: true,
-      contentType: "image/png",
-    })
-    return blob.url
+    return await uploadPng("weekly-card", await renderWeeklyCard(rows, periodLabel()))
   } catch (err) {
     console.error("주간 카드 이미지 생성 실패:", err)
     return null
@@ -244,5 +174,5 @@ export function weeklyAutoTags(content: string, existing: string[] = []): string
   }
   tags.push(...leagues)
   tags.push("해외파", "한국인 해외파", "해외파 경기 결과", "해외파 평점", "주간정리", "해외축구", "축구 칼럼", "GoalLine")
-  return [...new Set(tags.map((t) => t.replace(/[#,]/g, "").trim()).filter((t) => t && t.length <= 30))].slice(0, 30)
+  return cleanTags(tags)
 }

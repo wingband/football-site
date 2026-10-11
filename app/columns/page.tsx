@@ -2,8 +2,8 @@ import Link from "next/link"
 import type { Metadata } from "next"
 import { getColumns, readingMinutes } from "@/lib/columns"
 import { isAdmin } from "@/lib/admin"
-import WeeklyDraftButton from "./_components/WeeklyDraftButton"
-import { OPINION_PLACEHOLDER } from "@/lib/generateWeeklyColumn"
+import DraftButtons from "./_components/DraftButtons"
+import { DRAFT_KINDS, OPINION_PLACEHOLDER, draftKindOf } from "@/lib/draftKinds"
 
 export const dynamic = "force-dynamic"
 
@@ -25,8 +25,8 @@ function formatDate(iso: string) {
 export default async function ColumnsPage() {
   const admin = await isAdmin()
   const columns = await getColumns({ includeDrafts: admin })
-  // 관리자에게만: 의견을 기다리는 AI 초안이 있으면 맨 위에 바로가기를 띄운다
-  const pendingDraft = admin ? columns.find((c) => !c.published && c.content.includes(OPINION_PLACEHOLDER)) : undefined
+  // 관리자에게만: 의견을 기다리는 AI 초안 전부를 맨 위에 모아 보여준다
+  const pendingDrafts = admin ? columns.filter((c) => !c.published && c.content.includes(OPINION_PLACEHOLDER)) : []
 
   return (
     <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
@@ -35,7 +35,7 @@ export default async function ColumnsPage() {
           <h1 className="font-display uppercase text-2xl text-score-amber">칼럼</h1>
           {admin && (
             <div className="flex items-start gap-2">
-            <WeeklyDraftButton />
+            <DraftButtons />
             <Link
               href="/columns/write"
               className="text-sm px-4 py-2 bg-score-amber text-pitch-night font-bold rounded hover:bg-score-amber/80 transition-colors"
@@ -49,14 +49,28 @@ export default async function ColumnsPage() {
           데이터만으로는 보이지 않는 이야기. 해외파 활약, 경기 흐름, 리그 판도를 직접 짚어봅니다.
         </p>
 
-        {pendingDraft && (
-          <Link
-            href={`/columns/write?slug=${pendingDraft.slug}`}
-            className="block mb-6 p-4 border border-score-amber/50 bg-score-amber/10 hover:bg-score-amber/15 transition-colors"
-          >
-            <p className="text-sm font-semibold text-score-amber">✍️ 이번 주 초안이 준비됐어요 — 한 줄 의견 달고 발행하기 →</p>
-            <p className="text-xs text-floodlight/60 mt-1 line-clamp-1">{pendingDraft.title}</p>
-          </Link>
+        {pendingDrafts.length > 0 && (
+          <section className="mb-6 p-4 border border-score-amber/50 bg-score-amber/10">
+            <p className="text-sm font-semibold text-score-amber mb-3">
+              ✍️ 한 줄 총평을 기다리는 초안 {pendingDrafts.length}개 — 총평만 쓰면 바로 발행돼요
+            </p>
+            <ul className="space-y-2">
+              {pendingDrafts.map((d) => {
+                const kind = draftKindOf(d.slug)
+                return (
+                  <li key={d.slug}>
+                    <Link href={`/columns/write?slug=${d.slug}`} className="flex items-baseline gap-2 group">
+                      <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-score-amber/20 text-score-amber">
+                        {kind ? DRAFT_KINDS[kind].label : "초안"}
+                      </span>
+                      <span className="text-xs text-floodlight/80 group-hover:text-score-amber line-clamp-1">{d.title}</span>
+                    </Link>
+                  </li>
+                )
+              })}
+            </ul>
+            <p className="text-[11px] text-floodlight/40 mt-3">경기 리포트 초안은 7일 안에 발행하지 않으면 자동으로 지워져요.</p>
+          </section>
         )}
 
         {columns.length === 0 ? (

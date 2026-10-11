@@ -8,13 +8,12 @@ import ColumnBody from "@/components/ColumnBody"
 import OpinionQuickPublish from "./OpinionQuickPublish"
 import RegenerateDraftButton from "./RegenerateDraftButton"
 import { uploadColumnImage } from "./uploadColumnImage"
+import { OPINION_PLACEHOLDER, draftKindOf } from "@/lib/draftKinds"
 
 // lib/columns.ts는 서버 전용(DB)이라 클라이언트에서 import하지 않고 한도만 복제
 const TITLE_MAX = 120
 const SUMMARY_MAX = 200
 const CONTENT_MAX = 30000
-// lib/generateWeeklyColumn.ts의 OPINION_PLACEHOLDER와 같은 문자열 (서버 코드라 import 불가)
-const OPINION_PLACEHOLDER = "(여기에 직접 한두 줄 의견을 써주세요)"
 
 type Initial = {
   slug: string
@@ -46,7 +45,9 @@ export default function ColumnEditor({ initial }: { initial: Initial }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
-  const isWeeklyDraft = Boolean(initial?.slug.includes("weekly-korean-abroad") && !initial?.published)
+  // 다시 만들기는 발행 전 자동 초안(경기 리포트 제외)에만
+  const draftKind = initial && !initial.published ? draftKindOf(initial.slug) : null
+  const regenKind = draftKind && draftKind !== "report" ? draftKind : null
 
   async function handleImage(file: File | undefined) {
     if (!file) return
@@ -306,7 +307,7 @@ export default function ColumnEditor({ initial }: { initial: Initial }) {
                 삭제
               </button>
             )}
-            {isWeeklyDraft && <RegenerateDraftButton />}
+            {regenKind && <RegenerateDraftButton kind={regenKind} />}
           </div>
           <div className="flex gap-2">
             <Link

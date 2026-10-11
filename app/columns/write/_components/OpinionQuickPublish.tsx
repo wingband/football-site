@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import ColumnBody from "@/components/ColumnBody"
 import RegenerateDraftButton from "./RegenerateDraftButton"
+import { draftKindOf } from "@/lib/draftKinds"
 import { uploadColumnImage } from "./uploadColumnImage"
 
 // AI 초안에 운영자 의견만 채워서 바로 발행하는 간단한 화면 (2026-10-10).
@@ -46,6 +47,8 @@ function fill(content: string, placeholder: string, opinions: string[], fallback
 }
 
 export default function OpinionQuickPublish({ slug, title, summary, content, tags, placeholder, onEditFull }: Props) {
+  const kind = draftKindOf(slug)
+  const regenKind = kind && kind !== "report" ? kind : null
   const router = useRouter()
   // 의견 칸은 맨 끝(한 줄 총평) 하나만 받는다. 예전 초안에 남은 다른 의견 자리 줄은 지운다
   const body = useMemo(() => {
@@ -191,7 +194,7 @@ export default function OpinionQuickPublish({ slug, title, summary, content, tag
             <button onClick={onEditFull} className="text-xs text-floodlight/50 underline underline-offset-2 hover:text-floodlight">
               본문 직접 고치기
             </button>
-            <RegenerateDraftButton />
+            {regenKind && <RegenerateDraftButton kind={regenKind} />}
           </div>
           <button
             onClick={publish}
