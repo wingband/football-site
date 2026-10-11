@@ -1,5 +1,6 @@
 // 리그 관련 페이지들(개요/순위/경기/뉴스)이 공유하는 데이터 fetcher 모음
 import { cache } from "react"
+import { getCachedOrFetch } from "@/lib/apiCache"
 import { MOCK_STANDINGS, MOCK_SEASON_FIXTURES, MOCK_TOP_SCORERS, MOCK_NEWS } from "@/lib/mockData"
 import { fetchApiFootball } from "@/lib/apiFootballClient"
 import { fetchNewsData, type NewsFetchResult } from "@/lib/newsData"
@@ -84,8 +85,14 @@ export const getLeagueStandings = cache(async function getLeagueStandings(
   if (process.env.USE_MOCK_DATA === "true") return MOCK_STANDINGS as unknown as LeagueResponse
 
   try {
-    const response = await fetchApiFootball(`/standings?league=${leagueId}&season=${season}`, { revalidate })
-    return (response[0] as LeagueResponse) ?? null
+    // DB 캐시 경유 (2026-10-12): API 일일 한도가 소진돼도 마지막으로 받은 순위표를 보여주기 위함.
+    // 빈 응답은 에러로 던져서 캐시에 "없음"이 저장되지 않게 한다 (시즌 초 직전 시즌 대체 로직은 null을 받아 그대로 동작).
+    const path = `/standings?league=${leagueId}&season=${season}`
+    return await getCachedOrFetch<LeagueResponse>(path, 3600, async () => {
+      const response = await fetchApiFootball(path, { revalidate })
+      if (!response[0]) throw new Error("순위표 응답 비어 있음")
+      return response[0] as LeagueResponse
+    })
   } catch (err) {
     console.error("getLeagueStandings fetch 실패:", err instanceof Error ? err.message : err)
     return null
