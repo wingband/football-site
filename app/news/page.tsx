@@ -1,5 +1,4 @@
 import type { Metadata } from "next"
-import AdSlot from "@/components/AdSlot"
 import Link from "next/link"
 import Logo from "@/components/Logo"
 import { fetchNewsData } from "@/lib/newsData"
@@ -220,7 +219,6 @@ export default async function NewsPage() {
           <h1 className="font-display uppercase text-xl text-score-amber">뉴스</h1>
         </div>
 
-        <AdSlot label="뉴스 페이지 배너 광고 (예: 728x90)" className="w-full h-16 mb-8" />
 
         {hasAnyNews ? (
           <>

@@ -3,7 +3,6 @@ import Link from "next/link"
 import { teamHref } from "@/lib/slug"
 import { getSeasonYear } from "@/lib/season"
 import FollowButton from "@/components/FollowButton"
-import AdSlot from "@/components/AdSlot"
 import PlayerAvatar from "@/components/PlayerAvatar"
 import Logo from "@/components/Logo"
 import PlayerCareerRecent from "@/components/PlayerCareerRecent"
@@ -259,7 +258,6 @@ export default async function PlayerPage({
           </div>
         </div>
 
-        <AdSlot label="선수 페이지 배너 광고 (예: 728x90)" className="w-full h-16" />
 
         {/* 최신 이적 배너 */}
         {latestTransfer && (

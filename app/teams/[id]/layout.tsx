@@ -2,7 +2,6 @@ import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import { headers } from "next/headers"
 import TeamHeader from "@/components/TeamHeader"
-import AdSlot from "@/components/AdSlot"
 import { getTeamInfo, getTeamCurrentLeague } from "@/lib/teamData"
 import { isTeamInScope, isInternalReferer } from "@/lib/scope"
 
@@ -62,7 +61,6 @@ export default async function TeamLayout({
     <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
       <div className="max-w-4xl mx-auto pb-16 px-4">
         <TeamHeader teamId={id} name={info.team.name} country={info.team.country} logo={info.team.logo} />
-        <AdSlot label="팀 페이지 배너 광고 (예: 728x90)" className="w-full h-16 mb-6" />
         {children}
       </div>
     </main>

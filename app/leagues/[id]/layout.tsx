@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation"
 import LeagueHeader from "@/components/LeagueHeader"
-import AdSlot from "@/components/AdSlot"
 import { getSeasonYear } from "@/lib/season"
 import { getLeagueStandings } from "@/lib/leagueData"
 import { checkApiFootballStatus } from "@/lib/apiFootballStatus"
@@ -57,7 +56,6 @@ export default async function LeagueLayout({
             )}
           </div>
         )}
-        <AdSlot label="리그 페이지 배너 광고 (예: 728x90)" className="w-full h-16 mb-6" />
         {children}
       </div>
     </main>

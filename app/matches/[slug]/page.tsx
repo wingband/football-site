@@ -13,7 +13,6 @@ import KeyStatsPanel from "@/components/KeyStatsPanel"
 import MatchStatsPanel from "@/components/MatchStatsPanel"
 import MatchEventsTimeline from "@/components/MatchEventsTimeline"
 import MatchReviewCard from "@/components/MatchReviewCard"
-import AdSlot from "@/components/AdSlot"
 import RelatedMatches from "@/components/RelatedMatches"
 import StorySection from "./_components/StorySection"
 import { buildStatsSummary, buildMatchEventSummaries, type RawMatchEvent } from "@/lib/matchSummaries"
@@ -695,7 +694,6 @@ export default async function MatchDetailPage({
         </div>
 
         <div className="px-4">
-          <AdSlot label="경기 상세 배너 광고 (예: 728x90)" className="w-full h-16 mb-2" />
         </div>
 
         <MatchTabs
