@@ -112,7 +112,10 @@ export type PlayerWeek = {
 }
 
 export function koTeam(name: string): string {
-  return TEAM_NAME_KO[name] ?? name
+  if (TEAM_NAME_KO[name]) return TEAM_NAME_KO[name]
+  // 제공처가 " FC"를 붙이거나 빼는 경우가 있어 한 번 더 찾아본다 ("Jeju United FC" ↔ "Jeju United")
+  const alt = /\s+FC$/.test(name) ? name.replace(/\s+FC$/, "") : `${name} FC`
+  return TEAM_NAME_KO[alt] ?? name
 }
 
 export function koLeague(name: string): string {
