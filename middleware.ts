@@ -2,6 +2,9 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server"
 import { NextResponse } from "next/server"
 import { isInternalReferer } from "@/lib/scope"
 import { isKnownCrawler } from "@/lib/crawlerDetect"
+import { KOREAN_PLAYERS_ABROAD } from "@/lib/koreanPlayersAbroad"
+
+const KOREAN_PLAYER_IDS = new Set(KOREAN_PLAYERS_ABROAD.map((p) => String(p.id)))
 
 const isPublicRoute = createRouteMatcher([
   "/",
@@ -89,7 +92,8 @@ function isRateLimited(ip: string, pathname: string, userAgent: string | null): 
   const key = `${ip}:${rule.pattern.source}`
   const now = Date.now()
   const entry = hitCounts.get(key)
-  const effectiveMax = isKnownCrawler(userAgent) ? rule.max * 10 : rule.max
+  // (2026-10-11) 크롤러 10배 → 3배. 10배일 때 크롤러가 팀/선수 페이지를 분당 400개씩 훑어 API 한도를 소진했다
+  const effectiveMax = isKnownCrawler(userAgent) ? rule.max * 3 : rule.max
 
   if (!entry || now > entry.resetAt) {
     hitCounts.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS })
@@ -141,6 +145,20 @@ export default clerkMiddleware(async (auth, req) => {
   const isInternalRequest = hasInternalCookie || isInternalReferer(req.headers.get("referer"))
 
   const forwardedHeaders = new Headers(req.headers)
+
+  // (2026-10-11) API 게이트 — 이 요청 안에서는 API를 새로 부르지 않고 DB 저장값만 쓴다 (lib/apiGate.ts).
+  // 하루 방문자 11명인 날 크롤러가 팀→선수단→선수 페이지를 전부 훑어 7만 콜을 쓴 사고 대응.
+  //  - 사이트 안에서 이동해 온 게 아닌 요청이 팀 페이지, 한국인 해외파가 아닌 선수 페이지를 열 때
+  //  - 크롤러가 경기 상세/리그/비교/팀/선수 페이지를 열 때 (한국인 해외파 선수 페이지는 예외 — 색인 대상)
+  const playerId = pathname.match(/^\/players\/(\d+)/)?.[1]
+  const isKoreanPlayerPage = playerId ? KOREAN_PLAYER_IDS.has(playerId) : false
+  const isCrawler = isKnownCrawler(userAgent)
+  const cacheOnly =
+    (!isInternalRequest && (isTeamPath || (playerId && !isKoreanPlayerPage))) ||
+    (isCrawler && !isKoreanPlayerPage && /^\/(matches\/[^/]+|leagues\/|compare|teams\/|players\/)/.test(pathname))
+  forwardedHeaders.delete("x-api-live")
+  if (cacheOnly) forwardedHeaders.set("x-api-live", "0")
+
   if (isInternalRequest) {
     if (isTeamPath) forwardedHeaders.set("x-team-ref-internal", "1")
     if (isMatchDetailPath) forwardedHeaders.set("x-match-ref-internal", "1")

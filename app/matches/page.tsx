@@ -12,6 +12,7 @@ import type { Metadata } from "next"
 import { headers } from "next/headers"
 import { revalidateTag } from "next/cache"
 import { fetchApiFootball, ApiFootballError } from "@/lib/apiFootballClient"
+import { getCachedOrFetch } from "@/lib/apiCache"
 
 type Fixture = {
   fixture: {
@@ -119,10 +120,7 @@ async function fetchFixturesFromApi(date: string): Promise<Fixture[] | null> {
 
   let todayFixtures: Fixture[]
   try {
-    todayFixtures = await fetchApiFootball(`/fixtures?date=${date}`, {
-      revalidate: dateRevalidate,
-      tags: [todayTag],
-    }) as Fixture[]
+    todayFixtures = await fixturesByDate(date, dateRevalidate, todayTag)
   } catch (err) {
     console.error(
       "경기 목록 API 실패:",
@@ -134,10 +132,7 @@ async function fetchFixturesFromApi(date: string): Promise<Fixture[] | null> {
 
   let yesterdayFixtures: Fixture[] = []
   try {
-    yesterdayFixtures = await fetchApiFootball(`/fixtures?date=${yesterdayStr}`, {
-      revalidate: yesterdayRevalidate,
-      tags: [yesterdayTag],
-    }) as Fixture[]
+    yesterdayFixtures = await fixturesByDate(yesterdayStr, yesterdayRevalidate, yesterdayTag)
   } catch (err) {
     console.error(
       "어제 경기 목록 API 실패(보조 데이터, 빈 배열로 진행):",
@@ -229,6 +224,15 @@ const FALLBACK_SEARCH_DAYS = 14
 // 아직 "진행중"으로 보이는 상태값들. 이런 상태가 옛날 캐시 스냅샷에 남아있으면
 // 그건 실제로 진행중인 게 아니라, 그 날짜가 정상 fetch 흐름(오늘/어제만 API
 // 재조회)에서 벗어난 뒤로 다시 갱신될 기회가 없어서 그대로 얼어붙은 것이다
+// (2026-10-11) 날짜별 경기 목록 DB 캐시 — Next fetch 캐시(revalidate)만으로는 인스턴스마다
+// 따로 놀아서 30분 캐시인데도 몇 분 간격으로 같은 날짜를 다시 부르는 게 API 로그에서 확인됨
+async function fixturesByDate(date: string, ttl: number, tag: string): Promise<Fixture[]> {
+  const path = `/fixtures?date=${date}`
+  return await getCachedOrFetch<Fixture[]>(path, ttl, async () =>
+    (await fetchApiFootball(path, { revalidate: ttl, tags: [tag] })) as Fixture[]
+  )
+}
+
 const LIVE_STATUSES = new Set(["1H", "2H", "HT", "ET", "BT", "P", "INT", "LIVE"])
 
 function hasStaleLiveStatus(fixtures: Fixture[]): boolean {

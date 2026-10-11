@@ -1,3 +1,4 @@
+import { ApiGateBlockedError, isLiveApiAllowed } from "@/lib/apiGate"
 // API-Football 호출의 유일한 저수준 진입점.
 // (2026-09-20) 이 로직이 lib/matchApi.ts(apiFetch), lib/leagueData.ts(apiFootballFetch),
 // app/matches/page.tsx(fetchFixturesFromApi)에 각자 조금씩 다르게 흩어져 있어서,
@@ -54,6 +55,8 @@ async function fetchApiFootballInternal(
   { revalidate = 60, tags, retries = 2 }: FetchApiFootballOptions,
   expectArray: boolean
 ): Promise<unknown> {
+  // 봇/외부 직접 진입 요청은 실시간 호출 금지 (lib/apiGate.ts 참고)
+  if (!(await isLiveApiAllowed())) throw new ApiGateBlockedError(path)
   let lastErr: unknown
 
   for (let attempt = 0; attempt < retries; attempt++) {

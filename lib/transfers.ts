@@ -1,5 +1,6 @@
 import { MOCK_TRANSFERS } from "@/lib/mockData"
 import { fetchApiFootball } from "@/lib/apiFootballClient"
+import { getCachedOrFetch } from "@/lib/apiCache"
 import { devErrorOrSilent } from "@/lib/quietLog"
 
 export type TeamRef = { id: number; name: string; logo: string }
@@ -26,8 +27,13 @@ const FEATURED_CLUB_IDS = [
 // 실패는 빈 배열로 처리한다 (위젯 전체가 죽는 것 방지).
 async function getTeamTransfers(teamId: number): Promise<TransferEntry[]> {
   try {
-    const response = await fetchApiFootball(`/transfers?team=${teamId}`, { revalidate: 21600 })
-    return response as TransferEntry[]
+    // (2026-10-11) DB 캐시 추가 — Next fetch 캐시만 믿었다가 경기 목록 페이지가 열릴 때마다
+    // 14개 클럽 이적 조회(14콜)가 몇 분 간격으로 반복되는 게 API 로그에서 확인됨
+    const path = `/transfers?team=${teamId}`
+    return await getCachedOrFetch<TransferEntry[]>(path, 21600, async () => {
+      const response = await fetchApiFootball(path, { revalidate: 21600 })
+      return response as TransferEntry[]
+    })
   } catch (err) {
     devErrorOrSilent(`getAllTransfers: team ${teamId} 이적 조회 실패:`, err instanceof Error ? err.message : err)
     return []
