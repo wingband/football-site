@@ -44,7 +44,7 @@ export async function generateMetadata({
   const displayName = koreanEntry?.name ?? data.player.name
 
   const clubStats = data.statistics.filter(
-    (s) => !NATIONAL_KEYWORDS_META.some((kw) => s.league.name.includes(kw))
+    (s) => !NATIONAL_KEYWORDS_META.some((kw) => (s.league.name ?? "").includes(kw))
   )
   // 국가대표 스탯으로는 폴백하지 않는다 — 이적 직후라 클럽 스탯이 아직 없으면
   // 그냥 팀명 없이 제목을 구성한다 (국가대표팀을 소속팀처럼 잘못 보여주는 것 방지)
@@ -103,7 +103,7 @@ export default async function PlayerPage({
   // 클럽 스탯 우선: 국가대표/친선경기/아시안게임 등 모두 제외하고 클럽 리그만
   const NATIONAL_KEYWORDS = ["World Cup", "AFC", "Asian", "Olympic", "Friendlies", "Qualification", "Nations"]
   const clubStats = data.statistics.filter(
-    (s) => !NATIONAL_KEYWORDS.some((kw) => s.league.name.includes(kw))
+    (s) => !NATIONAL_KEYWORDS.some((kw) => (s.league.name ?? "").includes(kw))
   )
   const [transfers, trophies, sidelined] = await Promise.all([
     getPlayerTransfers(id),
@@ -148,7 +148,7 @@ export default async function PlayerPage({
   // 같은 팀 기록이 여러 개면 그 중 출전시간이 가장 긴 대회를 고른다
   let stat = teamNameFromTransfer
     ? clubStats
-        .filter((s) => normalizeTeamName(s.team.name) === normalizeTeamName(teamNameFromTransfer))
+        .filter((s) => normalizeTeamName(s.team.name ?? "") === normalizeTeamName(teamNameFromTransfer))
         .sort((a, b) => (b.games.minutes ?? 0) - (a.games.minutes ?? 0))[0]
     : undefined
 
@@ -199,7 +199,7 @@ export default async function PlayerPage({
   if (!stat) {
     const prevData = await getPlayerDataWithFallback(id, season - 1)
     const prevClubStats = prevData?.statistics.filter(
-      (s) => !NATIONAL_KEYWORDS.some((kw) => s.league.name.includes(kw))
+      (s) => !NATIONAL_KEYWORDS.some((kw) => (s.league.name ?? "").includes(kw))
     ) ?? []
     stat = prevClubStats.sort(
       (a, b) => (b.games.appearences ?? 0) - (a.games.appearences ?? 0)

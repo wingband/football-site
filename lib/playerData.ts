@@ -60,6 +60,42 @@ export type PlayerSeasonStat = {
 
 export type PlayerData = { player: PlayerBio; statistics: PlayerSeasonStat[] }
 
+// (2026-10-11) Search Console "서버 오류(5xx)": 일부 유망주의 지난 시즌(?season=2024)
+// 기록에 리그/팀 이름이 null이거나 하위 객체가 통째로 빠진 항목이 있어 선수 페이지가
+// 500으로 죽었다 (예: /players/380681?season=2024). API 응답을 화면에서 쓰기 전에
+// 빈 값을 안전한 기본값으로 채우고, 팀 정보조차 없는 항목은 버린다.
+function normalizeSeasonStat(raw: unknown): PlayerSeasonStat | null {
+  const s = (raw ?? {}) as Partial<Record<keyof PlayerSeasonStat, Record<string, unknown> | null>>
+  const team = s.team ?? null
+  if (!team || team.id == null) return null
+  const obj = <T extends object>(v: unknown, def: T): T => ({ ...def, ...((v as object | null) ?? {}) })
+  const league = obj(s.league, { id: 0, name: "", logo: "", country: "" })
+  return {
+    team: { id: Number(team.id), name: String(team.name ?? ""), logo: String(team.logo ?? "") },
+    league: { ...league, name: String(league.name ?? ""), logo: String(league.logo ?? ""), country: String(league.country ?? "") },
+    games: obj(s.games, { appearences: null, lineups: null, minutes: null, number: null, position: "", rating: null, captain: false }),
+    substitutes: obj(s.substitutes, { in: null, out: null, bench: null }),
+    goals: obj(s.goals, { total: null, assists: null, conceded: null, saves: null }),
+    shots: obj(s.shots, { total: null, on: null }),
+    passes: obj(s.passes, { total: null, key: null, accuracy: null }),
+    tackles: obj(s.tackles, { total: null, blocks: null, interceptions: null }),
+    duels: obj(s.duels, { total: null, won: null }),
+    dribbles: obj(s.dribbles, { attempts: null, success: null, past: null }),
+    fouls: obj(s.fouls, { drawn: null, committed: null }),
+    cards: obj(s.cards, { yellow: null, yellowred: null, red: null }),
+    penalty: obj(s.penalty, { won: null, committed: null, scored: null, missed: null, saved: null }),
+  }
+}
+
+function normalizePlayerData(d: PlayerData | null): PlayerData | null {
+  if (!d || !d.player) return null
+  const stats = Array.isArray(d.statistics) ? d.statistics : []
+  return {
+    player: d.player,
+    statistics: stats.map(normalizeSeasonStat).filter((x): x is PlayerSeasonStat => x !== null),
+  }
+}
+
 export type TransferEntry = {
   player: { id: number; name: string }
   update: string
@@ -101,10 +137,11 @@ export const getPlayerData = cache(async function getPlayerData(
 
   const path = `/players?id=${playerId}&season=${season}`
   try {
-    return await getCachedOrFetch<PlayerData | null>(path, 10800, async () => {
+    const data = await getCachedOrFetch<PlayerData | null>(path, 10800, async () => {
       const response = await fetchApiFootball(path, { revalidate: 10800 })
       return (response[0] as PlayerData | undefined) ?? null
     })
+    return normalizePlayerData(data)
   } catch (err) {
     console.error("getPlayerData fetch 실패:", err instanceof Error ? err.message : err)
     return null
