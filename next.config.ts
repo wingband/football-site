@@ -3,7 +3,10 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // 예측 랭킹 페이지는 없앴다 — 옛 링크는 메인으로
   async redirects() {
-    return [{ source: "/predictions", destination: "/", permanent: true }]
+    return [{ source: "/predictions", destination: "/", permanent: true },
+      { source: "/best11", destination: "/", permanent: true },
+      { source: "/transfers", destination: "/", permanent: true },
+    ]
   },
   images: {
     remotePatterns: [

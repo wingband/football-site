@@ -17,10 +17,8 @@ const isPublicRoute = createRouteMatcher([
   // 칼럼 작성(/columns/write)과 저장 API는 페이지/라우트 안에서 isAdmin()으로 직접 막는다
   "/columns(.*)",
   "/api/columns(.*)",
-  "/transfers(.*)",
   "/standings(.*)",
   "/korean-players(.*)",
-  "/best11(.*)",
   "/board(.*)",
   "/api/board(.*)",
   "/compare(.*)",

@@ -21,8 +21,6 @@ const NAV_LINKS = [
 const MORE_LINKS = [
   { href: "/standings", label: "순위표" },
   { href: "/compare", label: "선수 비교" },
-  { href: "/best11", label: "베스트11" },
-  { href: "/transfers", label: "이적" },
 ]
 
 const INFO_LINKS = [
