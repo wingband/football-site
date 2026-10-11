@@ -65,13 +65,13 @@ export default function PlayerCareerRecent({
     <>
       {/* ── 최근 경기 ── */}
       {recentMatches === null ? (
-        <div className="py-6 border-b border-turf-line/30">
-          <p className="text-sm font-medium mb-3">최근 경기</p>
+        <div className="bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5">
+          <p className="text-base font-semibold mb-3">최근 경기</p>
           <div className="h-24 animate-pulse bg-turf-line/10 rounded" />
         </div>
       ) : recentMatches.length > 0 ? (
-        <div className="py-6 border-b border-turf-line/30">
-          <p className="text-sm font-medium mb-3">최근 경기</p>
+        <div className="bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5">
+          <p className="text-base font-semibold mb-3">최근 경기</p>
           <div className="divide-y divide-turf-line/20">
             {recentMatches.map((m) => (
               <Link
@@ -79,7 +79,7 @@ export default function PlayerCareerRecent({
                 href={matchLinkHref(m)} prefetch={false}
                 className="flex items-center gap-3 py-2.5 hover:bg-turf-line/20 transition-colors -mx-1 px-1"
               >
-                <span className="text-[11px] text-floodlight/40 w-14 shrink-0">
+                <span className="text-xs text-floodlight/65 w-14 shrink-0">
                   {new Date(m.fixture.date).toLocaleDateString("ko-KR", { month: "numeric", day: "numeric" })}
                 </span>
                 <Logo src={m.teams.home.logo} alt="" className="w-4 h-4 shrink-0" />
@@ -87,7 +87,7 @@ export default function PlayerCareerRecent({
                   {m.teams.home.name} {m.goals.home}-{m.goals.away} {m.teams.away.name}
                 </span>
                 <Logo src={m.teams.away.logo} alt="" className="w-4 h-4 shrink-0" />
-                <span className="text-[11px] text-floodlight/40 w-8 text-right shrink-0">
+                <span className="text-xs text-floodlight/65 w-8 text-right shrink-0">
                   {m.stat.games.minutes ?? "-"}&apos;
                 </span>
                 {(m.stat.goals.total ?? 0) > 0 && <span className="shrink-0 text-xs">⚽{m.stat.goals.total}</span>}
@@ -105,16 +105,16 @@ export default function PlayerCareerRecent({
 
       {/* ── 경력 ── */}
       {career === null ? (
-        <div className="py-6 border-b border-turf-line/30">
-          <p className="text-sm font-medium mb-3">경력</p>
+        <div className="bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5">
+          <p className="text-base font-semibold mb-3">경력</p>
           <div className="h-20 animate-pulse bg-turf-line/10 rounded" />
         </div>
       ) : clubCareer.length > 0 || nationalCareer.length > 0 ? (
-        <div className="py-6 border-b border-turf-line/30">
-          <p className="text-sm font-medium mb-3">경력</p>
+        <div className="bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5">
+          <p className="text-base font-semibold mb-3">경력</p>
           {clubCareer.length > 0 && (
             <div className="mb-4">
-              <p className="text-xs text-floodlight/40 mb-2">클럽</p>
+              <p className="text-xs text-floodlight/65 mb-2">클럽</p>
               <div className="divide-y divide-turf-line/20">
                 {clubCareer.map((c) => (
                   <Link
@@ -124,7 +124,7 @@ export default function PlayerCareerRecent({
                   >
                     <Logo src={c.teamLogo} alt="" className="w-6 h-6 shrink-0" />
                     <span className="text-sm flex-1 truncate">{c.teamName}</span>
-                    <span className="text-xs text-floodlight/40 font-data shrink-0 w-20 text-right">
+                    <span className="text-xs text-floodlight/65 font-data shrink-0 w-20 text-right">
                       {Math.min(...c.seasons)}/{String(Math.max(...c.seasons) + 1).slice(2)}
                     </span>
                     <span className="text-xs text-floodlight/30 font-data shrink-0 w-24 text-right">
@@ -137,7 +137,7 @@ export default function PlayerCareerRecent({
           )}
           {nationalCareer.length > 0 && (
             <div>
-              <p className="text-xs text-floodlight/40 mb-2">국가대표</p>
+              <p className="text-xs text-floodlight/65 mb-2">국가대표</p>
               <div className="divide-y divide-turf-line/20">
                 {nationalCareer.map((c) => (
                   <div key={c.teamId} className="flex items-center gap-3 py-2">
