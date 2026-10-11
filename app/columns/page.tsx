@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { getColumns, readingMinutes } from "@/lib/columns"
 import { isAdmin } from "@/lib/admin"
 import DraftButtons from "./_components/DraftButtons"
+import { getColumnViews } from "@/lib/columnViews"
 import { DRAFT_KINDS, OPINION_PLACEHOLDER, draftKindOf } from "@/lib/draftKinds"
 
 export const dynamic = "force-dynamic"
@@ -25,6 +26,8 @@ function formatDate(iso: string) {
 export default async function ColumnsPage() {
   const admin = await isAdmin()
   const columns = await getColumns({ includeDrafts: admin })
+  // 칼럼별 조회수 — 관리자에게만
+  const views = admin ? await getColumnViews() : null
   // 관리자에게만: 의견을 기다리는 AI 초안 전부를 맨 위에 모아 보여준다
   const pendingDrafts = admin ? columns.filter((c) => !c.published && c.content.includes(OPINION_PLACEHOLDER)) : []
 
@@ -97,6 +100,9 @@ export default async function ColumnsPage() {
                   {c.summary && <p className="text-sm text-floodlight/60 mt-1.5 line-clamp-2">{c.summary}</p>}
                   <p className="text-[11px] text-floodlight/35 mt-2">
                     {formatDate(c.createdAt)} · {readingMinutes(c.content)}분 읽기
+                    {views && c.published && (
+                      <span className="text-score-amber/70"> · 조회 {views.get(c.slug)?.total ?? 0} (오늘 {views.get(c.slug)?.today ?? 0})</span>
+                    )}
                   </p>
                 </Link>
               </li>

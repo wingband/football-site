@@ -7,6 +7,7 @@ import { getMatchPhase } from "@/lib/matchStatus"
 import { renderPlayerCard } from "@/lib/weeklyCard"
 import { goalTimeline, nameHintsOf } from "@/lib/goalTimeline"
 import { koPlayerNames } from "@/lib/playerNameKo"
+import { withJosa } from "@/lib/josa"
 import { COMMON_RULES, DRAFT_KINDS, callOpenAI, shapeDraftText, uploadPng, cleanTags } from "@/lib/draftEngine"
 
 // 경기 직후 해외파 선수 리포트 초안 (3시간마다 크론, 2026-10-11).
@@ -221,7 +222,7 @@ ${data}`
     await saveColumn({
       slug,
       title: shaped.title,
-      summary: shaped.summary || `${p.name}이(가) ${oppKo}전에서 ${minutes}분 뛰며 평점 ${rating?.toFixed(1) ?? "-"}를 기록했다.`.slice(0, 200),
+      summary: shaped.summary || `${withJosa(p.name, "이", "가")} ${oppKo}전에서 ${minutes}분 뛰며 평점 ${rating?.toFixed(1) ?? "-"}를 기록했다.`.slice(0, 200),
       content,
       tags: cleanTags([p.name, `${p.name} 평점`, `${p.name} 경기 결과`, `${p.name} 오늘 경기`, teamKo, oppKo, `${teamKo} ${oppKo}`, leagueKo, "해외파 평점", "해외파 경기 결과", "한국인 해외파", "GoalLine"]),
       published: false,

@@ -6,6 +6,8 @@ import { isAdmin } from "@/lib/admin"
 import { SITE_URL } from "@/lib/siteConfig"
 import ColumnBody from "@/components/ColumnBody"
 import ShareButtons from "@/components/ShareButtons"
+import ColumnViewBeacon from "@/components/ColumnViewBeacon"
+import { getColumnViews } from "@/lib/columnViews"
 
 export const dynamic = "force-dynamic"
 
@@ -72,9 +74,12 @@ export default async function ColumnPage({ params }: { params: Promise<{ slug: s
   }
 
   const edited = column.updatedAt.slice(0, 10) !== column.createdAt.slice(0, 10)
+  // 조회수는 관리자에게만 보여준다 (방문자가 적을 때 공개하면 오히려 신뢰를 깎음)
+  const views = admin && column.published ? (await getColumnViews()).get(column.slug) : undefined
 
   return (
     <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
+      {column.published && <ColumnViewBeacon slug={column.slug} />}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <article className="max-w-2xl mx-auto px-4 pt-8 pb-16">
         <Link href="/columns" className="text-xs text-floodlight/50 hover:text-floodlight transition-colors">
@@ -95,6 +100,9 @@ export default async function ColumnPage({ params }: { params: Promise<{ slug: s
             GoalLine 칼럼 · {formatDate(column.createdAt)}
             {edited && ` (수정 ${formatDate(column.updatedAt)})`} · {readingMinutes(column.content)}분 읽기
             {!column.published && " · 비공개"}
+            {admin && column.published && (
+              <span className="text-score-amber/70"> · 조회 {views?.total ?? 0} (오늘 {views?.today ?? 0}) · 관리자만 보임</span>
+            )}
           </p>
           {column.published && (
             <div className="mt-5">
