@@ -75,7 +75,11 @@ export const metadata: Metadata = {
     // 네이버 서치어드바이저 소유확인. Next.js Metadata 타입에 naver 전용
     // 필드가 없어서 other로 임의 메타태그를 추가한다
     other: {
-      "naver-site-verification": "3836c5a9753c3db89b2e8c1f994b93231c889147",
+      // 네이버는 www 유무를 다른 사이트로 봐서 토큰이 둘: goalline.me / www.goalline.me(정규 주소, 2026-10-11)
+      "naver-site-verification": [
+        "3836c5a9753c3db89b2e8c1f994b93231c889147",
+        "2467c883f48935f02fe047ee7519df2becf9f8ec",
+      ],
       // Google AdSense 사이트 소유권 확인용 메타태그 (2026-09-21).
       // 처음엔 next/script(beforeInteractive)로 <script> 태그를 넣었으나
       // 렌더링된 <head>에 실제로 반영이 안 되는 문제가 있어서, 이미 검증된
