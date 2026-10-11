@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Oswald, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import MobileTabBar from "@/components/MobileTabBar";
 import AdSlot from "@/components/AdSlot";
 import KakaoAdBanner from "@/components/KakaoAdBanner";
 import Script from "next/script";
@@ -106,7 +107,7 @@ export default function RootLayout({
           이 스크립트는 페이지당 한 번만 있으면 된다 (2026-09-21, 애드핏
           매체 등록 및 상단 배너 광고단위 생성 후 적용) */}
       <Script src="//t1.kakaocdn.net/kas/static/ba.min.js" strategy="afterInteractive" async />
-      <body className="min-h-full flex flex-col bg-pitch-night">
+      <body className="min-h-full flex flex-col bg-pitch-night pb-16 md:pb-0">
         <Header />
         {/* 전 페이지 공통 상단 배너 광고 자리 — 카카오 애드핏.
             PC(728x90)와 모바일(320x50) 광고단위를 각각 별도로 렌더링해두고
@@ -135,6 +136,7 @@ export default function RootLayout({
         </div>
         <div className="flex-1">{children}</div>
         <Footer />
+        <MobileTabBar />
       </body>
     </html>
     </ClerkProvider>

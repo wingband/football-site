@@ -6,19 +6,22 @@ import { useEffect, useState } from "react"
 import { usePathname } from "next/navigation"
 import { UserButton, SignInButton, SignUpButton, useUser } from "@clerk/nextjs"
 
+// (2026-10-11 메인 개편) 상단에는 자주 쓰는 메뉴 5개만, 나머지는 "더보기"에 모은다.
+// 되돌리려면 git 브랜치 backup/before-home-redesign 참고.
 const NAV_LINKS = [
+  { href: "/korean-players", label: "해외파" },
   { href: "/matches", label: "경기" },
   { href: "/columns", label: "칼럼" },
-  { href: "/stories", label: "리뷰" },
-  { href: "/standings", label: "순위표" },
-  { href: "/korean-players", label: "🇰🇷 해외파" },
-  { href: "/compare", label: "비교" },
-  // (2026-09-21) NewsData.io 크레딧 소진으로 뉴스 페이지가 정상 작동 안 해서,
-  // AdSense 심사 기간 동안 헤더 메뉴에서 임시로 숨김. 크레딧 복구되면 이 줄 살릴 것.
-  // { href: "/news", label: "뉴스" },
-  { href: "/best11", label: "베스트11" },
   { href: "/predictions", label: "예측" },
   { href: "/board", label: "게시판" },
+]
+
+// (2026-09-21) NewsData.io 크레딧 소진으로 뉴스 페이지는 메뉴에서 숨김. 복구되면 { href: "/news", label: "뉴스" } 추가.
+const MORE_LINKS = [
+  { href: "/stories", label: "리뷰" },
+  { href: "/standings", label: "순위표" },
+  { href: "/compare", label: "선수 비교" },
+  { href: "/best11", label: "베스트11" },
   { href: "/transfers", label: "이적" },
 ]
 
@@ -65,14 +68,18 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 bg-pitch-night/95 backdrop-blur border-b border-turf-line/60">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-8">
-        <Link href="/matches" className="font-display uppercase tracking-wide text-lg text-score-amber shrink-0 hover:text-floodlight transition-colors cursor-pointer">
+        <Link href="/" className="font-display uppercase tracking-wide text-lg text-score-amber shrink-0 hover:text-floodlight transition-colors cursor-pointer">
           GoalLine
         </Link>
 
         {/* 데스크톱 메뉴 */}
         <nav className="hidden md:flex items-center gap-6 text-sm text-floodlight/70 shrink-0">
           {NAV_LINKS.map((link) => (
-            <Link key={link.href} href={link.href} className="hover:text-floodlight transition-colors">
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`hover:text-floodlight transition-colors ${pathname.startsWith(link.href) ? "text-score-amber" : ""}`}
+            >
               {link.label}
               {badge(link.href)}
             </Link>
@@ -83,17 +90,17 @@ export default function Header() {
               onBlur={() => setTimeout(() => setInfoOpen(false), 150)}
               className="hover:text-floodlight transition-colors flex items-center gap-1"
             >
-              정보
+              더보기
               <span className={`text-[10px] transition-transform ${infoOpen ? "rotate-180" : ""}`}>▾</span>
             </button>
             {infoOpen && (
-              <div className="absolute top-full right-0 mt-2 w-32 bg-pitch-night border border-turf-line/60 rounded-lg shadow-lg overflow-hidden">
-                {INFO_LINKS.map((link) => (
+              <div className="absolute top-full right-0 mt-2 w-36 bg-pitch-night border border-turf-line/60 rounded-lg shadow-lg overflow-hidden">
+                {[...MORE_LINKS, ...INFO_LINKS].map((link, i) => (
                   <Link
                     key={link.href}
                     href={link.href}
                     onClick={() => setInfoOpen(false)}
-                    className="block px-4 py-2.5 text-sm text-floodlight/70 hover:bg-turf-line/40 hover:text-floodlight transition-colors"
+                    className={`block px-4 py-2.5 text-sm text-floodlight/70 hover:bg-turf-line/40 hover:text-floodlight transition-colors${i === MORE_LINKS.length ? " border-t border-turf-line/40" : ""}`}
                   >
                     {link.label}
                   </Link>
@@ -192,7 +199,7 @@ export default function Header() {
             />
           </form>
           <nav className="flex flex-col gap-1 text-sm">
-            {NAV_LINKS.map((link) => (
+            {[...NAV_LINKS, ...MORE_LINKS].map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
