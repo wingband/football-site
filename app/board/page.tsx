@@ -81,22 +81,22 @@ export default async function BoardPage({
   const tabs = [{ key: null as string | null, label: "전체" }, ...BOARD_CATEGORIES.map((c) => ({ key: c.key as string | null, label: c.label }))]
 
   return (
-    <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 text-floodlight">
+    <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-5 text-floodlight">
       {/* 게시판 이름 + 글쓰기 */}
-      <div className="flex items-end justify-between gap-3 mb-3">
+      <div className="flex items-end justify-between gap-3">
         <div className="min-w-0">
  <h1 className="text-xl font-bold text-floodlight">{cat ? cat.title : "게시판"}</h1>
           <p className="text-sm text-floodlight/70 mt-1 truncate">
             {cat ? cat.desc : "축구 이야기를 자유롭게 나누는 곳"} · 글 <b className="text-score-amber font-data">{total.toLocaleString("ko-KR")}</b>
           </p>
         </div>
-        <Link href={writeHref} className="shrink-0 px-5 py-2 rounded-lg bg-score-amber text-pitch-night text-sm font-bold hover:bg-floodlight transition-colors">
+        <Link href={writeHref} className="shrink-0 px-5 py-2 bg-score-amber text-pitch-night text-sm font-bold hover:bg-floodlight transition-colors">
           ✏️ 글쓰기
         </Link>
       </div>
 
       {/* 게시판 탭 (커뮤니티식 가로 탭) */}
-      <nav aria-label="게시판 분류" className="bg-turf/40 border border-turf-line/60 rounded-t-none border-b-0">
+      <nav aria-label="게시판 분류" className="border-b border-turf-line/50">
         <ul className="flex flex-wrap">
           {tabs.map((t) => {
             const active = t.key === category
@@ -104,7 +104,7 @@ export default async function BoardPage({
               <li key={t.key ?? "all"}>
                 <Link
                   href={t.key ? `/board?category=${t.key}` : "/board"}
-                  className={`block px-3.5 py-2.5 text-sm border-b-2 transition-colors ${
+                  className={`block px-3.5 py-2.5 text-sm -mb-px border-b-2 transition-colors ${
                     active ? "border-score-amber text-score-amber font-bold" : "border-transparent text-floodlight/80 hover:text-floodlight"
                   }`}
                 >
@@ -117,8 +117,8 @@ export default async function BoardPage({
       </nav>
 
       {/* 글 목록 — 표 형태 */}
-      <div className="border border-turf-line/60 rounded-b-none overflow-hidden bg-turf/20">
-        <div className="hidden sm:grid grid-cols-[88px_minmax(0,1fr)_120px_64px_56px_48px] gap-2 px-3 py-2 text-xs text-floodlight/60 bg-turf/50 border-b border-turf-line/60 text-center">
+      <div>
+        <div className="hidden sm:grid grid-cols-[88px_minmax(0,1fr)_120px_64px_56px_48px] gap-2 px-3 py-2 text-xs text-floodlight/55 border-b border-turf-line/50 text-center">
           <span>분류</span>
           <span>제목</span>
           <span>글쓴이</span>
@@ -131,7 +131,7 @@ export default async function BoardPage({
           <div className="text-center py-14 px-4">
             <p className="text-sm font-semibold text-floodlight">{cat ? `${cat.title}에 아직 글이 없어요` : "아직 게시글이 없어요"}</p>
             <p className="text-sm text-floodlight/70 mt-1">첫 글의 주인공이 되어보세요!</p>
-            <Link href={writeHref} className="inline-block mt-4 px-5 py-2 rounded-lg bg-score-amber text-pitch-night text-sm font-bold hover:bg-floodlight transition-colors">
+            <Link href={writeHref} className="inline-block mt-4 px-5 py-2 bg-score-amber text-pitch-night text-sm font-bold hover:bg-floodlight transition-colors">
               ✏️ 첫 글 쓰기
             </Link>
           </div>
@@ -149,7 +149,7 @@ export default async function BoardPage({
                 </span>
               )
               return (
-                <li key={post.id} className="border-b border-turf-line/40 last:border-b-0">
+                <li key={post.id} className="border-b border-turf-line/30">
                   <Link href={`/board/${post.id}`} className="group block hover:bg-turf-line/20 transition-colors">
                     {/* 데스크톱 */}
                     <div className="hidden sm:grid grid-cols-[88px_minmax(0,1fr)_120px_64px_56px_48px] gap-2 px-3 py-2.5 items-center text-sm">
@@ -182,7 +182,7 @@ export default async function BoardPage({
       </div>
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-1 mt-6 text-sm">
+        <div className="flex items-center justify-center gap-1 text-sm">
           {pageWindowStart > 1 && (
             <Link href={qs(Math.max(1, page - 10))} className="px-3 py-1.5 text-floodlight/70 hover:text-floodlight">
               ‹ 이전
@@ -192,7 +192,7 @@ export default async function BoardPage({
             <Link
               key={p}
               href={qs(p)}
-              className={`min-w-8 h-8 px-2 flex items-center justify-center rounded border ${
+              className={`min-w-8 h-8 px-2 flex items-center justify-center border ${
                 p === page ? "bg-score-amber text-pitch-night border-score-amber font-bold" : "border-turf-line text-floodlight/75 hover:border-floodlight/40"
               }`}
             >
