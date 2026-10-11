@@ -125,6 +125,8 @@ export default function ColumnBody({ content }: { content: string }) {
           case "hr":
             return <hr key={k} className="border-turf-line/50" />
           case "img":
+            // 자동 생성 기록 카드 이미지는 칼럼 화면에서 보여주지 않는다 (같은 내용이 본문 글에 있다)
+            if (/— GoalLine/.test(b.alt)) return null
             return (
               <figure key={k} className={/— GoalLine/.test(b.alt) ? "my-2 w-full max-w-sm md:float-right md:w-[22rem] md:ml-6 md:mt-1 md:mb-3" : "my-2"}>
                 {/* 칼럼 이미지는 업로드 시점에 이미 줄여서 저장하므로 next/image 최적화 없이 그대로 쓴다 */}
