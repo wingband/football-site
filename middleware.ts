@@ -26,6 +26,7 @@ const isPublicRoute = createRouteMatcher([
   "/company(.*)",
   "/advertise(.*)",
   "/sitemap.xml",
+  "/rss.xml",
   "/robots.txt",
   "/ads.txt",
   // Next.js가 app/opengraph-image.tsx, app/matches/[slug]/opengraph-image.tsx

@@ -39,6 +39,8 @@ export const metadata: Metadata = {
   // 이게 없으면 Next가 배포 URL(...vercel.app)을 기준으로 삼아서,
   // 그 주소로 들어온 방문자에게는 canonical이 vercel.app으로 찍혀 중복 색인이 생긴다
   metadataBase: new URL(SITE_URL),
+  // 칼럼 RSS (네이버 서치어드바이저 RSS 제출용)
+  alternates: { types: { "application/rss+xml": [{ url: "/rss.xml", title: "GoalLine 칼럼" }] } },
   title: {
     default: "GoalLine - 실시간 축구 스코어 · 순위표 · 경기 분석",
     template: "%s | GoalLine",
