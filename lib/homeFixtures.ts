@@ -51,7 +51,7 @@ async function fixturesByDate(date: string, ttl: number): Promise<RawFixture[]> 
   const path = `/fixtures?date=${date}`
   try {
     const data = await getCachedOrFetch<RawFixture[]>(path, ttl, async () =>
-      (await fetchApiFootball(path, { revalidate: ttl, tags: [`fixtures-${date}`] })) as RawFixture[]
+      (await fetchApiFootball(path, { revalidate: Math.max(ttl, 60), tags: [`fixtures-${date}`] })) as RawFixture[]
     )
     return Array.isArray(data) ? data : []
   } catch (err) {
