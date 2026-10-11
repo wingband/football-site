@@ -167,12 +167,12 @@ export default function ColumnEditor({ initial }: { initial: Initial }) {
   return (
     <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
       <div className="max-w-3xl mx-auto px-4 py-8">
-        <div className="flex items-center gap-1.5 text-[11px] text-floodlight/40 mb-3">
+        <div className="flex items-center gap-1.5 text-xs text-floodlight/40 mb-3">
           <Link href="/columns" className="hover:text-floodlight/70 transition-colors">칼럼</Link>
           <span>/</span>
           <span>{initial ? "수정" : "새 칼럼"}</span>
         </div>
-        <h1 className="font-display uppercase text-xl text-score-amber mb-6">{initial ? "칼럼 수정" : "새 칼럼 쓰기"}</h1>
+        <h1 className="text-xl font-bold text-floodlight">{initial ? "칼럼 수정" : "새 칼럼 쓰기"}</h1>
 
         <div className="border border-turf-line rounded-lg overflow-hidden bg-turf/20">
           <input
@@ -276,7 +276,7 @@ export default function ColumnEditor({ initial }: { initial: Initial }) {
             </div>
           )}
 
-          <div className="flex items-center justify-between px-4 py-2 border-t border-turf-line/60 text-[11px] text-floodlight/40">
+          <div className="flex items-center justify-between px-4 py-2 border-t border-turf-line/60 text-xs text-floodlight/40">
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} />
               공개
@@ -291,7 +291,7 @@ export default function ColumnEditor({ initial }: { initial: Initial }) {
             틀린 내용이 없는지도 한 번 확인해 주세요.
           </p>
         )}
-        <p className="text-[11px] text-floodlight/35 mt-2">
+        <p className="text-xs text-floodlight/35 mt-2">
           사진은 직접 찍거나 만든 것, 또는 사용 허락을 받은 것만 올려주세요. 뉴스 사진·선수 사진을 퍼오면 저작권 문제가 생길 수 있어요.
         </p>
         {error && <p className="text-xs text-red-400 mt-2">{error}</p>}

@@ -107,7 +107,7 @@ export default function BoardWritePage() {
   const btn = "text-sm px-5 py-2.5 rounded-lg border border-turf-line text-floodlight/85 hover:bg-turf-line/30 transition-colors"
   return (
     <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 text-floodlight">
-      <h1 className="text-xl font-display text-floodlight mb-3 flex items-center gap-2">
+      <h1 className="text-xl font-bold text-floodlight mb-3 flex items-center gap-2">
         <span className="w-2 h-6 rounded-sm bg-score-amber" />
         {cat ? cat.title : "게시판"} 글쓰기
       </h1>

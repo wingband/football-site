@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Oswald, JetBrains_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Oswald, JetBrains_Mono, Noto_Sans_KR } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -19,6 +19,15 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+// 사이트 전체 본문 서체 (한글). 페이지마다 한글이 다른 폰트로 그려지던 문제를 없앤다
+const notoKr = Noto_Sans_KR({
+  variable: "--font-kr",
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  display: "swap",
+  preload: false,
 });
 
 // 스코어/제목용 — 경기장 전광판 느낌의 폭 좁은 대문자 서체
@@ -99,7 +108,7 @@ export default function RootLayout({
     <ClerkProvider>
     <html
       lang="ko"
-      className={`${geistSans.variable} ${geistMono.variable} ${oswald.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${oswald.variable} ${jetbrainsMono.variable} ${notoKr.variable} h-full antialiased`}
     >
       <GoogleTagManager gtmId="GTM-MXDTC98T" />
       <GoogleAnalytics gaId="G-1PL7KFH8KD" />

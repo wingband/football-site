@@ -51,9 +51,9 @@ export default function AddToCalendar({ title, startIso, id, compact = false }: 
           </a>
           <a href={icsHref} download={`goalline-${id}.ics`} onClick={() => setOpen(false)} className="block px-3 py-2 rounded-lg text-floodlight hover:bg-turf-line/40">
             아이폰·갤럭시·PC 캘린더에 저장
-            <span className="block text-[11px] text-floodlight/55">.ics 파일 — 열면 내 캘린더 앱에 들어가요</span>
+            <span className="block text-xs text-floodlight/55">.ics 파일 — 열면 내 캘린더 앱에 들어가요</span>
           </a>
-          <p className="px-3 py-2 text-[11px] leading-4 text-floodlight/55 border-t border-turf-line/60 mt-1">
+          <p className="px-3 py-2 text-xs leading-4 text-floodlight/55 border-t border-turf-line/60 mt-1">
             내 캘린더에만 저장되고, 경기 30분 전에 알림이 와요. GoalLine에는 아무것도 저장되지 않아요.
           </p>
         </div>

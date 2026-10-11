@@ -55,7 +55,7 @@ export default function DraftButtons() {
             {loading === k ? "만드는 중… (30초~1분)" : DRAFT_KINDS[k].label}
           </button>
         ))}
-        {msg && <p className="text-[11px] text-floodlight/70 max-w-56">{msg}</p>}
+        {msg && <p className="text-xs text-floodlight/70 max-w-56">{msg}</p>}
       </div>
     </details>
   )

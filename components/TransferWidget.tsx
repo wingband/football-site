@@ -17,8 +17,8 @@ export default async function TransferWidget() {
   return (
     <div className="bg-turf/40 border-l-2 border-score-amber">
       <div className="flex items-center justify-between px-4 py-3 border-b border-turf-line/60">
-        <h2 className="font-display uppercase text-sm text-floodlight/70">주요 이적</h2>
-        <Link href="/transfers" className="text-[11px] text-floodlight/40 hover:text-score-amber">
+        <h2 className="text-base font-semibold text-floodlight">주요 이적</h2>
+        <Link href="/transfers" className="text-xs text-floodlight/40 hover:text-score-amber">
           더보기 →
         </Link>
       </div>
@@ -38,7 +38,7 @@ export default async function TransferWidget() {
               />
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium truncate">{entry.player.name}</p>
-                <div className="flex items-center gap-1 mt-0.5 text-[10px] text-floodlight/40">
+                <div className="flex items-center gap-1 mt-0.5 text-xs text-floodlight/40">
                   <Logo src={t.teams.out.logo} alt="" className="w-3 h-3" />
                   <span className="truncate max-w-[60px]">{t.teams.out.name}</span>
                   <span>→</span>
@@ -46,7 +46,7 @@ export default async function TransferWidget() {
                   <span className="truncate max-w-[60px]">{t.teams.in.name}</span>
                 </div>
               </div>
-              <span className="text-[10px] font-data text-score-amber shrink-0">
+              <span className="text-xs font-data text-score-amber shrink-0">
                 {formatDate(t.date)}
               </span>
             </Link>

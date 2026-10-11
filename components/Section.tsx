@@ -9,7 +9,7 @@ type SectionProps = {
     return (
       <section className="bg-turf/40 border-l-2 border-score-amber mt-5">
         <div className="px-5 py-3 border-b border-turf-line/60">
-          <h2 className="font-display uppercase tracking-wide text-sm text-floodlight/70">
+          <h2 className="text-base font-semibold text-floodlight">
             {title}
           </h2>
         </div>

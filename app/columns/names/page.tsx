@@ -14,7 +14,7 @@ export default async function PlayerNamesPage() {
   return (
     <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
       <div className="max-w-2xl mx-auto px-4 pt-8 pb-16">
-        <h1 className="font-display text-xl text-score-amber mb-1">선수 이름 한글 표기</h1>
+        <h1 className="text-xl font-bold text-floodlight mb-1">선수 이름 한글 표기</h1>
         <p className="text-xs text-floodlight/50 mb-6">
           칼럼 초안에 쓰이는 표기예요. 틀린 걸 고치고 저장하면 다음 초안부터 반영돼요. (이미 만든 초안은 &quot;초안 다시 만들기&quot;)
         </p>

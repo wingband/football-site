@@ -60,7 +60,7 @@ export default function BoardEditForm({ post }: { post: Post }) {
   return (
     <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
       <div className="max-w-2xl mx-auto px-4 py-8">
-        <div className="flex items-center gap-1.5 text-[11px] text-floodlight/40 mb-3">
+        <div className="flex items-center gap-1.5 text-xs text-floodlight/40 mb-3">
           <Link href={`/board/${post.id}`} className="hover:text-floodlight/70 transition-colors truncate max-w-xs">
             {post.title}
           </Link>
@@ -69,8 +69,8 @@ export default function BoardEditForm({ post }: { post: Post }) {
         </div>
 
         <div className="flex items-center justify-between mb-6">
-          <h1 className="font-display uppercase text-xl text-score-amber">글 수정</h1>
-          <span className="text-[11px] px-2.5 py-1 rounded border border-turf-line text-floodlight/50">
+          <h1 className="text-xl font-bold text-floodlight">글 수정</h1>
+          <span className="text-xs px-2.5 py-1 rounded border border-turf-line text-floodlight/50">
             자유
           </span>
         </div>
@@ -98,7 +98,7 @@ export default function BoardEditForm({ post }: { post: Post }) {
                 {btn.label}
               </button>
             ))}
-            <span className="ml-auto text-[10px] text-floodlight/30">
+            <span className="ml-auto text-xs text-floodlight/30">
               **굵게** *기울임* &gt;인용 지원
             </span>
           </div>
@@ -112,7 +112,7 @@ export default function BoardEditForm({ post }: { post: Post }) {
             className="w-full bg-transparent px-4 py-3 text-sm text-floodlight placeholder:text-floodlight/30 focus:outline-none resize-none leading-relaxed"
           />
 
-          <div className="flex items-center justify-end gap-3 px-4 py-2 border-t border-turf-line/60 text-[11px] text-floodlight/30">
+          <div className="flex items-center justify-end gap-3 px-4 py-2 border-t border-turf-line/60 text-xs text-floodlight/30">
             <span>{title.length}/{TITLE_MAX}</span>
             <span className="text-floodlight/20">·</span>
             <span>{content.length}/{CONTENT_MAX}</span>

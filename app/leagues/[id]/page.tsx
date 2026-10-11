@@ -115,12 +115,12 @@ function LeaderboardCard({ title, rows, moreHref }: { title: string; rows: Leade
             <Link key={r.id} href={`/players/${r.id}`}
               className="flex items-center gap-2.5 py-2.5 hover:bg-turf-line/20 transition-colors -mx-1 px-1">
               <span className="text-xs text-floodlight/30 w-4 text-center">{i + 1}</span>
-              <PlayerAvatar src={r.photo} alt={r.name} className="w-8 h-8 rounded-full object-cover bg-turf-line text-[10px] shrink-0" />
+              <PlayerAvatar src={r.photo} alt={r.name} className="w-8 h-8 rounded-full object-cover bg-turf-line text-xs shrink-0" />
               <div className="min-w-0 flex-1">
                 <p className="text-sm truncate text-floodlight/90">{r.name}</p>
                 <div className="flex items-center gap-1 mt-0.5">
                   <Logo src={r.teamLogo} alt="" className="w-3 h-3" />
-                  <span className="text-[11px] text-floodlight/45 truncate">{r.teamName}</span>
+                  <span className="text-xs text-floodlight/45 truncate">{r.teamName}</span>
                 </div>
               </div>
               <span className="font-data font-bold bg-score-amber/15 text-score-amber px-2.5 py-0.5 rounded-full shrink-0 text-sm">
@@ -277,7 +277,7 @@ export default async function LeagueOverviewPage({ params, searchParams }: { par
       {(news.length > 0 || newsLimited) && (
         <section className="mt-8">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-display uppercase tracking-wide text-sm text-floodlight/70">뉴스</h2>
+            <h2 className="text-base font-semibold text-floodlight">뉴스</h2>
             {news.length > 0 && (
               <Link href={`/leagues/${id}/news`} className="text-xs text-floodlight/40 hover:text-score-amber">
                 전체 보기 →

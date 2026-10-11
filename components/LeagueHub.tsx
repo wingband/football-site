@@ -49,7 +49,7 @@ export default function LeagueHub({ tabs, initial }: { tabs: Tab[]; initial: Lea
   return (
     <section className="bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5">
       <div className="flex items-center justify-between gap-3 mb-3">
- <h2 className="text-base font-semibold font-display text-floodlight shrink-0">리그 순위</h2>
+ <h2 className="text-base font-semibold text-floodlight shrink-0">리그 순위</h2>
         <Link href={`/leagues/${active}`} className="text-xs text-floodlight/50 hover:text-score-amber shrink-0">
           {label} 자세히 →
         </Link>
@@ -123,7 +123,7 @@ export default function LeagueHub({ tabs, initial }: { tabs: Tab[]; initial: Lea
                 {expanded ? "순위표 접기 ▴" : `전체 순위 펼치기 · ${data.table.length}팀 ▾`}
               </button>
             )}
-            <p className="mt-2 flex flex-wrap gap-3 text-[11px] text-floodlight/55">
+            <p className="mt-2 flex flex-wrap gap-3 text-xs text-floodlight/55">
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-sky-400" />챔피언스리그</span>
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-orange-400" />유로파리그</span>
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-400" />컨퍼런스리그</span>

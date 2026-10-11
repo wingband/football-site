@@ -52,7 +52,7 @@ export default function XGPanel({ homeTeam, awayTeam, date, leagueId, homeGoals,
         <p className="text-xs text-floodlight/40 uppercase tracking-wide font-display">
           기대 골 (xG)
         </p>
-        <span className="text-[10px] text-floodlight/25">
+        <span className="text-xs text-floodlight/25">
           via {xg.source === "sofascore" ? "Sofascore" : "Understat"}
         </span>
       </div>
@@ -73,7 +73,7 @@ export default function XGPanel({ homeTeam, awayTeam, date, leagueId, homeGoals,
             style={{ width: `${awayWidth}%` }}
           />
         </div>
-        <div className="flex justify-between text-[10px] text-floodlight/40 mt-1">
+        <div className="flex justify-between text-xs text-floodlight/40 mt-1">
           <span>{homeTeam}</span>
           <span>{awayTeam}</span>
         </div>
@@ -82,10 +82,10 @@ export default function XGPanel({ homeTeam, awayTeam, date, leagueId, homeGoals,
       {/* 빅 찬스 (Sofascore에서만) */}
       {xg.source === "sofascore" && (xg.home.bigChances !== undefined || xg.away.bigChances !== undefined) && (
         <div>
-          <p className="text-[10px] text-floodlight/40 uppercase tracking-wide mb-1.5">빅 찬스</p>
+          <p className="text-xs text-floodlight/40 uppercase tracking-wide mb-1.5">빅 찬스</p>
           <div className="flex justify-between items-center">
             <span className="font-bold font-data text-floodlight">{xg.home.bigChances ?? 0}</span>
-            <span className="text-[10px] text-floodlight/30">Big Chances</span>
+            <span className="text-xs text-floodlight/30">Big Chances</span>
             <span className="font-bold font-data text-floodlight">{xg.away.bigChances ?? 0}</span>
           </div>
         </div>
@@ -94,12 +94,12 @@ export default function XGPanel({ homeTeam, awayTeam, date, leagueId, homeGoals,
       {/* 점유율 (Sofascore에서만) */}
       {xg.source === "sofascore" && xg.homePossession && xg.awayPossession && (
         <div>
-          <p className="text-[10px] text-floodlight/40 uppercase tracking-wide mb-1.5">점유율</p>
+          <p className="text-xs text-floodlight/40 uppercase tracking-wide mb-1.5">점유율</p>
           <div className="flex h-1.5 rounded-full overflow-hidden bg-turf-line/30">
             <div className="bg-score-amber" style={{ width: `${xg.homePossession}%` }} />
             <div className="bg-floodlight/40" style={{ width: `${xg.awayPossession}%` }} />
           </div>
-          <div className="flex justify-between text-[10px] text-floodlight/50 mt-1 font-data">
+          <div className="flex justify-between text-xs text-floodlight/50 mt-1 font-data">
             <span>{xg.homePossession}%</span>
             <span>{xg.awayPossession}%</span>
           </div>
@@ -107,7 +107,7 @@ export default function XGPanel({ homeTeam, awayTeam, date, leagueId, homeGoals,
       )}
 
       {/* xG 해석 */}
-      <div className="text-[10px] text-floodlight/25 border-t border-turf-line/20 pt-2">
+      <div className="text-xs text-floodlight/25 border-t border-turf-line/20 pt-2">
         xG = 기대 골. 슛의 질(거리·각도·상황)을 토대로 얼마나 득점할 가능성이 있었는지 나타냅니다.
         {homeGoals !== null && awayGoals !== null && (
           <span className="block mt-0.5">

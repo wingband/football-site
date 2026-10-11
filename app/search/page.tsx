@@ -129,7 +129,7 @@ export default async function SearchPage({
   return (
     <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 text-floodlight">
       <div className="space-y-6">
-        <h1 className="text-xl font-display text-floodlight">
+        <h1 className="text-xl font-bold text-floodlight">
           &apos;{q}&apos; 검색 결과 <span className="text-score-amber font-data">{totalResults}</span>건
         </h1>
 

@@ -32,7 +32,7 @@ function NextMatchColumn({ teamId, fixture }: { teamId: number; fixture: TeamFix
       href={matchLinkHref(fixture)} prefetch={false}
       className="flex flex-col items-center gap-2 hover:bg-turf-line/20 transition-colors py-2 px-1"
     >
-      <span className="flex items-center gap-1.5 text-[10px] text-floodlight/40">
+      <span className="flex items-center gap-1.5 text-xs text-floodlight/40">
         <Logo src={fixture.league.logo} alt="" className="w-3.5 h-3.5" />
         {fixture.league.name}
       </span>
@@ -44,7 +44,7 @@ function NextMatchColumn({ teamId, fixture }: { teamId: number; fixture: TeamFix
         <Logo src={opponent.logo} alt="" className="w-7 h-7" />
       </div>
       <span className="text-xs text-floodlight/60 text-center">{opponent.name}</span>
-      <span className="text-[10px] text-floodlight/30">{dateText}</span>
+      <span className="text-xs text-floodlight/30">{dateText}</span>
     </Link>
   )
 }

@@ -49,7 +49,7 @@ export default function CoupangBanner({ className = "" }: { className?: string }
           />
         )}
       </div>
-      <p className="mt-1.5 text-[10px] leading-snug text-floodlight/40">
+      <p className="mt-1.5 text-xs leading-snug text-floodlight/40">
         이 콘텐츠는 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.
       </p>
     </aside>

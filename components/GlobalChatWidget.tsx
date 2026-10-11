@@ -146,7 +146,7 @@ export default function GlobalChatWidget() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-baseline gap-2">
                   <span className="text-xs font-semibold text-floodlight/80 truncate">{m.nickname}</span>
-                  <span className="text-[10px] text-floodlight/30 shrink-0">{timeAgo(m.created_at)}</span>
+                  <span className="text-xs text-floodlight/30 shrink-0">{timeAgo(m.created_at)}</span>
                 </div>
                 <p className="text-sm text-floodlight/70 mt-0.5 leading-relaxed break-words">{m.content}</p>
               </div>
@@ -179,7 +179,7 @@ export default function GlobalChatWidget() {
                 {loading ? "..." : "전송"}
               </button>
             </div>
-            <p className="text-[10px] text-floodlight/20">
+            <p className="text-xs text-floodlight/20">
               {user.username ?? user.firstName ?? "익명"} · 욕설·스팸은 삭제됩니다
             </p>
           </div>

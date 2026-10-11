@@ -111,7 +111,7 @@ export default async function Home() {
         <aside className="space-y-4">
           <section className="bg-turf/40 border border-turf-line/60 rounded-none p-4">
             <div className="flex items-center justify-between mb-3">
-              <Link href="/board" className="font-display text-lg text-floodlight hover:text-score-amber">
+              <Link href="/board" className="text-base font-semibold text-floodlight hover:text-score-amber">
                 게시판
               </Link>
               <Link href="/board/write" className="text-xs px-3 py-1.5 bg-score-amber text-pitch-night font-bold rounded-full hover:bg-floodlight">
@@ -141,7 +141,7 @@ export default async function Home() {
                 {board.posts.map((p) => (
                   <li key={p.id}>
                     <Link href={`/board/${p.id}`} className="flex items-center gap-2 py-2 text-sm hover:text-score-amber">
-                      <span className="shrink-0 text-[11px] px-1.5 py-0.5 rounded bg-turf-line/60 text-floodlight/80">
+                      <span className="shrink-0 text-xs px-1.5 py-0.5 rounded bg-turf-line/60 text-floodlight/80">
                         {boardCategoryLabel(p.category)}
                       </span>
                       <span className="truncate text-floodlight/90">{p.title}</span>
@@ -164,7 +164,7 @@ export default async function Home() {
       {/* 이번 주 해외파 */}
       <section className="bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5">
         <div className="flex items-baseline justify-between mb-4">
- <h2 className="text-base font-semibold font-display text-floodlight">이번 주 해외파</h2>
+ <h2 className="text-base font-semibold text-floodlight">이번 주 해외파</h2>
           <Link href="/korean-players" className="text-xs text-floodlight/75 hover:text-score-amber">
             전체 보기 →
           </Link>
@@ -246,7 +246,7 @@ export default async function Home() {
       {columns.length > 0 && (
         <section>
           <div className="flex items-baseline justify-between mb-3">
- <h2 className="text-base font-semibold font-display text-floodlight">GoalLine 칼럼</h2>
+ <h2 className="text-base font-semibold text-floodlight">GoalLine 칼럼</h2>
             <Link href="/columns" className="text-xs text-floodlight/75 hover:text-score-amber">
               전체 보기 →
             </Link>

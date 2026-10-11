@@ -52,7 +52,7 @@ export default function DateTabs({ selectedDate }: { selectedDate: string }) {
           className="font-display uppercase text-sm text-score-amber tracking-wide min-w-16 text-center flex items-center gap-1.5 justify-center"
         >
           {formatDateLabel(selectedDate, today)}
-          <span className={`text-[10px] transition-transform ${calendarOpen ? "rotate-180" : ""}`}>▼</span>
+          <span className={`text-xs transition-transform ${calendarOpen ? "rotate-180" : ""}`}>▼</span>
         </button>
 
         <button
@@ -90,7 +90,7 @@ export default function DateTabs({ selectedDate }: { selectedDate: string }) {
               </button>
             </div>
 
-            <div className="grid grid-cols-7 gap-1 text-center text-[11px] text-floodlight/40 mb-1">
+            <div className="grid grid-cols-7 gap-1 text-center text-xs text-floodlight/40 mb-1">
               {WEEKDAYS_KO.map((w) => (
                 <span key={w}>{w}</span>
               ))}

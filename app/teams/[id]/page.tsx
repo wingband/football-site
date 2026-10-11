@@ -195,7 +195,7 @@ export default async function TeamOverviewPage({
                   <span className="font-data text-score-amber">
                     {new Date(nextFixture.fixture.date).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
                   </span>
-                  <span className="text-[11px] text-floodlight/40">
+                  <span className="text-xs text-floodlight/40">
                     {new Date(nextFixture.fixture.date).toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "short" })}
                   </span>
                 </div>
@@ -267,7 +267,7 @@ export default async function TeamOverviewPage({
                       />
                       <div className="min-w-0">
                         <p className="text-sm truncate">{inj.player.name}</p>
-                        <p className="text-[11px] text-floodlight/40">{inj.reason}</p>
+                        <p className="text-xs text-floodlight/40">{inj.reason}</p>
                       </div>
                     </div>
                   ))}
@@ -295,7 +295,7 @@ export default async function TeamOverviewPage({
         {(news.length > 0 || newsLimited) && (
           <section className="mt-8">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="font-display uppercase tracking-wide text-sm text-floodlight/70">뉴스</h2>
+              <h2 className="text-base font-semibold text-floodlight">뉴스</h2>
               {news.length > 0 && (
                 <Link href={`/teams/${id}/news?ref=internal`} className="text-xs text-floodlight/40 hover:text-score-amber">
                   전체 보기 →

@@ -41,7 +41,7 @@ export default function RelatedMatches({
     <section className="mt-10 pt-8 border-t border-turf-line/40">
       <div className="flex items-center gap-2 mb-4">
         <Logo src={leagueLogo} alt="" className="w-5 h-5 shrink-0" />
-        <h2 className="font-display uppercase text-sm tracking-wide text-floodlight/90">
+        <h2 className="text-base font-semibold text-floodlight">
           같은 리그 다른 경기
         </h2>
         {round && <span className="text-xs text-floodlight/40 truncate">{round}</span>}
@@ -58,8 +58,8 @@ export default function RelatedMatches({
               className="block bg-turf/40 border border-turf-line/40 rounded-md px-4 py-3 hover:border-score-amber/60 hover:bg-turf/60 transition-colors group"
             >
               <div className="flex items-center justify-between mb-2.5">
-                <span className="text-[10px] uppercase text-floodlight/40 truncate">{leagueName}</span>
-                <span className={`text-[10px] font-data shrink-0 ${finished ? "text-floodlight/40" : "text-score-amber"}`}>
+                <span className="text-xs uppercase text-floodlight/40 truncate">{leagueName}</span>
+                <span className={`text-xs font-data shrink-0 ${finished ? "text-floodlight/40" : "text-score-amber"}`}>
                   {finished
                     ? "종료"
                     : `${kickoff.toLocaleDateString("ko-KR", { month: "numeric", day: "numeric" })} ${kickoff.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}`}

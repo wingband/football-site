@@ -36,8 +36,12 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-kr), "Apple SD Gothic Neo", "Malgun Gothic", Arial, sans-serif;
 }
+
+/* 영문 전광판 서체 뒤에 한글 본문 서체를 이어, 한글이 섞여도 같은 글씨로 보이게 */
+.font-display { font-family: var(--font-display), var(--font-kr), sans-serif; }
+.font-data { font-family: var(--font-data), var(--font-kr), monospace; }
 
 
 /* 골 셀레브레이션 캐릭터 애니메이션 */

@@ -514,7 +514,7 @@ export default async function MatchDetailPage({
                     </>
                   )}
                 </div>
-                <p className="text-[10px] text-floodlight/30 mt-1">Expected Goals</p>
+                <p className="text-xs text-floodlight/30 mt-1">Expected Goals</p>
               </div>
               <span className="font-data font-bold text-2xl text-floodlight/80">{awayXg ?? "–"}</span>
             </div>
@@ -671,7 +671,7 @@ export default async function MatchDetailPage({
 
             <div className="flex flex-col items-center px-2 shrink-0">
               {isLive && (
-                <span className="flex items-center gap-1.5 mb-1 text-live-red text-[11px] font-display uppercase tracking-wider">
+                <span className="flex items-center gap-1.5 mb-1 text-live-red text-xs font-display uppercase tracking-wider">
                   <span className="w-1.5 h-1.5 rounded-full bg-live-red animate-pulse" />
                   {match.fixture.status.elapsed}&apos; LIVE
                 </span>
@@ -681,7 +681,7 @@ export default async function MatchDetailPage({
                 <span className="text-floodlight/30 mx-1.5">-</span>
                 {match.goals.away ?? "-"}
               </div>
-              <span className="text-[11px] text-floodlight/40 mt-1.5">{match.fixture.status.long}</span>
+              <span className="text-xs text-floodlight/40 mt-1.5">{match.fixture.status.long}</span>
             </div>
 
             <div className="flex items-center gap-2 flex-1 min-w-0">

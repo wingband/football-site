@@ -64,7 +64,7 @@ export default async function KoreanPlayersPage() {
     <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6 text-floodlight">
       {/* 헤더 */}
       <section className={CARD}>
- <h1 className="text-xl font-display text-floodlight">🇰🇷 해외파 경기 일정 · 결과</h1>
+ <h1 className="text-xl font-bold text-floodlight">🇰🇷 해외파 경기 일정 · 결과</h1>
         <p className="text-sm text-floodlight/75 leading-relaxed mt-2">
           해외 무대에서 뛰는 한국 선수들의 다음 경기 일정(한국 시간)과 최근 경기 평점·공격포인트를 한 곳에서 확인하세요.
         </p>
@@ -108,7 +108,7 @@ export default async function KoreanPlayersPage() {
 
       {/* SEO 텍스트 블록 */}
       <section className={CARD}>
- <h2 className="text-base font-semibold font-display text-floodlight mb-2">한국 축구 해외파 현황</h2>
+ <h2 className="text-base font-semibold text-floodlight mb-2">한국 축구 해외파 현황</h2>
         <p className="text-sm text-floodlight/70 leading-relaxed">
           현재 유럽 무대에서 활약 중인 한국 선수는 라리가의 이강인(아틀레티코 마드리드),
           분데스리가의 김민재(바이에른 뮌헨)·황희찬(샬케04)·이재성·정우영·옌스 카스트로프 등이 있습니다.

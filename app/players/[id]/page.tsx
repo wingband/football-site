@@ -237,7 +237,7 @@ export default async function PlayerPage({
               className="w-20 h-20 rounded-full object-cover bg-turf-line text-xl shrink-0"
             />
             <div className="min-w-0">
-              <h1 className="font-display uppercase text-xl truncate">{player.name}</h1>
+              <h1 className="text-xl font-bold text-floodlight truncate">{player.name}</h1>
               {/* 국적 */}
               <p className="text-sm text-floodlight/75 mt-0.5">{player.nationality}</p>
               {/* 현재 소속팀 — 눈에 띄게 */}

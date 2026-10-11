@@ -73,7 +73,7 @@ export default async function TopScorersPage({
                   <p className="text-sm font-medium truncate">{s.player.name}</p>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <Logo src={stat.team.logo} alt="" className="w-3.5 h-3.5" />
-                    <span className="text-[11px] text-floodlight/40 truncate">{stat.team.name}</span>
+                    <span className="text-xs text-floodlight/40 truncate">{stat.team.name}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-4 text-sm font-data shrink-0">

@@ -38,7 +38,7 @@ export default async function ColumnsPage({ searchParams }: { searchParams: Prom
       <section className="bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
- <h1 className="text-xl font-display text-floodlight">GoalLine 칼럼</h1>
+ <h1 className="text-xl font-bold text-floodlight">GoalLine 칼럼</h1>
             <p className="text-sm text-floodlight/75 mt-2">
               데이터만으로는 보이지 않는 이야기. 해외파 활약, 경기 흐름, 리그 판도를 직접 짚어봅니다.
             </p>
@@ -68,7 +68,7 @@ export default async function ColumnsPage({ searchParams }: { searchParams: Prom
               return (
                 <li key={d.slug}>
                   <Link href={`/columns/write?slug=${d.slug}`} className="flex items-baseline gap-2 group">
-                    <span className="shrink-0 text-[11px] px-1.5 py-0.5 rounded bg-score-amber/20 text-score-amber">
+                    <span className="shrink-0 text-xs px-1.5 py-0.5 rounded bg-score-amber/20 text-score-amber">
                       {kind ? DRAFT_KINDS[kind].label : "초안"}
                     </span>
                     <span className="text-sm text-floodlight/85 group-hover:text-score-amber line-clamp-1">{d.title}</span>

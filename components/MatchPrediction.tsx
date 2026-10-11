@@ -133,7 +133,7 @@ export default function MatchPrediction({
         <p className="text-xs text-floodlight/60">
           예측완료 ✓ {existing.predictedHomeScore} - {existing.predictedAwayScore}
         </p>
-        <p className="text-[11px] text-floodlight/30 mt-1">경기 종료 후 결과가 집계됩니다</p>
+        <p className="text-xs text-floodlight/30 mt-1">경기 종료 후 결과가 집계됩니다</p>
       </div>
     )
   }
@@ -181,7 +181,7 @@ export default function MatchPrediction({
       >
         {submitting ? "제출 중..." : "예측 제출"}
       </button>
-      <p className="text-[11px] text-floodlight/30 mt-2 text-center">
+      <p className="text-xs text-floodlight/30 mt-2 text-center">
         정확히 맞히면 3점, 승/무/패만 맞혀도 1점
       </p>
     </div>

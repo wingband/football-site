@@ -174,7 +174,7 @@ export default function StandingsWithFilter({
             {mode === "all" && legends.size > 0 && (
               <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 px-2">
                 {[...legends.entries()].map(([label, color]) => (
-                  <span key={label} className="flex items-center gap-1.5 text-[11px] text-floodlight/50">
+                  <span key={label} className="flex items-center gap-1.5 text-xs text-floodlight/50">
                     <span className={`w-2 h-2 rounded-full ${color}`} />
                     {label}
                   </span>

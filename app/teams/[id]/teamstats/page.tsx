@@ -42,8 +42,8 @@ function StatBlock({ label, value, sub }: { label: string; value: string | numbe
   return (
     <div className="bg-turf/30 border border-turf-line/30 rounded p-3 text-center">
       <p className="font-data font-bold text-xl text-score-amber">{value}</p>
-      <p className="text-[11px] text-floodlight/50 mt-1">{label}</p>
-      {sub && <p className="text-[10px] text-floodlight/30">{sub}</p>}
+      <p className="text-xs text-floodlight/50 mt-1">{label}</p>
+      {sub && <p className="text-xs text-floodlight/30">{sub}</p>}
     </div>
   )
 }
@@ -121,7 +121,7 @@ export default async function TeamStatsPage({ params }: { params: Promise<{ id: 
                 <p className="text-xs text-floodlight/40 mb-2">득점</p>
                 <p className="font-data font-bold text-2xl text-score-amber">{seasonStats.goals.for.total.total}</p>
                 <p className="text-xs text-floodlight/40 mt-1">경기당 {seasonStats.goals.for.average.total}</p>
-                <div className="mt-2 text-[11px] text-floodlight/40 space-y-0.5">
+                <div className="mt-2 text-xs text-floodlight/40 space-y-0.5">
                   <div className="flex justify-between"><span>홈</span><span className="font-data">{seasonStats.goals.for.total.home} (평균 {seasonStats.goals.for.average.home})</span></div>
                   <div className="flex justify-between"><span>원정</span><span className="font-data">{seasonStats.goals.for.total.away} (평균 {seasonStats.goals.for.average.away})</span></div>
                 </div>
@@ -130,7 +130,7 @@ export default async function TeamStatsPage({ params }: { params: Promise<{ id: 
                 <p className="text-xs text-floodlight/40 mb-2">실점</p>
                 <p className="font-data font-bold text-2xl text-floodlight/80">{seasonStats.goals.against.total.total}</p>
                 <p className="text-xs text-floodlight/40 mt-1">경기당 {seasonStats.goals.against.average.total}</p>
-                <div className="mt-2 text-[11px] text-floodlight/40 space-y-0.5">
+                <div className="mt-2 text-xs text-floodlight/40 space-y-0.5">
                   <div className="flex justify-between"><span>홈</span><span className="font-data">{seasonStats.goals.against.total.home} (평균 {seasonStats.goals.against.average.home})</span></div>
                   <div className="flex justify-between"><span>원정</span><span className="font-data">{seasonStats.goals.against.total.away} (평균 {seasonStats.goals.against.average.away})</span></div>
                 </div>
@@ -164,13 +164,13 @@ export default async function TeamStatsPage({ params }: { params: Promise<{ id: 
             <div className="grid grid-cols-2 gap-3 mt-3">
               {seasonStats.biggest.wins.home && (
                 <div className="bg-turf/30 border border-turf-line/30 rounded p-3">
-                  <p className="text-[11px] text-floodlight/40">홈 최대 승리</p>
+                  <p className="text-xs text-floodlight/40">홈 최대 승리</p>
                   <p className="font-data font-bold text-lg text-score-amber mt-1">{seasonStats.biggest.wins.home}</p>
                 </div>
               )}
               {seasonStats.biggest.wins.away && (
                 <div className="bg-turf/30 border border-turf-line/30 rounded p-3">
-                  <p className="text-[11px] text-floodlight/40">원정 최대 승리</p>
+                  <p className="text-xs text-floodlight/40">원정 최대 승리</p>
                   <p className="font-data font-bold text-lg text-score-amber mt-1">{seasonStats.biggest.wins.away}</p>
                 </div>
               )}

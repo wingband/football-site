@@ -121,7 +121,7 @@ export default function StoriesPage() {
   return (
     <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6 text-floodlight">
       <section className="bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5">
- <h1 className="text-xl font-display text-floodlight">경기 리뷰</h1>
+ <h1 className="text-xl font-bold text-floodlight">경기 리뷰</h1>
         <p className="text-sm text-floodlight/75 mt-2">주요 경기 분석 · {articles.length}개</p>
 
         {/* 리그 탭 필터 */}

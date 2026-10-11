@@ -46,12 +46,12 @@ function LeaderCard({ title, rows }: { title: string; rows: Row[] }) {
               href={`/players/${r.id}`}
               className="flex items-center gap-2.5 py-2 hover:bg-turf-line/20 transition-colors -mx-1 px-1"
             >
-              <PlayerAvatar src={r.photo} alt={r.name} className="w-8 h-8 rounded-full object-cover bg-turf-line text-[10px] shrink-0" />
+              <PlayerAvatar src={r.photo} alt={r.name} className="w-8 h-8 rounded-full object-cover bg-turf-line text-xs shrink-0" />
               <div className="min-w-0 flex-1">
                 <p className="text-sm truncate">{r.name}</p>
                 <div className="flex items-center gap-1 mt-0.5">
                   <Logo src={r.teamLogo} alt="" className="w-3 h-3" />
-                  <span className="text-[11px] text-floodlight/40 truncate">{r.teamName}</span>
+                  <span className="text-xs text-floodlight/40 truncate">{r.teamName}</span>
                 </div>
               </div>
               <span className="font-data font-bold bg-score-amber/15 text-score-amber px-2 py-0.5 rounded-full shrink-0 text-sm">
@@ -168,7 +168,7 @@ export default async function LeaguePlayerStatsPage({
         <LeaderCard title="평점" rows={ratingRows} />
       </div>
 
-      <p className="text-[11px] text-floodlight/30 mt-6 leading-relaxed">
+      <p className="text-xs text-floodlight/30 mt-6 leading-relaxed">
         출전 시간, xG, xGOT, 90분당 지표, 큰 기회 만듦 등 세부 지표는 API 데이터에 없어 제공하지 않습니다.
         위 순위는 득점왕·도움왕 명단을 기반으로 한 것이라, 그 명단 밖의 선수는 포함되지 않을 수 있습니다.
       </p>

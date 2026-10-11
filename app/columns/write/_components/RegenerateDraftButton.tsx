@@ -36,7 +36,7 @@ export default function RegenerateDraftButton({ kind = "weekly" }: { kind?: Excl
       <button onClick={run} disabled={loading} className="text-xs text-floodlight/50 underline underline-offset-2 hover:text-floodlight disabled:opacity-50">
         {loading ? "다시 쓰는 중… (30초 정도)" : "초안 다시 만들기"}
       </button>
-      {error && <span className="text-[11px] text-red-400 mt-1">{error}</span>}
+      {error && <span className="text-xs text-red-400 mt-1">{error}</span>}
     </span>
   )
 }

@@ -115,7 +115,7 @@ function MatchRow({ match }: { match: Fixture }) {
         ) : phase === "upcoming" ? (
           <span className="text-floodlight/40 text-xs font-data">{formatKickoff(match.fixture.date)}</span>
         ) : (
-          <span className="text-floodlight/30 text-[10px]">종료</span>
+          <span className="text-floodlight/30 text-xs">종료</span>
         )}
       </div>
 
@@ -387,7 +387,7 @@ export default function MatchesExplorer({ fixtures, userCountry }: { fixtures: F
 
           {favoriteLeagues.length > 0 && (
             <>
-              <p className="text-[11px] uppercase text-score-amber px-1 mb-2 font-display tracking-wide">
+              <p className="text-xs uppercase text-score-amber px-1 mb-2 font-display tracking-wide">
                 즐겨찾기
               </p>
               <div className="space-y-1 mb-5">
@@ -406,7 +406,7 @@ export default function MatchesExplorer({ fixtures, userCountry }: { fixtures: F
             </>
           )}
 
-          <p className="text-[11px] uppercase text-floodlight/40 px-1 mb-2 font-display tracking-wide">
+          <p className="text-xs uppercase text-floodlight/40 px-1 mb-2 font-display tracking-wide">
             주요 리그
           </p>
           <div className="space-y-1 mb-5">
@@ -430,7 +430,7 @@ export default function MatchesExplorer({ fixtures, userCountry }: { fixtures: F
 
           <button
             onClick={() => setShowMore((v) => !v)}
-            className="w-full flex items-center justify-between text-left px-1 py-1 text-[11px] uppercase text-floodlight/40 hover:text-floodlight/70 mb-2 font-display tracking-wide"
+            className="w-full flex items-center justify-between text-left px-1 py-1 text-xs uppercase text-floodlight/40 hover:text-floodlight/70 mb-2 font-display tracking-wide"
           >
             <span>그 외 리그</span>
             <span>{showMore ? "▲" : "▼"}</span>
@@ -440,7 +440,7 @@ export default function MatchesExplorer({ fixtures, userCountry }: { fixtures: F
             <div>
               {restByCountry.map(({ country, leagues }) => (
                 <div key={country} className="mb-3">
-                  <p className="text-[10px] uppercase text-floodlight/30 px-3 mb-1">{country}</p>
+                  <p className="text-xs uppercase text-floodlight/30 px-3 mb-1">{country}</p>
                   {leagues.map((league) => (
                     <LeagueLink
                       key={league.id}

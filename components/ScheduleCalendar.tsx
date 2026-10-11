@@ -64,7 +64,7 @@ export default function ScheduleCalendar({ month, today, prevMonth, nextMonth, i
       <div className="flex items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-2">
           <MonthLink month={prevMonth} label="‹" aria="이전 달" />
- <h2 className="text-base font-semibold font-display text-floodlight tabular-nums">
+ <h2 className="text-base font-semibold text-floodlight tabular-nums">
             {y}년 {m}월
           </h2>
           <MonthLink month={nextMonth} label="›" aria="다음 달" />
@@ -144,22 +144,22 @@ export default function ScheduleCalendar({ month, today, prevMonth, nextMonth, i
                     <span
                       key={x.id}
                       title={`${x.home} vs ${x.away}${x.korean.length ? ` (${x.korean.join(", ")})` : ""}`}
-                      className={`flex items-center gap-1 min-w-0 text-[11px] leading-5 px-1 rounded ${
+                      className={`flex items-center gap-1 min-w-0 text-xs leading-5 px-1 rounded ${
                         x.korean.length > 0 ? "bg-score-amber/15 text-score-amber" : "text-floodlight/80"
                       }`}
                     >
-                      <span className="font-data text-[11px] text-floodlight/55 shrink-0">{x.status === "finished" ? "종료" : x.time}</span>
+                      <span className="font-data text-xs text-floodlight/55 shrink-0">{x.status === "finished" ? "종료" : x.time}</span>
                       <Logo src={x.homeLogo} alt={x.home} className="w-[18px] h-[18px] shrink-0" />
-                      <span className="text-floodlight/40 text-[10px] shrink-0">vs</span>
+                      <span className="text-floodlight/40 text-xs shrink-0">vs</span>
                       <Logo src={x.awayLogo} alt={x.away} className="w-[18px] h-[18px] shrink-0" />
                       {x.korean.length > 0 && <span className="truncate font-semibold">{x.korean.join("·")}</span>}
                     </span>
                   ))}
-                  {list.length > 4 && <span className="text-[11px] text-floodlight/60 px-1">+{list.length - 4}경기 더</span>}
+                  {list.length > 4 && <span className="text-xs text-floodlight/60 px-1">+{list.length - 4}경기 더</span>}
                 </span>
 
                 {/* 모바일: 경기 수만 */}
-                {list.length > 0 && <span className="sm:hidden mt-auto text-[10px] text-floodlight/50 font-data">{list.length}경기</span>}
+                {list.length > 0 && <span className="sm:hidden mt-auto text-xs text-floodlight/50 font-data">{list.length}경기</span>}
               </button>
             )
           })}
@@ -178,7 +178,7 @@ export default function ScheduleCalendar({ month, today, prevMonth, nextMonth, i
           <div className="space-y-4">
             {[...groups].map(([league, list]) => (
               <div key={league}>
-                <p className="text-[11px] tracking-wide text-floodlight/40 mb-1">{league}</p>
+                <p className="text-xs tracking-wide text-floodlight/40 mb-1">{league}</p>
                 <ul className="divide-y divide-turf-line/40">
                   {list.map((x) => (
                     <li key={x.id}>
@@ -197,7 +197,7 @@ export default function ScheduleCalendar({ month, today, prevMonth, nextMonth, i
                           <Logo src={x.awayLogo} alt="" className="w-5 h-5 shrink-0" />
                           <span className="truncate text-floodlight/90">{x.away}</span>
                           {x.korean.length > 0 && (
-                            <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-score-amber/15 text-score-amber">
+                            <span className="shrink-0 text-xs px-1.5 py-0.5 rounded-full bg-score-amber/15 text-score-amber">
                               🇰🇷 {x.korean.join("·")}
                             </span>
                           )}

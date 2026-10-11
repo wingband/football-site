@@ -77,7 +77,7 @@ export default function H2HPanel({
             <div className="bg-floodlight/70" style={{ width: `${(bWins / total) * 100}%` }} />
           </div>
         )}
-        <p className="text-center text-[11px] text-floodlight/40 mt-2">최근 {total}경기 기준</p>
+        <p className="text-center text-xs text-floodlight/40 mt-2">최근 {total}경기 기준</p>
       </div>
 
       {/* 과거 경기 리스트 */}
@@ -90,7 +90,7 @@ export default function H2HPanel({
 
           const row = (
             <div className="py-3">
-              <p className="text-[11px] text-floodlight/40 mb-1.5 text-center">
+              <p className="text-xs text-floodlight/40 mb-1.5 text-center">
                 {new Date(m.fixture.date).toLocaleDateString("ko-KR", {
                   year: "numeric",
                   month: "long",

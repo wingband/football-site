@@ -17,7 +17,7 @@ export default function PrivacyPage() {
           ← GoalLine 홈으로
         </Link>
 
-        <h1 className="font-display uppercase text-2xl text-score-amber mb-2">개인정보처리방침</h1>
+        <h1 className="text-xl font-bold text-floodlight mb-2">개인정보처리방침</h1>
         <p className="text-xs text-floodlight/40 mb-10">최종 업데이트: {today}</p>
 
         <div className="space-y-8 text-sm text-floodlight/80 leading-relaxed">

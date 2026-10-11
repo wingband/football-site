@@ -85,7 +85,7 @@ export default async function BoardPage({
       {/* 게시판 이름 + 글쓰기 */}
       <div className="flex items-end justify-between gap-3 mb-3">
         <div className="min-w-0">
- <h1 className="text-xl font-display text-floodlight">{cat ? cat.title : "게시판"}</h1>
+ <h1 className="text-xl font-bold text-floodlight">{cat ? cat.title : "게시판"}</h1>
           <p className="text-sm text-floodlight/70 mt-1 truncate">
             {cat ? cat.desc : "축구 이야기를 자유롭게 나누는 곳"} · 글 <b className="text-score-amber font-data">{total.toLocaleString("ko-KR")}</b>
           </p>
@@ -144,8 +144,8 @@ export default async function BoardPage({
                 <span className="min-w-0">
                   <span className="text-[15px] text-floodlight group-hover:text-score-amber transition-colors">{post.title}</span>
                   {post.commentCount > 0 && <span className="ml-1.5 text-score-amber text-xs font-bold font-data">[{post.commentCount}]</span>}
-                  {fresh && <span className="ml-1.5 text-[10px] font-bold px-1 py-px rounded bg-red-500 text-white align-middle">N</span>}
-                  {hot && <span className="ml-1 text-[10px] font-bold px-1 py-px rounded bg-score-amber text-pitch-night align-middle">HOT</span>}
+                  {fresh && <span className="ml-1.5 text-xs font-bold px-1 py-px rounded bg-red-500 text-white align-middle">N</span>}
+                  {hot && <span className="ml-1 text-xs font-bold px-1 py-px rounded bg-score-amber text-pitch-night align-middle">HOT</span>}
                 </span>
               )
               return (

@@ -169,10 +169,10 @@ function PlayerNode({
           />
         )}
         {goals > 0 && (
-          <span className="absolute -bottom-1 -right-1 text-[10px]">⚽</span>
+          <span className="absolute -bottom-1 -right-1 text-xs">⚽</span>
         )}
       </div>
-      <span className="mt-1 text-[10px] text-floodlight/90 leading-tight text-center truncate w-16">
+      <span className="mt-1 text-xs text-floodlight/90 leading-tight text-center truncate w-16">
         <span className="text-floodlight/40">{lp.player.number} </span>
         {lp.player.name.split(" ").pop()}
       </span>
@@ -254,7 +254,7 @@ function SubstituteRow({
       />
       {data?.rating && (
         <span
-          className={`px-1.5 py-0.5 rounded-full text-[10px] font-data font-bold shrink-0 ${ratingBadgeClass(data.rating, isMotm)}`}
+          className={`px-1.5 py-0.5 rounded-full text-xs font-data font-bold shrink-0 ${ratingBadgeClass(data.rating, isMotm)}`}
         >
           {data.rating}
         </span>
@@ -262,7 +262,7 @@ function SubstituteRow({
       <span className="font-data text-xs text-floodlight/40 w-5 shrink-0">{lp.player.number}</span>
       <div className="min-w-0 flex-1">
         <p className="text-sm text-floodlight/90 truncate">{lp.player.name}</p>
-        <p className="text-[11px] text-floodlight/40">{POS_KR[lp.player.pos] ?? lp.player.pos}</p>
+        <p className="text-xs text-floodlight/40">{POS_KR[lp.player.pos] ?? lp.player.pos}</p>
       </div>
       <div className="flex items-center gap-1.5 shrink-0 text-xs">
         {goals > 0 && <span>⚽</span>}
@@ -302,7 +302,7 @@ export default function FotmobLineup({
       <div className="flex items-center justify-between gap-2 mb-4 text-sm">
         <div className="flex items-center gap-2 min-w-0">
           {homeAvg && (
-            <span className={`px-1.5 py-0.5 rounded-full text-[11px] font-data font-bold ${Number(homeAvg) >= 7 ? "bg-green-600" : "bg-orange-500"} text-white`}>
+            <span className={`px-1.5 py-0.5 rounded-full text-xs font-data font-bold ${Number(homeAvg) >= 7 ? "bg-green-600" : "bg-orange-500"} text-white`}>
               {homeAvg}
             </span>
           )}
@@ -315,7 +315,7 @@ export default function FotmobLineup({
           <span className="truncate font-medium">{away.team.name}</span>
           <Logo src={away.team.logo} alt="" className="w-5 h-5 shrink-0" />
           {awayAvg && (
-            <span className={`px-1.5 py-0.5 rounded-full text-[11px] font-data font-bold ${Number(awayAvg) >= 7 ? "bg-green-600" : "bg-orange-500"} text-white`}>
+            <span className={`px-1.5 py-0.5 rounded-full text-xs font-data font-bold ${Number(awayAvg) >= 7 ? "bg-green-600" : "bg-orange-500"} text-white`}>
               {awayAvg}
             </span>
           )}
@@ -347,7 +347,7 @@ export default function FotmobLineup({
           <PlayerAvatar
             src={home.coach?.photo ?? ""}
             alt={home.coach?.name ?? "-"}
-            className="w-8 h-8 rounded-full object-cover bg-turf-line text-[10px] shrink-0"
+            className="w-8 h-8 rounded-full object-cover bg-turf-line text-xs shrink-0"
           />
           <span className="text-sm truncate">{home.coach?.name ?? "-"}</span>
         </div>
@@ -357,7 +357,7 @@ export default function FotmobLineup({
           <PlayerAvatar
             src={away.coach?.photo ?? ""}
             alt={away.coach?.name ?? "-"}
-            className="w-8 h-8 rounded-full object-cover bg-turf-line text-[10px] shrink-0"
+            className="w-8 h-8 rounded-full object-cover bg-turf-line text-xs shrink-0"
           />
         </div>
       </div>

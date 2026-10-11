@@ -77,7 +77,7 @@ export default function MatchVote({ matchId }: { matchId: number }) {
               <span className="text-2xl">{emoji}</span>
               <span className="text-xs font-medium">{label}</span>
               {voted && (
-                <span className="text-[10px] font-data font-bold text-floodlight/60">
+                <span className="text-xs font-data font-bold text-floodlight/60">
                   {pct}% ({count})
                 </span>
               )}
@@ -86,7 +86,7 @@ export default function MatchVote({ matchId }: { matchId: number }) {
         })}
       </div>
       {voted && (
-        <p className="text-[10px] text-floodlight/30 text-center mt-3">
+        <p className="text-xs text-floodlight/30 text-center mt-3">
           총 {total}명 참여
         </p>
       )}

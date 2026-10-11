@@ -43,8 +43,8 @@ function CardIcon({ detail }: { detail: string }) {
 function SubIcon() {
   return (
     <span className="inline-flex flex-col items-center justify-center w-4 shrink-0 leading-none">
-      <span className="text-green-400 text-[10px]">←</span>
-      <span className="text-orange-400 text-[10px]">→</span>
+      <span className="text-green-400 text-xs">←</span>
+      <span className="text-orange-400 text-xs">→</span>
     </span>
   )
 }

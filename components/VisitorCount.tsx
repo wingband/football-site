@@ -51,7 +51,7 @@ export default function VisitorCount() {
   if (count === null) return null
 
   return (
-    <p className="text-[10px] text-floodlight/30">
+    <p className="text-xs text-floodlight/30">
       오늘 방문자 {count.toLocaleString("ko-KR")}명
     </p>
   )

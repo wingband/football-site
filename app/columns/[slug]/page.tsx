@@ -91,13 +91,13 @@ export default async function ColumnPage({ params }: { params: Promise<{ slug: s
           {column.tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-3">
               {column.tags.map((t) => (
-                <span key={t} className="text-[11px] text-score-amber/80">#{t}</span>
+                <span key={t} className="text-xs text-score-amber/80">#{t}</span>
               ))}
             </div>
           )}
           <h1 className="text-2xl font-bold leading-snug text-floodlight">{column.title}</h1>
           {column.summary && <p className="text-sm text-floodlight/60 mt-3 leading-relaxed">{column.summary}</p>}
-          <p className="text-[11px] text-floodlight/40 mt-4">
+          <p className="text-xs text-floodlight/40 mt-4">
             GoalLine 칼럼 · {formatDate(column.createdAt)}
             {edited && ` (수정 ${formatDate(column.updatedAt)})`} · {readingMinutes(column.content)}분 읽기
             {!column.published && " · 비공개"}

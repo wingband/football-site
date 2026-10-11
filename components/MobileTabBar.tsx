@@ -26,7 +26,7 @@ export default function MobileTabBar() {
             <li key={t.href}>
               <Link
                 href={t.href}
-                className={`flex flex-col items-center gap-0.5 py-2 text-[11px] ${active ? "text-score-amber" : "text-floodlight/60"}`}
+                className={`flex flex-col items-center gap-0.5 py-2 text-xs ${active ? "text-score-amber" : "text-floodlight/60"}`}
               >
                 <span className="text-base leading-none">{t.icon}</span>
                 {t.label}

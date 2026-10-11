@@ -15,7 +15,7 @@ export default function AdvertisePage() {
           ← GoalLine 홈으로
         </Link>
 
-        <h1 className="font-display uppercase text-2xl text-score-amber mb-10">광고하기</h1>
+        <h1 className="text-xl font-bold text-floodlight">광고하기</h1>
 
         <div className="space-y-8 text-sm text-floodlight/80 leading-relaxed">
 

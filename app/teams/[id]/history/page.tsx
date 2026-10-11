@@ -80,7 +80,7 @@ export default async function TeamHistoryPage({
                       className={`w-full rounded-t ${rank ? "bg-score-amber/70" : "bg-transparent"}`}
                       style={{ height: `${heightPct}%`, minHeight: rank ? "4px" : "0" }}
                     />
-                    <span className="text-[10px] text-floodlight/40 mt-2 whitespace-nowrap">
+                    <span className="text-xs text-floodlight/40 mt-2 whitespace-nowrap">
                       {String(season).slice(2)}/{String(season + 1).slice(2)}
                     </span>
                   </div>
@@ -94,7 +94,7 @@ export default async function TeamHistoryPage({
           <p className="text-floodlight/40 text-sm py-6">과거 순위 정보를 찾을 수 없습니다.</p>
         )}
 
-        <p className="text-[11px] text-floodlight/30 mt-6">
+        <p className="text-xs text-floodlight/30 mt-6">
           트로피 수, 감독별 시즌 승률은 API 데이터에 없어 제공하지 않습니다.
         </p>
     </>

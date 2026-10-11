@@ -49,7 +49,7 @@ function LeaderCard({ title, rows, unit }: { title: string; rows: Row[]; unit?: 
               href={`/players/${r.id}`}
               className="flex items-center gap-3 py-2 hover:bg-turf-line/20 transition-colors -mx-1 px-1"
             >
-              <PlayerAvatar src={r.photo} alt={r.name} className="w-8 h-8 rounded-full object-cover bg-turf-line text-[10px] shrink-0" />
+              <PlayerAvatar src={r.photo} alt={r.name} className="w-8 h-8 rounded-full object-cover bg-turf-line text-xs shrink-0" />
               <span className="text-sm flex-1 truncate">{r.name}</span>
               <span className="font-data font-bold bg-score-amber/15 text-score-amber px-2 py-0.5 rounded-full shrink-0">
                 {r.value}
@@ -104,7 +104,7 @@ export default async function TeamPlayerStatsPage({
           </div>
         )}
 
-        <p className="text-[11px] text-floodlight/30 mt-6">
+        <p className="text-xs text-floodlight/30 mt-6">
           xG, 태클, 가로채기 등 세부 지표는 API 데이터 한계로 제공하지 않습니다.
         </p>
     </>

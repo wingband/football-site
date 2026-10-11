@@ -122,7 +122,7 @@ export default function OpinionQuickPublish({ slug, title, summary, content, tag
   return (
     <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
       <div className="max-w-2xl mx-auto px-4 py-8">
-        <div className="flex items-center gap-1.5 text-[11px] text-floodlight/40 mb-3">
+        <div className="flex items-center gap-1.5 text-xs text-floodlight/40 mb-3">
           <Link href="/columns" className="hover:text-floodlight/70 transition-colors">칼럼</Link>
           <span>/</span>
           <span>의견 달고 발행</span>
@@ -163,7 +163,7 @@ export default function OpinionQuickPublish({ slug, title, summary, content, tag
                   placeholder="사진 설명 (선택)"
                   className="w-full bg-transparent border-b border-turf-line px-1 py-1 text-sm focus:outline-none focus:border-score-amber/60"
                 />
-                <button onClick={() => setPhoto(null)} className="text-[11px] text-floodlight/50 mt-2 hover:text-floodlight">
+                <button onClick={() => setPhoto(null)} className="text-xs text-floodlight/50 mt-2 hover:text-floodlight">
                   사진 빼기
                 </button>
               </div>
@@ -184,7 +184,7 @@ export default function OpinionQuickPublish({ slug, title, summary, content, tag
             className="hidden"
             onChange={(e) => handlePhoto(e.target.files?.[0])}
           />
-          <p className="text-[10px] text-floodlight/35 mt-2">직접 찍거나 만든 사진만 올려주세요. 뉴스·선수 사진을 퍼오면 저작권 문제가 생길 수 있어요.</p>
+          <p className="text-xs text-floodlight/35 mt-2">직접 찍거나 만든 사진만 올려주세요. 뉴스·선수 사진을 퍼오면 저작권 문제가 생길 수 있어요.</p>
         </div>
 
         {error && <p className="text-xs text-red-400 mt-3">{error}</p>}
@@ -206,7 +206,7 @@ export default function OpinionQuickPublish({ slug, title, summary, content, tag
         </div>
 
         <div className="mt-10 pt-6 border-t border-turf-line/40">
-          <p className="text-[11px] text-floodlight/40 mb-3">미리보기</p>
+          <p className="text-xs text-floodlight/40 mb-3">미리보기</p>
           <h1 className="text-xl font-bold leading-snug">{title}</h1>
           {summary && <p className="text-sm text-floodlight/60 mt-2">{summary}</p>}
           <div className="mt-6">

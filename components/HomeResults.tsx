@@ -26,7 +26,7 @@ export default function HomeResults({ tabs, results }: { tabs: Tab[]; results: H
   return (
     <section className="bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5">
       <div className="flex items-baseline justify-between gap-3 mb-3">
- <h1 className="text-xl font-display text-floodlight">최근 경기 결과</h1>
+ <h1 className="text-xl font-bold text-floodlight">최근 경기 결과</h1>
         <Link href="/matches" className="text-xs sm:text-sm text-floodlight/70 hover:text-score-amber shrink-0">
           전체 경기 →
         </Link>
@@ -44,7 +44,7 @@ export default function HomeResults({ tabs, results }: { tabs: Tab[]; results: H
             }`}
           >
             {t.label}
-            <span className={`ml-1 font-data text-[11px] ${active === t.id ? "text-pitch-night/70" : "text-floodlight/40"}`}>{t.n}</span>
+            <span className={`ml-1 font-data text-xs ${active === t.id ? "text-pitch-night/70" : "text-floodlight/40"}`}>{t.n}</span>
           </button>
         ))}
       </nav>
@@ -73,7 +73,7 @@ export default function HomeResults({ tabs, results }: { tabs: Tab[]; results: H
                       <span className="font-data text-sm font-semibold text-floodlight">
                         {r.homeScore ?? "-"} : {r.awayScore ?? "-"}
                       </span>
-                      <span className={`text-[11px] leading-none ${r.live ? "text-red-400" : "text-floodlight/50"}`}>{r.live ? "진행 중" : "종료"}</span>
+                      <span className={`text-xs leading-none ${r.live ? "text-red-400" : "text-floodlight/50"}`}>{r.live ? "진행 중" : "종료"}</span>
                     </span>
                     <span className="flex items-center gap-2 min-w-0 text-sm text-floodlight">
                       <Logo src={r.away.logo} alt="" className="w-5 h-5 shrink-0" />

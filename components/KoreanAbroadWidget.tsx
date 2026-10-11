@@ -63,19 +63,19 @@ function PlayerRow({ p }: { p: Player }) {
           <p className={`text-sm font-bold font-data ${p.goals > 0 ? "text-score-amber" : "text-floodlight/40"}`}>
             {p.goals}
           </p>
-          <p className="text-[10px] text-floodlight/40">골</p>
+          <p className="text-xs text-floodlight/40">골</p>
         </div>
         <div className="text-center w-8">
           <p className={`text-sm font-bold font-data ${p.assists > 0 ? "text-floodlight/90" : "text-floodlight/40"}`}>
             {p.assists}
           </p>
-          <p className="text-[10px] text-floodlight/40">도움</p>
+          <p className="text-xs text-floodlight/40">도움</p>
         </div>
         <div className="text-center w-8">
           <p className="text-sm font-bold font-data text-floodlight/60">
             {p.apps > 0 ? p.apps : "–"}
           </p>
-          <p className="text-[10px] text-floodlight/40">경기</p>
+          <p className="text-xs text-floodlight/40">경기</p>
         </div>
         <div className="w-12 text-right">
           <RatingBadge rating={p.rating} />
@@ -143,7 +143,7 @@ export default function KoreanAbroadWidget() {
           )}
           <span className="flex items-center gap-1 text-score-amber text-xs font-medium bg-score-amber/15 border border-score-amber/50 rounded-full px-3 py-1 group-hover:bg-score-amber/25 transition-colors">
             {open ? "접기" : "펼치기"}
-            <span className="text-[10px]">{open ? "▲" : "▼"}</span>
+            <span className="text-xs">{open ? "▲" : "▼"}</span>
           </span>
         </div>
       </button>

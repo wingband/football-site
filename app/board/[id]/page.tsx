@@ -28,8 +28,8 @@ export default async function BoardPostPage({
         </div>
 
         <div className="mt-4 pb-4 border-b border-turf-line/40">
-          <h1 className="text-lg font-semibold text-floodlight">{post.title}</h1>
-          <p className="text-[11px] text-floodlight/40 mt-2">
+          <h1 className="text-xl font-bold text-floodlight">{post.title}</h1>
+          <p className="text-xs text-floodlight/40 mt-2">
             {post.nickname} · {new Date(post.createdAt).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })} · 조회 {post.viewCount}
           </p>
         </div>

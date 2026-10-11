@@ -127,7 +127,7 @@ export default async function StandingsPage({
     <main className="text-floodlight font-sans">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         <div className="bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5">
- <h1 className="text-xl font-display text-floodlight">
+ <h1 className="text-xl font-bold text-floodlight">
             {formatSeasonLabel(season)} 리그 순위표
           </h1>
           <p className="text-sm text-floodlight/70 mt-1.5">
@@ -172,7 +172,7 @@ export default async function StandingsPage({
                   <div className="flex items-center gap-2.5">
                     <Logo src={logo} alt="" className="w-7 h-7" />
                     <div>
- <h2 className="text-base font-semibold font-display text-floodlight">{name}</h2>
+ <h2 className="text-base font-semibold text-floodlight">{name}</h2>
                       <p className="text-xs text-floodlight/60">{nameEn} {data.league.season}</p>
                     </div>
                   </div>
@@ -268,7 +268,7 @@ export default async function StandingsPage({
 
         {/* SEO 텍스트 */}
         <section className="bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5">
- <h2 className="text-base font-semibold font-display text-floodlight mb-2">유럽 축구 리그 순위표 안내</h2>
+ <h2 className="text-base font-semibold text-floodlight mb-2">유럽 축구 리그 순위표 안내</h2>
           <p className="text-sm text-floodlight/70 leading-relaxed">
             본 페이지에서는 {formatSeasonLabel(season)} 시즌 프리미어리그(잉글랜드), 라리가(스페인),
             분데스리가(독일), 세리에A(이탈리아), 리그1(프랑스) 순위표를 제공합니다.

@@ -24,7 +24,7 @@ export default function MatchReviewCard({
       {/* 헤더 */}
       <div className="flex items-center gap-2 px-5 py-3 bg-score-amber/10 border-b border-score-amber/20">
         <span className="text-score-amber text-xs">✦</span>
-        <h2 className="font-display uppercase tracking-widest text-xs text-score-amber font-bold">
+        <h2 className="text-base font-semibold text-floodlight">
           Match Review
         </h2>
         <span className="flex items-center ml-1.5">
@@ -43,7 +43,7 @@ export default function MatchReviewCard({
             {tags.map((tag) => (
               <span
                 key={tag}
-                className="px-2 py-1 rounded-full bg-turf-line/40 text-floodlight/60 text-[11px] font-medium"
+                className="px-2 py-1 rounded-full bg-turf-line/40 text-floodlight/60 text-xs font-medium"
               >
                 #{tag.replace(/\s+/g, "")}
               </span>

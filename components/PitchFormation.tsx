@@ -22,7 +22,7 @@ function PlayerAvatar({ id, number }: { id: number; number: number }) {
 
   if (failed) {
     return (
-      <div className="w-9 h-9 rounded-full bg-gray-900 border-2 border-green-500 flex items-center justify-center text-[11px] font-bold text-green-400">
+      <div className="w-9 h-9 rounded-full bg-gray-900 border-2 border-green-500 flex items-center justify-center text-xs font-bold text-green-400">
         {number}
       </div>
     )

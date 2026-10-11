@@ -85,7 +85,7 @@ function HeroSection({ articles }: { articles: Article[] }) {
               <span className="text-score-amber font-bold font-data text-lg w-6 shrink-0">{i + 1}</span>
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-floodlight/90 leading-snug line-clamp-2 group-hover:text-score-amber transition-colors">{a.title}</p>
-                <p className="text-[10px] text-floodlight/40 mt-1">{a.source_name} · {timeAgo(a.pubDate)}</p>
+                <p className="text-xs text-floodlight/40 mt-1">{a.source_name} · {timeAgo(a.pubDate)}</p>
               </div>
               {a.image_url && (
                 <img src={a.image_url} alt="" className="w-16 h-12 object-cover shrink-0" />
@@ -121,7 +121,7 @@ function LeagueSection({
       <div className="bg-turf/20 border border-turf-line/30 overflow-hidden mb-6">
         <div className="flex items-center gap-2.5 px-5 py-3 border-b border-turf-line/30">
           <Logo src={logo} alt="" className="w-6 h-6" />
-          <h2 className="font-display uppercase text-sm text-floodlight/90 font-bold tracking-wide">{label}</h2>
+          <h2 className="text-base font-semibold text-floodlight">{label}</h2>
         </div>
         <p className="text-floodlight/40 text-xs px-5 py-8 text-center">뉴스를 일시적으로 불러올 수 없습니다.</p>
       </div>
@@ -136,7 +136,7 @@ function LeagueSection({
       {/* 섹션 헤더 */}
       <div className="flex items-center gap-2.5 px-5 py-3 border-b border-turf-line/30">
         <Logo src={logo} alt="" className="w-6 h-6" />
-        <h2 className="font-display uppercase text-sm text-floodlight/90 font-bold tracking-wide">{label}</h2>
+        <h2 className="text-base font-semibold text-floodlight">{label}</h2>
       </div>
 
       <div className="grid lg:grid-cols-[1fr_480px]">
@@ -147,7 +147,7 @@ function LeagueSection({
               className="flex gap-3 items-start px-5 py-4 hover:bg-turf-line/20 transition-colors group">
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-floodlight/90 leading-snug line-clamp-2 group-hover:text-score-amber transition-colors font-medium">{a.title}</p>
-                <p className="text-[10px] text-floodlight/40 mt-1.5">{a.source_name} · {timeAgo(a.pubDate)}</p>
+                <p className="text-xs text-floodlight/40 mt-1.5">{a.source_name} · {timeAgo(a.pubDate)}</p>
               </div>
               {a.image_url && (
                 <img src={a.image_url} alt="" className="w-20 h-14 object-cover shrink-0" />
@@ -216,7 +216,7 @@ export default async function NewsPage() {
     <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
       <div className="max-w-5xl mx-auto px-4 pb-16">
         <div className="pt-8 pb-4">
-          <h1 className="font-display uppercase text-xl text-score-amber">뉴스</h1>
+          <h1 className="text-xl font-bold text-floodlight">뉴스</h1>
         </div>
 
 

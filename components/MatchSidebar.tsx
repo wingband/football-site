@@ -210,7 +210,7 @@ function InjuriesCard({
                     className="w-6 h-6 rounded-full object-cover bg-turf-line text-[8px] shrink-0"
                   />
                   <span className="text-xs flex-1 truncate">{inj.player.name}</span>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded shrink-0 ${
+                  <span className={`text-xs px-1.5 py-0.5 rounded shrink-0 ${
                     inj.player.type === "Missing Fixture" ? "bg-red-900/40 text-red-400" : "bg-orange-900/40 text-orange-400"
                   }`}>
                     {inj.player.type === "Missing Fixture" ? "결장" : "의심"}
@@ -238,7 +238,7 @@ function OddsCard({
     <div className="bg-turf/40 border border-turf-line/40 rounded-md p-4">
       <div className="flex items-center justify-between mb-3">
         <p className="text-sm font-medium">배당률</p>
-        <span className="text-[10px] text-floodlight/20">Bet365</span>
+        <span className="text-xs text-floodlight/20">Bet365</span>
       </div>
       <div className="grid grid-cols-3 gap-2 mb-3">
         {[{ label: homeTeamName, logo: homeTeamLogo, odd: odds.home },
@@ -248,7 +248,7 @@ function OddsCard({
             odd && Number(odd) === minOdd ? "border-score-amber bg-score-amber/10" : "border-turf-line/30 bg-turf/20"
           }`}>
             {logo && <Logo src={logo} alt="" className="w-5 h-5" />}
-            <span className="text-[10px] text-floodlight/50 truncate w-full text-center">{label}</span>
+            <span className="text-xs text-floodlight/50 truncate w-full text-center">{label}</span>
             <span className={`font-data font-bold text-sm ${odd && Number(odd) === minOdd ? "text-score-amber" : "text-floodlight/80"}`}>
               {odd ?? "–"}
             </span>
@@ -297,7 +297,7 @@ function WhoWinsCard({
           <span className="font-data font-bold text-floodlight/90">{awayPct}</span>
         </div>
       </div>
-      <p className="text-center text-[10px] text-floodlight/30 mt-3">승부 예측 기반</p>
+      <p className="text-center text-xs text-floodlight/30 mt-3">승부 예측 기반</p>
     </div>
   )
 }

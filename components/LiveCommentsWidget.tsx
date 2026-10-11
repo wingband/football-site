@@ -51,12 +51,12 @@ export default function LiveCommentsWidget() {
           <Link key={c.id} href={`/matches/${c.match_id}`}
             className="flex gap-2.5 px-4 py-2.5 hover:bg-turf-line/20 transition-colors group">
             {/* 아바타 */}
-            <div className="w-6 h-6 rounded-full bg-score-amber/20 flex items-center justify-center shrink-0 text-[10px] font-bold text-score-amber">
+            <div className="w-6 h-6 rounded-full bg-score-amber/20 flex items-center justify-center shrink-0 text-xs font-bold text-score-amber">
               {c.nickname[0]?.toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 mb-0.5">
-                <span className="text-[10px] font-semibold text-floodlight/60">{c.nickname}</span>
+                <span className="text-xs font-semibold text-floodlight/60">{c.nickname}</span>
                 <span className="text-[9px] text-floodlight/30">{timeAgo(c.created_at)}</span>
               </div>
               {/* 경기명 */}

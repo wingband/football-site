@@ -46,7 +46,7 @@ export default function Header() {
   }, [isSignedIn, pathname])
   const badge = (href: string) =>
     isSignedIn && href === "/columns" && pending > 0 ? (
-      <span className="ml-1 inline-flex items-center justify-center min-w-4 h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold align-top">
+      <span className="ml-1 inline-flex items-center justify-center min-w-4 h-4 px-1 rounded-full bg-red-500 text-white text-xs font-bold align-top">
         {pending}
       </span>
     ) : null
@@ -85,7 +85,7 @@ export default function Header() {
               className="hover:text-floodlight transition-colors flex items-center gap-1"
             >
               더보기
-              <span className={`text-[10px] transition-transform ${infoOpen ? "rotate-180" : ""}`}>▾</span>
+              <span className={`text-xs transition-transform ${infoOpen ? "rotate-180" : ""}`}>▾</span>
             </button>
             {infoOpen && (
               <div className="absolute top-full right-0 mt-2 w-36 bg-pitch-night border border-turf-line/60 rounded-lg shadow-lg overflow-hidden">
@@ -212,7 +212,7 @@ export default function Header() {
             ))}
           </nav>
           <div className="pt-2 border-t border-turf-line/30">
-            <p className="px-2 pb-1 text-[11px] text-floodlight/30 uppercase tracking-wide">정보</p>
+            <p className="px-2 pb-1 text-xs text-floodlight/30 uppercase tracking-wide">정보</p>
             <nav className="flex flex-col gap-1 text-sm">
               {INFO_LINKS.map((link) => (
                 <Link
