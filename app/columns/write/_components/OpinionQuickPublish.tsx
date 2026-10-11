@@ -1,9 +1,11 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import ColumnBody from "@/components/ColumnBody"
+import RegenerateDraftButton from "./RegenerateDraftButton"
+import { uploadColumnImage } from "./uploadColumnImage"
 
 // AI 초안에 운영자 의견만 채워서 바로 발행하는 간단한 화면 (2026-10-10).
 // 본문을 직접 고칠 필요 없이, 의견 자리마다 입력 칸 하나씩만 보여준다.
@@ -49,8 +51,28 @@ export default function OpinionQuickPublish({ slug, title, summary, content, tag
   const [opinions, setOpinions] = useState<string[]>(() => slots.map(() => ""))
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
+  // 선택: 글 맨 위에 넣을 사진 한 장
+  const [photo, setPhoto] = useState<{ url: string; caption: string } | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
 
-  const preview = fill(content, placeholder, opinions, () => "…")
+  async function handlePhoto(file: File | undefined) {
+    if (!file) return
+    setUploading(true)
+    setError("")
+    try {
+      setPhoto({ url: await uploadColumnImage(file), caption: "" })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "업로드에 실패했습니다")
+    } finally {
+      setUploading(false)
+      if (fileRef.current) fileRef.current.value = ""
+    }
+  }
+
+  const withPhoto = (body: string) =>
+    photo ? `![${photo.caption.replace(/[\[\]]/g, "").trim()}](${photo.url})\n\n${body}` : body
+  const preview = withPhoto(fill(content, placeholder, opinions, () => "…"))
   const allFilled = opinions.every((o) => o.trim().length >= 5)
 
   async function publish() {
@@ -68,7 +90,7 @@ export default function OpinionQuickPublish({ slug, title, summary, content, tag
           slug,
           title,
           summary,
-          content: fill(content, placeholder, opinions, () => ""),
+          content: withPhoto(fill(content, placeholder, opinions, () => "")),
           tags,
           published: true,
         }),
@@ -119,12 +141,51 @@ export default function OpinionQuickPublish({ slug, title, summary, content, tag
           ))}
         </div>
 
+        <div className="mt-5 border border-dashed border-turf-line/60 p-3">
+          {photo ? (
+            <div className="flex gap-3 items-start">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={photo.url} alt="" className="w-24 h-16 object-cover rounded shrink-0" />
+              <div className="flex-1 min-w-0">
+                <input
+                  value={photo.caption}
+                  onChange={(e) => setPhoto({ ...photo, caption: e.target.value.slice(0, 80) })}
+                  placeholder="사진 설명 (선택)"
+                  className="w-full bg-transparent border-b border-turf-line px-1 py-1 text-sm focus:outline-none focus:border-score-amber/60"
+                />
+                <button onClick={() => setPhoto(null)} className="text-[11px] text-floodlight/50 mt-2 hover:text-floodlight">
+                  사진 빼기
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading}
+              className="text-sm text-floodlight/60 hover:text-floodlight disabled:opacity-50"
+            >
+              {uploading ? "사진 올리는 중…" : "🖼 사진 한 장 추가 (선택)"}
+            </button>
+          )}
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            className="hidden"
+            onChange={(e) => handlePhoto(e.target.files?.[0])}
+          />
+          <p className="text-[10px] text-floodlight/35 mt-2">직접 찍거나 만든 사진만 올려주세요. 뉴스·선수 사진을 퍼오면 저작권 문제가 생길 수 있어요.</p>
+        </div>
+
         {error && <p className="text-xs text-red-400 mt-3">{error}</p>}
 
         <div className="flex items-center justify-between gap-3 mt-5">
-          <button onClick={onEditFull} className="text-xs text-floodlight/50 underline underline-offset-2 hover:text-floodlight">
-            본문 직접 고치기
-          </button>
+          <div className="flex items-start gap-4">
+            <button onClick={onEditFull} className="text-xs text-floodlight/50 underline underline-offset-2 hover:text-floodlight">
+              본문 직접 고치기
+            </button>
+            <RegenerateDraftButton />
+          </div>
           <button
             onClick={publish}
             disabled={submitting || !allFilled}

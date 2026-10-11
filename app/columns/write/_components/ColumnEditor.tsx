@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation"
 import { applyFormat, FORMAT_BUTTONS } from "@/lib/boardEditor"
 import ColumnBody from "@/components/ColumnBody"
 import OpinionQuickPublish from "./OpinionQuickPublish"
+import RegenerateDraftButton from "./RegenerateDraftButton"
+import { uploadColumnImage } from "./uploadColumnImage"
 
 // lib/columns.ts는 서버 전용(DB)이라 클라이언트에서 import하지 않고 한도만 복제
 const TITLE_MAX = 120
@@ -42,6 +44,28 @@ export default function ColumnEditor({ initial }: { initial: Initial }) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false)
+  const isWeeklyDraft = Boolean(initial?.slug.includes("weekly-korean-abroad") && !initial?.published)
+
+  async function handleImage(file: File | undefined) {
+    if (!file) return
+    setUploading(true)
+    setError("")
+    try {
+      const url = await uploadColumnImage(file)
+      const el = textareaRef.current
+      const pos = el ? el.selectionStart : content.length
+      const snippet = `\n![사진 설명을 여기에 써주세요](${url})\n`
+      setContent((prev) => (prev.slice(0, pos) + snippet + prev.slice(pos)).slice(0, CONTENT_MAX))
+      setTab("write")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "업로드에 실패했습니다")
+    } finally {
+      setUploading(false)
+      if (fileRef.current) fileRef.current.value = ""
+    }
+  }
   // AI 초안(의견 자리가 남아 있는 글)은 기본으로 "의견만 달고 발행" 간단 화면을 보여준다
   const [quick, setQuick] = useState(() => Boolean(initial?.content.includes(OPINION_PLACEHOLDER)))
 
@@ -205,6 +229,22 @@ export default function ColumnEditor({ initial }: { initial: Initial }) {
                 >
                   •
                 </button>
+                <button
+                  type="button"
+                  title="사진 넣기"
+                  disabled={uploading}
+                  onClick={() => fileRef.current?.click()}
+                  className="h-7 px-2 flex items-center justify-center text-xs text-floodlight/60 rounded hover:bg-turf-line/40 hover:text-floodlight transition-colors disabled:opacity-50"
+                >
+                  {uploading ? "올리는 중…" : "🖼 사진"}
+                </button>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  className="hidden"
+                  onChange={(e) => handleImage(e.target.files?.[0])}
+                />
                 {FORMAT_BUTTONS.map((btn) => (
                   <button
                     key={btn.action}
@@ -250,10 +290,13 @@ export default function ColumnEditor({ initial }: { initial: Initial }) {
             틀린 내용이 없는지도 한 번 확인해 주세요.
           </p>
         )}
+        <p className="text-[11px] text-floodlight/35 mt-2">
+          사진은 직접 찍거나 만든 것, 또는 사용 허락을 받은 것만 올려주세요. 뉴스 사진·선수 사진을 퍼오면 저작권 문제가 생길 수 있어요.
+        </p>
         {error && <p className="text-xs text-red-400 mt-2">{error}</p>}
 
         <div className="flex items-center justify-between mt-4">
-          <div>
+          <div className="flex items-start gap-4">
             {initial && (
               <button
                 onClick={remove}
@@ -263,6 +306,7 @@ export default function ColumnEditor({ initial }: { initial: Initial }) {
                 삭제
               </button>
             )}
+            {isWeeklyDraft && <RegenerateDraftButton />}
           </div>
           <div className="flex gap-2">
             <Link

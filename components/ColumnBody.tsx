@@ -40,6 +40,7 @@ type Block =
   | { type: "h2" | "h3" | "p" | "quote"; text: string }
   | { type: "ul" | "ol"; items: string[] }
   | { type: "hr" }
+  | { type: "img"; alt: string; src: string }
 
 function parseBlocks(src: string): Block[] {
   const lines = src.replace(/\r\n/g, "\n").split("\n")
@@ -64,6 +65,10 @@ function parseBlocks(src: string): Block[] {
     if ((m = line.match(/^###\s+(.*)/))) { flush(); blocks.push({ type: "h3", text: m[1] }); continue }
     if ((m = line.match(/^##\s+(.*)/))) { flush(); blocks.push({ type: "h2", text: m[1] }); continue }
     if (/^(-{3,}|\*{3,})$/.test(line.trim())) { flush(); blocks.push({ type: "hr" }); continue }
+    // 한 줄 전체가 ![설명](https://...) 이면 이미지 (https 또는 사이트 내부 경로만 허용)
+    if ((m = line.trim().match(/^!\[([^\]]*)\]\((https:\/\/[^\s)]+|\/[^\s)]*)\)$/))) {
+      flush(); blocks.push({ type: "img", alt: m[1], src: m[2] }); continue
+    }
     if ((m = line.match(/^>\s?(.*)/))) {
       if (para.length || list) flush()
       quote.push(m[1]); continue
@@ -118,6 +123,15 @@ export default function ColumnBody({ content }: { content: string }) {
           }
           case "hr":
             return <hr key={k} className="border-turf-line/50" />
+          case "img":
+            return (
+              <figure key={k} className="my-2">
+                {/* 칼럼 이미지는 업로드 시점에 이미 줄여서 저장하므로 next/image 최적화 없이 그대로 쓴다 */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={b.src} alt={b.alt} loading="lazy" className="w-full h-auto rounded border border-turf-line/30" />
+                {b.alt && <figcaption className="text-xs text-floodlight/45 mt-2 text-center">{b.alt}</figcaption>}
+              </figure>
+            )
           default:
             return <p key={k}><Fragment>{withBreaks(b.text, k)}</Fragment></p>
         }

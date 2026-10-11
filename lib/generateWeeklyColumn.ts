@@ -39,20 +39,19 @@ function buildPrompt(weeks: PlayerWeek[]): string {
 - 숫자(스코어, 출전 시간, 평점, 골, 도움)는 데이터 그대로 써라.
 - 평점은 경기 데이터 제공처 기준의 평점이라고만 언급하고 과장하지 마라.
 - 존댓말 대신 칼럼체(~했다, ~이다)로 쓴다.
+- 너의 의견·평가·전망("긍정적인 영향", "기대된다" 등)은 쓰지 마라. 사실만 정리한다. 의견은 운영자가 따로 쓴다.
+- "다음 경기 일정" 섹션을 빼고는 데이터 줄을 그대로 복사하지 말고 자연스러운 문장으로 풀어 써라.
 
 [형식] 마크다운. 정확히 아래 순서를 지켜라.
-1행: "제목: " 뒤에 25~40자 제목 (선수 이름과 핵심 활약이 드러나게)
-2행: "요약: " 뒤에 60~100자 요약
+1행: 제목: (25~40자 제목, 선수 이름과 핵심 활약이 드러나게) — 앞에 #이나 ** 같은 기호를 붙이지 마라
+2행: 요약: (60~100자 요약) — 앞에 기호를 붙이지 마라
 3행: 빈 줄
 그다음 본문:
 - 도입 문단 2~3문장 (이번 주 해외파 전체 흐름)
-- "## 이번 주 최고 활약" 섹션: 평점·공격포인트 기준 가장 돋보인 선수 1명을 데이터로 설명하고, 섹션 끝에 정확히 다음 한 줄을 그대로 넣어라:
-> ✍️ 내 의견: ${OPINION_PLACEHOLDER}
-- "## 선수별 정리" 섹션: 출전 기록이 있는 선수마다 "### 선수이름 (소속팀)" 소제목과 2~4문장 정리 (의견 자리는 넣지 마라)
+- "## 이번 주 최고 활약" 섹션: 평점·공격포인트 기준 가장 돋보인 선수 1명을 데이터로 2~3문장 설명
+- "## 선수별 정리" 섹션: 출전 기록이 있는 선수마다 "### 선수이름 (소속팀)" 소제목과 2~4문장 정리
 - "## 이번 주 경기가 없었던 선수" 섹션: 한 문장으로 이름만 나열 (없으면 섹션 생략)
-- "## 다음 경기 일정" 섹션: 목록(- )으로 데이터의 다음 경기를 그대로 정리
-- 마지막에 "## 한 줄 총평" 섹션을 만들고 내용은 정확히 다음 한 줄만 넣어라:
-> ✍️ 내 의견: ${OPINION_PLACEHOLDER}
+- "## 다음 경기 일정" 섹션: 목록(- )으로 데이터의 다음 경기를 그대로 정리하고, 이 섹션으로 글을 끝내라
 
 [데이터: 최근 7일 경기 기록]
 ${played.length ? played.map(line).join("\n") : "(최근 7일 경기 없음)"}
@@ -118,22 +117,7 @@ export async function generateWeeklyKoreanDraft({ refreshDraft = false } = {}): 
   const raw = (await callOpenAI(buildPrompt(weeks))).trim()
   if (!raw) return { ok: false, error: "AI 응답이 비어 있습니다" }
 
-  const lines = raw.split("\n")
-  let title = `[주간 해외파] ${weekLabel()} 해외파 활약 정리`
-  let summary = ""
-  const body: string[] = []
-  for (const l of lines) {
-    const t = l.match(/^\s*제목\s*[:：]\s*(.+)$/)
-    const s = l.match(/^\s*요약\s*[:：]\s*(.+)$/)
-    if (t && body.length === 0) title = `[주간 해외파] ${t[1].replace(/^["'\[]|["'\]]$/g, "").trim()}`
-    else if (s && body.length === 0) summary = s[1].trim()
-    else body.push(l)
-  }
-  let content = body.join("\n").trim()
-  // 모델이 의견 자리를 빠뜨렸으면 끝에라도 하나 넣어서, 발행 전 반드시 사람이 손대게 한다
-  if (!content.includes(OPINION_PLACEHOLDER)) {
-    content += `\n\n## 한 줄 총평\n> ✍️ 내 의견: ${OPINION_PLACEHOLDER}`
-  }
+  const { title, summary, content } = shapeDraft(raw)
 
   const slug = existing?.slug ?? makeColumnSlug(WEEKLY_SLUG_MARK)
   await saveColumn({
@@ -145,4 +129,44 @@ export async function generateWeeklyKoreanDraft({ refreshDraft = false } = {}): 
     published: false,
   })
   return { ok: true, slug, created: true }
+}
+
+// 모델 출력 → 제목/요약/본문으로 정리하고, 운영자 의견 자리 2곳을 코드로 직접 넣는다.
+// (2026-10-11) 의견 자리를 모델에게 맡겼더니 모델이 그 자리에 스스로 의견을 써 넣어서
+// "사람 의견 없이 발행 불가" 장치가 무력화됐다. 이제 모델이 쓴 의견 줄은 전부 지우고
+// 의견 자리는 항상 코드가 넣는다. 제목/요약도 "# 제목:", "**제목:**" 같은 변형을 모두 받는다.
+export function shapeDraft(raw: string): { title: string; summary: string; content: string } {
+  let title = `[주간 해외파] ${weekLabel()} 해외파 활약 정리`
+  let summary = ""
+  const body: string[] = []
+  let seenHeading = false
+  for (const line of raw.split("\n")) {
+    const clean = line.replace(/^[\s#>*_-]+/, "").replace(/\*\*/g, "").trim()
+    const t = !seenHeading && clean.match(/^제목\s*[:：]\s*(.+)$/)
+    const sm = !seenHeading && clean.match(/^요약\s*[:：]\s*(.+)$/)
+    if (t) {
+      title = `[주간 해외파] ${t[1].replace(/^["'\[(]+|["'\])]+$/g, "").trim()}`
+      continue
+    }
+    if (sm) {
+      summary = sm[1].trim()
+      continue
+    }
+    if (/^#{2,3}\s/.test(line)) seenHeading = true
+    if (/내\s*의견/.test(line)) continue // 모델이 쓴 의견 줄 제거
+    body.push(line)
+  }
+
+  // 모델이 만든 "한 줄 총평" 섹션은 통째로 제거 (운영자 몫)
+  let text = body.join("\n").replace(/\n##\s*한\s*줄\s*총평[\s\S]*?(?=\n##\s|$)/, "").trim()
+
+  const slot = `> ✍️ 내 의견: ${OPINION_PLACEHOLDER}`
+  // "이번 주 최고 활약" 섹션 끝(다음 ## 앞)에 의견 자리
+  const mvp = text.match(/\n?##\s*이번\s*주\s*최고\s*활약[^\n]*\n[\s\S]*?(?=\n##\s|$)/)
+  if (mvp && mvp.index !== undefined) {
+    const end = mvp.index + mvp[0].length
+    text = `${text.slice(0, end).trimEnd()}\n\n${slot}\n${text.slice(end)}`
+  }
+  text = `${text.trim()}\n\n## 한 줄 총평\n${slot}`
+  return { title, summary, content: text }
 }
