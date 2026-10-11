@@ -68,66 +68,38 @@ export default async function KoreanPlayersPage() {
         <p className="text-sm text-floodlight/75 leading-relaxed mt-2">
           해외 무대에서 뛰는 한국 선수들의 다음 경기 일정(한국 시간)과 최근 경기 평점·공격포인트를 한 곳에서 확인하세요.
         </p>
-        <div className="flex flex-wrap gap-2 mt-4">
-          {KOREAN_PLAYERS_ABROAD.map((p) => (
-            <Link
-              key={p.id}
-              href={`/players/${p.id}`}
-              className="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full border border-turf-line text-sm text-floodlight/90 hover:border-score-amber hover:text-score-amber transition-colors"
-            >
-              <PlayerAvatar
-                src={`https://media.api-sports.io/football/players/${p.id}.png`}
-                alt={PLAYER_INTRO[p.id]?.nameKo ?? p.name}
-                className="w-7 h-7 rounded-full"
-              />
-              {PLAYER_INTRO[p.id]?.nameKo ?? p.name}
-            </Link>
-          ))}
-        </div>
       </section>
 
       {/* 이번 주 해외파: 다음 경기 일정 + 최근 7일 활약 */}
       <KoreanWeekHub weeks={weeks} />
 
-      {/* 리그별 선수 목록 */}
-      <section>
- <h2 className="text-base font-semibold font-display text-floodlight mb-3">선수별 소속팀</h2>
-        <div className="space-y-6">
+      {/* 선수별 소속팀 — 리그마다 한 줄씩 */}
+      <section className={CARD}>
+        <h2 className="text-base font-semibold text-floodlight mb-1">선수별 소속팀</h2>
+        <p className="text-sm text-floodlight/70 mb-3">이름을 누르면 선수 기록 페이지로 가요</p>
+        <div className="divide-y divide-turf-line/40">
           {sorted.map(({ league, players }) => (
-            <div key={league} className={CARD}>
-              <div className="flex items-center gap-2 mb-3">
-                <Logo src={LEAGUE_LOGO_LOCAL[league] ?? players[0].leagueLogo} alt="" className="w-6 h-6 shrink-0" />
- <h3 className="text-sm font-semibold font-display text-floodlight">{leagueKo(league)}</h3>
-                <span className="text-sm text-floodlight/65 ml-1">{players.length}명</span>
+            <div key={league} className="py-3 first:pt-0 last:pb-0 sm:flex sm:gap-4">
+              <div className="flex items-center gap-2 sm:w-44 shrink-0 mb-2 sm:mb-0">
+                <Logo src={LEAGUE_LOGO_LOCAL[league] ?? players[0].leagueLogo} alt="" className="w-5 h-5 shrink-0" />
+                <h3 className="text-sm font-semibold text-floodlight">{leagueKo(league)}</h3>
               </div>
-
-              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                {players.map((p) => {
-                  const intro = PLAYER_INTRO[p.id]
-                  return (
-                    <Link
-                      key={p.id}
-                      href={`/players/${p.id}`}
-                      className="flex items-start gap-3 bg-pitch-night/50 border border-turf-line/50 rounded-xl p-3 hover:border-score-amber/60 transition-colors group"
-                    >
-                      <PlayerAvatar
-                        src={`https://media.api-sports.io/football/players/${p.id}.png`}
-                        alt={intro?.nameKo ?? p.name}
-                        className="w-14 h-14 rounded-full ring-2 ring-score-amber/60 shrink-0"
-                      />
-                      <div className="flex-1 min-w-0">
- <h4 className="text-sm font-bold text-floodlight group-hover:text-score-amber transition-colors">
-                          {intro?.nameKo ?? p.name}
-                        </h4>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <Logo src={p.teamLogo} alt="" className="w-4 h-4 shrink-0" />
-                          <span className="text-sm font-semibold text-score-amber truncate">{koTeam(p.teamName)}</span>
-                        </div>
-                        {intro?.desc && <p className="text-xs sm:text-sm text-floodlight/70 mt-1.5 leading-relaxed">{intro.desc}</p>}
-                      </div>
-                    </Link>
-                  )
-                })}
+              <div className="flex flex-wrap gap-2">
+                {players.map((p) => (
+                  <Link
+                    key={p.id}
+                    href={`/players/${p.id}`}
+                    className="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full border border-turf-line text-sm text-floodlight/90 hover:border-score-amber hover:text-score-amber transition-colors"
+                  >
+                    <PlayerAvatar
+                      src={`https://media.api-sports.io/football/players/${p.id}.png`}
+                      alt={PLAYER_INTRO[p.id]?.nameKo ?? p.name}
+                      className="w-7 h-7 rounded-full"
+                    />
+                    <span>{PLAYER_INTRO[p.id]?.nameKo ?? p.name}</span>
+                    <span className="text-xs text-floodlight/60">{koTeam(p.teamName)}</span>
+                  </Link>
+                ))}
               </div>
             </div>
           ))}

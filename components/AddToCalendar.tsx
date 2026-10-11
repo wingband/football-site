@@ -6,7 +6,7 @@ import { useState } from "react"
 // 누른 사람의 구글 캘린더 / 휴대폰·PC 캘린더 앱에만 일정(경기 30분 전 알림 포함)이 들어간다.
 const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "")
 
-export default function AddToCalendar({ title, startIso, id }: { title: string; startIso: string; id: string }) {
+export default function AddToCalendar({ title, startIso, id, compact = false }: { title: string; startIso: string; id: string; compact?: boolean }) {
   const [open, setOpen] = useState(false)
   const start = new Date(startIso)
   const end = new Date(start.getTime() + 2 * 3600_000)
@@ -38,9 +38,11 @@ export default function AddToCalendar({ title, startIso, id }: { title: string; 
       <button
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="text-xs sm:text-sm px-3 py-1.5 rounded-full border border-score-amber/60 text-score-amber hover:bg-score-amber/10 whitespace-nowrap"
+        title="내 캘린더에 저장"
+        aria-label="내 캘린더에 저장"
+        className={`text-xs sm:text-sm rounded-full border border-score-amber/60 text-score-amber hover:bg-score-amber/10 whitespace-nowrap ${compact ? "w-9 h-9 flex items-center justify-center" : "px-3 py-1.5"}`}
       >
-        📅 내 캘린더에 저장 ▾
+        {compact ? "📅" : "📅 내 캘린더에 저장 ▾"}
       </button>
       {open && (
         <div className="absolute right-0 top-full mt-1.5 z-30 w-64 bg-pitch-night border border-turf-line rounded-xl shadow-xl p-1.5 text-sm">
