@@ -22,8 +22,10 @@ export default function PageCoupang() {
   if (pathname === "/") return null
   if (EXCLUDE.some((p) => pathname.startsWith(p))) return null
   if (/^\/board\/[^/]+\/edit/.test(pathname)) return null
+  // /matches는 PC에서 오른쪽 채팅 아래에 배너가 있어서 모바일에서만 하단에 보여준다
+  const mobileOnly = pathname === "/matches"
   return (
-    <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 pb-8">
+    <div className={`max-w-6xl mx-auto w-full px-4 sm:px-6 pb-8 ${mobileOnly ? "lg:hidden" : ""}`}>
       <CoupangBanner />
     </div>
   )

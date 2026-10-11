@@ -5,6 +5,7 @@ import GlobalChatWidget from "@/components/GlobalChatWidget"
 import { getTodayStr, shiftDate, formatDateLabel } from "@/lib/dateUtils"
 import { MOCK_FIXTURES } from "@/lib/mockData"
 import { saveCachedFixtures, getCachedFixtures } from "@/lib/fixturesCache"
+import CoupangBanner from "@/components/CoupangBanner"
 import AdSlot from "@/components/AdSlot"
 import type { Metadata } from "next"
 import { headers } from "next/headers"
@@ -376,6 +377,7 @@ export default async function MatchesPage({
             </div>
             <aside className="w-72 shrink-0 hidden lg:block sticky top-20 space-y-6">
               <GlobalChatWidget />
+              <CoupangBanner />
               <LiveCommentsWidget />
               {/* 사이드바 광고 자리 */}
               <AdSlot label="사이드바 광고 (예: 300x250)" className="w-full h-64" />

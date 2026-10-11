@@ -29,7 +29,7 @@ const ORDER = ["프리미어리그", "라리가", "분데스리가", "세리에A
 export default function UpcomingList({ rows }: { rows: UpcomingRow[] }) {
   const [active, setActive] = useState("all")
   const [open, setOpen] = useState(false)
-  const FOLD = 4
+  const FOLD = 6
   const present = ORDER.filter((g) => rows.some((r) => r.group === g))
   const filtered = active === "all" ? rows : rows.filter((r) => r.group === active)
   const foldable = active === "all" && filtered.length > FOLD
