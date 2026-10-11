@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation"
 const TABS = [
   { href: "/korean-players", label: "해외파", icon: "🇰🇷" },
   { href: "/matches", label: "경기", icon: "⚽" },
-  { href: "/predictions", label: "예측", icon: "🎯" },
+  { href: "/schedule", label: "일정", icon: "📅" },
   { href: "/columns", label: "칼럼", icon: "📝" },
   { href: "/board", label: "게시판", icon: "💬" },
 ]

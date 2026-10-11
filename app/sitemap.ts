@@ -111,6 +111,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // (2026-10-11) "/"가 리다이렉트가 아닌 진짜 메인 화면이 되어 다시 넣는다
     { path: "/",                priority: 1,   changeFrequency: "hourly" },
     { path: "/matches",         priority: 0.9, changeFrequency: "hourly" },
+    { path: "/schedule",        priority: 0.8, changeFrequency: "daily" },
     { path: "/columns",         priority: 0.9, changeFrequency: "daily" },
     { path: "/stories",         priority: 0.9, changeFrequency: "hourly" },
     { path: "/standings",       priority: 0.8, changeFrequency: "daily" },

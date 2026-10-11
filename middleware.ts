@@ -47,6 +47,8 @@ const isPublicRoute = createRouteMatcher([
   "/api/vote(.*)",
   "/api/articles(.*)",
   "/api/korean-abroad(.*)",
+  "/api/league-board(.*)",
+  "/schedule(.*)",
   "/api/player-search(.*)",
   "/api/players(.*)",
   "/api/pageview(.*)",

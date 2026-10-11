@@ -3,13 +3,13 @@ import type { Metadata } from "next"
 import Logo from "@/components/Logo"
 import PlayerAvatar from "@/components/PlayerAvatar"
 import CoupangBanner from "@/components/CoupangBanner"
+import LeagueHub from "@/components/LeagueHub"
+import { BOARD_LEAGUES, getLeagueBoard, type LeagueBoardData } from "@/lib/leagueBoard"
 import { getKoreanPlayersWeek, koTeam, type PlayerWeek } from "@/lib/koreanWeekly"
 import { getPosts, type Post } from "@/lib/board"
 import { boardCategoryLabel } from "@/lib/boardCategories"
 import { getColumns, type Column } from "@/lib/columns"
 import { draftKindOf, OPINION_PLACEHOLDER } from "@/lib/draftKinds"
-import { getStandings, type StandingRow } from "@/lib/matchApi"
-import { getSeasonYear } from "@/lib/season"
 import { getHomeResults, type HomeResult } from "@/lib/homeFixtures"
 import { matchLinkHref } from "@/lib/slug"
 import { KOREAN_PLAYERS_ABROAD } from "@/lib/koreanPlayersAbroad"
@@ -116,12 +116,12 @@ async function safe<T>(p: Promise<T>, fallback: T, label: string): Promise<T> {
 }
 
 export default async function Home() {
-  const [weeks, board, allColumns, results, standings] = await Promise.all([
+  const [weeks, board, allColumns, results, leagueBoard] = await Promise.all([
     safe(getKoreanPlayersWeek(), [] as PlayerWeek[], "해외파"),
     safe(getPosts(null, 1, 4), { posts: [] as Post[], total: 0 }, "게시판"),
     safe(getColumns({ limit: 80 }), [] as Column[], "칼럼"),
     safe(getHomeResults(8), [] as HomeResult[], "경기 결과"),
-    safe(getStandings(292, getSeasonYear("South Korea")), [] as StandingRow[][], "K리그 순위"),
+    safe(getLeagueBoard(39), null as LeagueBoardData | null, "리그 순위"),
   ])
 
   const published = allColumns.filter((c) => c.published && !c.content.includes(OPINION_PLACEHOLDER))
@@ -134,95 +134,45 @@ export default async function Home() {
     .sort((a, b) => (b.m.rating ?? 0) - (a.m.rating ?? 0))
     .slice(0, 3)
 
-  const kleague = (standings[0] ?? []).slice(0, 5)
 
   return (
     <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-        {/* 이번 주 해외파 */}
+        {/* 최근 경기 결과 */}
         <section className="bg-turf/40 border border-turf-line/60 rounded-2xl p-4 sm:p-5">
-          <div className="flex items-baseline justify-between mb-4">
-            <h1 className="font-display text-xl text-floodlight">이번 주 해외파</h1>
-            <Link href="/korean-players" className="text-xs text-floodlight/50 hover:text-score-amber">
-              전체 보기 →
+          <div className="flex items-baseline justify-between mb-3">
+            <h1 className="font-display text-xl text-floodlight">최근 경기 결과</h1>
+            <Link href="/matches" className="text-xs text-floodlight/50 hover:text-score-amber">
+              전체 경기 →
             </Link>
           </div>
-
-          <h2 className="text-[11px] tracking-widest text-floodlight/40 font-data mb-2">다가오는 경기</h2>
-          {upcoming.length === 0 ? (
-            <p className="text-sm text-floodlight/40 py-4">7일 안에 잡힌 해외파 경기가 없어요.</p>
+          {results.length === 0 ? (
+            <p className="text-sm text-floodlight/40 py-4">오늘·어제 끝난 주요 리그 경기가 없어요.</p>
           ) : (
             <ul className="divide-y divide-turf-line/40">
-              {upcoming.map(({ player, next }) => {
-                const t = kstParts(next!.date)
-                const title = `${player.name} · ${koTeam(next!.homeName)} vs ${koTeam(next!.awayName)}`
-                return (
-                  <li key={player.id} className="flex items-center gap-3 py-2.5">
-                    <Link href={`/players/${player.id}`} className="shrink-0">
-                      <PlayerAvatar src={playerPhoto(player.id)} alt={player.name} className="w-10 h-10 rounded-full ring-2 ring-score-amber/60" />
-                    </Link>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm text-floodlight truncate">
-                        <Link href={`/players/${player.id}`} className="font-semibold hover:text-score-amber">
-                          {player.name}
-                        </Link>
-                        <span className="text-floodlight/50"> · {next!.isHome ? "홈" : "원정"} vs {koTeam(next!.opponentName)}</span>
-                      </p>
-                      <p className="text-xs text-floodlight/40 font-data">
-                        [{t.wd}] {t.md} {t.hm}
-                      </p>
-                    </div>
-                    <a
-                      href={icsHref(title, next!.date)}
-                      download={`goalline-${player.id}-${next!.fixtureId}.ics`}
-                      title="경기 30분 전 알림이 휴대폰·PC 캘린더에 저장됩니다"
-                      className="shrink-0 text-[11px] px-2.5 py-1 rounded-full border border-turf-line text-floodlight/60 hover:border-score-amber hover:text-score-amber"
-                    >
-                      캘린더에 추가
-                    </a>
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-
-          <h2 className="text-[11px] tracking-widest text-floodlight/40 font-data mt-5 mb-2">최근 활약 (평점순)</h2>
-          {recent.length === 0 ? (
-            <p className="text-sm text-floodlight/40 py-4">최근 7일 동안 평점이 나온 경기가 없어요.</p>
-          ) : (
-            <div className="grid grid-cols-3 gap-2 sm:gap-3">
-              {recent.map(({ w, m }) => {
-                const slug = reportSlugFor(published, w.player.id, m.fixtureId)
-                const href = slug ? `/columns/${slug}` : `/players/${w.player.id}`
-                const score = m.isHome ? `${m.homeScore}:${m.awayScore}` : `${m.awayScore}:${m.homeScore}`
-                return (
-                  <Link
-                    key={`${w.player.id}-${m.fixtureId}`}
-                    href={href}
-                    className="group flex flex-col items-center text-center bg-pitch-night/60 border border-turf-line/50 rounded-xl px-2 py-3 hover:border-score-amber/60"
-                  >
-                    <div className="relative">
-                      <PlayerAvatar src={playerPhoto(w.player.id)} alt={w.player.name} className="w-14 h-14 sm:w-16 sm:h-16 rounded-full ring-2 ring-score-amber/70" />
-                      <span className={`absolute -bottom-1 -right-2 text-[11px] font-data font-bold px-1.5 rounded ${ratingTone(m.rating!)}`}>
-                        {m.rating!.toFixed(1)}
+              {results.map((r) => (
+                <li key={r.fixtureId}>
+                  <Link href={matchLinkHref(r.slugSource)} className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 py-2.5 hover:bg-turf-line/20 rounded">
+                    <span className="flex items-center justify-end gap-2 min-w-0 text-sm text-floodlight/90">
+                      <span className="truncate">{r.home.name}</span>
+                      <Logo src={r.home.logo} alt="" className="w-5 h-5 shrink-0" />
+                    </span>
+                    <span className="flex flex-col items-center min-w-16">
+                      <span className="font-data font-semibold text-floodlight">
+                        {r.homeScore ?? "-"} : {r.awayScore ?? "-"}
                       </span>
-                    </div>
-                    <p className="mt-2 text-sm font-semibold text-floodlight truncate max-w-full">{w.player.name}</p>
-                    <p className="text-[11px] text-floodlight/50 truncate max-w-full">
-                      vs {koTeam(m.opponentName)} {score}
-                    </p>
-                    {(m.goals > 0 || m.assists > 0) && (
-                      <p className="text-[11px] text-score-amber">
-                        {m.goals > 0 && `${m.goals}골`} {m.assists > 0 && `${m.assists}도움`}
-                      </p>
-                    )}
-                    <span className="mt-1 text-[11px] text-floodlight/40 group-hover:text-score-amber">
-                      {slug ? "리포트 보기 →" : "기록 보기 →"}
+                      <span className={`text-[10px] ${r.live ? "text-red-400" : "text-floodlight/30"}`}>
+                        {r.live ? "진행 중" : r.leagueName}
+                      </span>
+                    </span>
+                    <span className="flex items-center gap-2 min-w-0 text-sm text-floodlight/90">
+                      <Logo src={r.away.logo} alt="" className="w-5 h-5 shrink-0" />
+                      <span className="truncate">{r.away.name}</span>
                     </span>
                   </Link>
-                )
-              })}
-            </div>
+                </li>
+              ))}
+            </ul>
           )}
         </section>
 
@@ -277,6 +227,96 @@ export default async function Home() {
         </aside>
       </div>
 
+      {/* 리그 순위 · 득점 · 도움 */}
+      <LeagueHub tabs={BOARD_LEAGUES.map((l) => ({ id: l.id, label: l.label }))} initial={leagueBoard} />
+
+      {/* 이번 주 해외파 */}
+      <section className="bg-turf/40 border border-turf-line/60 rounded-2xl p-4 sm:p-5">
+        <div className="flex items-baseline justify-between mb-4">
+          <h2 className="font-display text-xl text-floodlight">이번 주 해외파</h2>
+          <Link href="/korean-players" className="text-xs text-floodlight/50 hover:text-score-amber">
+            전체 보기 →
+          </Link>
+        </div>
+
+        <h2 className="text-[11px] tracking-widest text-floodlight/40 font-data mb-2">다가오는 경기</h2>
+        {upcoming.length === 0 ? (
+          <p className="text-sm text-floodlight/40 py-4">7일 안에 잡힌 해외파 경기가 없어요.</p>
+        ) : (
+          <ul className="divide-y divide-turf-line/40">
+            {upcoming.map(({ player, next }) => {
+              const t = kstParts(next!.date)
+              const title = `${player.name} · ${koTeam(next!.homeName)} vs ${koTeam(next!.awayName)}`
+              return (
+                <li key={player.id} className="flex items-center gap-3 py-2.5">
+                  <Link href={`/players/${player.id}`} className="shrink-0">
+                    <PlayerAvatar src={playerPhoto(player.id)} alt={player.name} className="w-10 h-10 rounded-full ring-2 ring-score-amber/60" />
+                  </Link>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm text-floodlight truncate">
+                      <Link href={`/players/${player.id}`} className="font-semibold hover:text-score-amber">
+                        {player.name}
+                      </Link>
+                      <span className="text-floodlight/50"> · {next!.isHome ? "홈" : "원정"} vs {koTeam(next!.opponentName)}</span>
+                    </p>
+                    <p className="text-xs text-floodlight/40 font-data">
+                      [{t.wd}] {t.md} {t.hm}
+                    </p>
+                  </div>
+                  <a
+                    href={icsHref(title, next!.date)}
+                    download={`goalline-${player.id}-${next!.fixtureId}.ics`}
+                    title="경기 30분 전 알림이 휴대폰·PC 캘린더에 저장됩니다"
+                    className="shrink-0 text-[11px] px-2.5 py-1 rounded-full border border-turf-line text-floodlight/60 hover:border-score-amber hover:text-score-amber"
+                  >
+                    캘린더에 추가
+                  </a>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+
+        <h2 className="text-[11px] tracking-widest text-floodlight/40 font-data mt-5 mb-2">최근 활약 (평점순)</h2>
+        {recent.length === 0 ? (
+          <p className="text-sm text-floodlight/40 py-4">최근 7일 동안 평점이 나온 경기가 없어요.</p>
+        ) : (
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
+            {recent.map(({ w, m }) => {
+              const slug = reportSlugFor(published, w.player.id, m.fixtureId)
+              const href = slug ? `/columns/${slug}` : `/players/${w.player.id}`
+              const score = m.isHome ? `${m.homeScore}:${m.awayScore}` : `${m.awayScore}:${m.homeScore}`
+              return (
+                <Link
+                  key={`${w.player.id}-${m.fixtureId}`}
+                  href={href}
+                  className="group flex flex-col items-center text-center bg-pitch-night/60 border border-turf-line/50 rounded-xl px-2 py-3 hover:border-score-amber/60"
+                >
+                  <div className="relative">
+                    <PlayerAvatar src={playerPhoto(w.player.id)} alt={w.player.name} className="w-14 h-14 sm:w-16 sm:h-16 rounded-full ring-2 ring-score-amber/70" />
+                    <span className={`absolute -bottom-1 -right-2 text-[11px] font-data font-bold px-1.5 rounded ${ratingTone(m.rating!)}`}>
+                      {m.rating!.toFixed(1)}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm font-semibold text-floodlight truncate max-w-full">{w.player.name}</p>
+                  <p className="text-[11px] text-floodlight/50 truncate max-w-full">
+                    vs {koTeam(m.opponentName)} {score}
+                  </p>
+                  {(m.goals > 0 || m.assists > 0) && (
+                    <p className="text-[11px] text-score-amber">
+                      {m.goals > 0 && `${m.goals}골`} {m.assists > 0 && `${m.assists}도움`}
+                    </p>
+                  )}
+                  <span className="mt-1 text-[11px] text-floodlight/40 group-hover:text-score-amber">
+                    {slug ? "리포트 보기 →" : "기록 보기 →"}
+                  </span>
+                </Link>
+              )
+            })}
+          </div>
+        )}
+      </section>
+
       {/* GoalLine 칼럼 */}
       {columns.length > 0 && (
         <section>
@@ -317,88 +357,6 @@ export default async function Home() {
           </div>
         </section>
       )}
-
-      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-        {/* 최근 경기 결과 */}
-        <section className="bg-turf/40 border border-turf-line/60 rounded-2xl p-4 sm:p-5">
-          <div className="flex items-baseline justify-between mb-3">
-            <h2 className="font-display text-xl text-floodlight">최근 경기 결과</h2>
-            <Link href="/matches" className="text-xs text-floodlight/50 hover:text-score-amber">
-              전체 경기 →
-            </Link>
-          </div>
-          {results.length === 0 ? (
-            <p className="text-sm text-floodlight/40 py-4">오늘·어제 끝난 주요 리그 경기가 없어요.</p>
-          ) : (
-            <ul className="divide-y divide-turf-line/40">
-              {results.map((r) => (
-                <li key={r.fixtureId}>
-                  <Link href={matchLinkHref(r.slugSource)} className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 py-2.5 hover:bg-turf-line/20 rounded">
-                    <span className="flex items-center justify-end gap-2 min-w-0 text-sm text-floodlight/90">
-                      <span className="truncate">{r.home.name}</span>
-                      <Logo src={r.home.logo} alt="" className="w-5 h-5 shrink-0" />
-                    </span>
-                    <span className="flex flex-col items-center min-w-16">
-                      <span className="font-data font-semibold text-floodlight">
-                        {r.homeScore ?? "-"} : {r.awayScore ?? "-"}
-                      </span>
-                      <span className={`text-[10px] ${r.live ? "text-red-400" : "text-floodlight/30"}`}>
-                        {r.live ? `LIVE ${r.elapsed ?? ""}'` : r.leagueName}
-                      </span>
-                    </span>
-                    <span className="flex items-center gap-2 min-w-0 text-sm text-floodlight/90">
-                      <Logo src={r.away.logo} alt="" className="w-5 h-5 shrink-0" />
-                      <span className="truncate">{r.away.name}</span>
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        {/* K리그1 순위 */}
-        <section className="bg-turf/40 border border-turf-line/60 rounded-2xl p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="flex items-center gap-2 font-display text-lg text-floodlight">
-              <Logo src={KLEAGUE_LOGO} alt="K리그1" className="w-6 h-6" />
-              K리그1 순위
-            </h2>
-            <Link href="/leagues/292" className="text-xs text-floodlight/50 hover:text-score-amber">
-              전체 →
-            </Link>
-          </div>
-          {kleague.length === 0 ? (
-            <p className="text-sm text-floodlight/40 py-3">순위 정보를 불러오지 못했어요.</p>
-          ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-[11px] text-floodlight/40">
-                  <th className="text-left font-normal pb-1 w-6">#</th>
-                  <th className="text-left font-normal pb-1">팀</th>
-                  <th className="text-right font-normal pb-1">경기</th>
-                  <th className="text-right font-normal pb-1">승점</th>
-                </tr>
-              </thead>
-              <tbody>
-                {kleague.map((row) => (
-                  <tr key={row.team.id} className="border-t border-turf-line/30">
-                    <td className="py-2 font-data text-floodlight/50">{row.rank}</td>
-                    <td className="py-2">
-                      <span className="flex items-center gap-2 min-w-0">
-                        <Logo src={row.team.logo} alt="" className="w-5 h-5 shrink-0" />
-                        <span className="truncate text-floodlight/90">{koTeam(row.team.name)}</span>
-                      </span>
-                    </td>
-                    <td className="py-2 text-right font-data text-floodlight/60">{row.all.played}</td>
-                    <td className="py-2 text-right font-data font-semibold text-score-amber">{row.points}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </section>
-      </div>
     </main>
   )
 }
