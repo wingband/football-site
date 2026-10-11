@@ -159,7 +159,7 @@ function PlayerCard({
   scorers: BoardPlayerRow[]
   assists: BoardPlayerRow[]
 }) {
-  const rows = (tab === "scorers" ? scorers : assists).slice(0, 5)
+  const rows = (tab === "scorers" ? scorers : assists).slice(0, 7)
   const unit = tab === "scorers" ? "골" : "도움"
   return (
     <div className="bg-pitch-night/50 border border-turf-line/40 rounded-none p-3 flex flex-col lg:self-stretch">
