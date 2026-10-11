@@ -119,9 +119,9 @@ export default async function BoardPage({
         </div>
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-[220px_1fr] items-start">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[220px_minmax(0,1fr)] items-start">
         {/* 게시판 목록 — 데스크톱은 왼쪽 세로 메뉴, 모바일은 가로 스크롤 */}
-        <nav aria-label="게시판 분류" className="lg:sticky lg:top-20 rounded-2xl lg:border lg:border-turf-line/60 lg:bg-turf/40 lg:p-2">
+        <nav aria-label="게시판 분류" className="min-w-0 lg:sticky lg:top-20 rounded-2xl lg:border lg:border-turf-line/60 lg:bg-turf/40 lg:p-2">
           <ul className="flex lg:flex-col gap-1.5 lg:gap-0.5 overflow-x-auto lg:overflow-visible -mx-4 px-4 lg:mx-0 lg:px-0 pb-1 lg:pb-0 [scrollbar-width:none]">
             {tabs.map((t) => {
               const active = t.key === category
