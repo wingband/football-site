@@ -9,6 +9,10 @@ import type { HomeResult } from "@/lib/homeFixtures"
 // 메인 "최근 경기 결과" (2026-10-12): 리그 탭 + 경기마다 날짜·시각·리그명. 최근 3일(한국 시간) 기준.
 type Tab = { id: number; label: string }
 const PAGE = 4
+const LEAGUE_ICON: Record<number, string> = {
+  39: "/leagues/pl.png", 140: "/leagues/laliga.png", 78: "/leagues/bundesliga.png", 135: "/leagues/seriea.png",
+  61: "/leagues/ligue1.png", 292: "/leagues/kleague.png", 2: "/leagues/cl.png", 3: "/leagues/europa.png",
+}
 
 export default function HomeResults({ tabs, results }: { tabs: Tab[]; results: HomeResult[] }) {
   const [active, setActive] = useState<number | "all">("all")
@@ -32,19 +36,26 @@ export default function HomeResults({ tabs, results }: { tabs: Tab[]; results: H
         </Link>
       </div>
 
-      <nav className="flex flex-wrap gap-1.5 pb-3">
+      <nav className="flex gap-1 pb-3 border-b border-turf-line/40 mb-1" aria-label="리그 선택">
         {[{ id: "all" as const, label: "전체", n: results.length }, ...tabs.map((t) => ({ id: t.id, label: t.label, n: countOf(t.id) }))].map((t) => (
           <button
             key={t.id}
             onClick={() => pick(t.id)}
-            className={`shrink-0 text-xs sm:text-sm px-3 py-1.5 rounded-full border transition-colors ${
+            title={t.label}
+            aria-label={`${t.label} ${t.n}경기`}
+            aria-pressed={active === t.id}
+            className={`flex-1 min-w-0 h-10 flex items-center justify-center gap-1 border-b-2 transition-colors ${
               active === t.id
-                ? "bg-score-amber text-pitch-night border-score-amber font-bold"
-                : "border-turf-line text-floodlight/70 hover:text-floodlight hover:border-floodlight/40"
+                ? "border-score-amber bg-turf-line/20"
+                : "border-transparent opacity-60 hover:opacity-100 hover:bg-turf-line/10"
             }`}
           >
-            {t.label}
-            <span className={`ml-1 font-data text-xs ${active === t.id ? "text-pitch-night/70" : "text-floodlight/40"}`}>{t.n}</span>
+            {t.id === "all" ? (
+              <span className={`text-xs sm:text-sm font-semibold ${active === t.id ? "text-score-amber" : "text-floodlight"}`}>전체</span>
+            ) : (
+              <Logo src={LEAGUE_ICON[t.id] ?? ""} alt="" className="w-5 h-5 shrink-0" />
+            )}
+            <span className={`hidden sm:inline font-data text-[11px] ${active === t.id ? "text-score-amber" : "text-floodlight/50"}`}>{t.n}</span>
           </button>
         ))}
       </nav>
