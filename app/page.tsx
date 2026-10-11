@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { unstable_cache } from "next/cache"
 import type { Metadata } from "next"
 import PlayerAvatar from "@/components/PlayerAvatar"
 import CoupangBanner from "@/components/CoupangBanner"
@@ -17,8 +18,9 @@ import ColumnCard from "@/components/ColumnCard"
 // 메인 화면 (2026-10-11 개편). 예전엔 / → /matches 영구 이동이었는데,
 // "들어오자마자 할 게 없다"는 문제로 해외파 · 게시판 · 칼럼 · 결과 · K리그를 한 화면에 모았다.
 // 되돌리려면 git 브랜치 backup/before-home-redesign 참고.
-// 매 방문마다 서버에서 다시 그리면 DB를 여러 번 오가느라 2~6초가 걸렸다. 1분마다 한 번만 만들어 두고 모두에게 보여준다.
-export const revalidate = 60
+// 매 방문마다 데이터를 새로 모으면 DB를 여러 번 오가느라 2~6초가 걸렸다.
+// 모은 결과를 1분간 서버에 보관해 두고(unstable_cache) 모든 방문자가 같이 쓴다.
+export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
   title: { absolute: "GoalLine - 해외파 · 경기 결과 · 축구 칼럼 · 게시판" },
@@ -70,14 +72,23 @@ async function safe<T>(p: Promise<T>, fallback: T, label: string): Promise<T> {
   }
 }
 
+const getHomeData = unstable_cache(
+  async () => {
+    const [weeks, board, allColumns, results, leagueBoard] = await Promise.all([
+      safe(getKoreanPlayersWeek(), [] as PlayerWeek[], "해외파"),
+      safe(getPosts(null, 1, 4), { posts: [] as Post[], total: 0 }, "게시판"),
+      safe(getColumns({ limit: 80 }), [] as Column[], "칼럼"),
+      safe(getHomeResults(60), [] as HomeResult[], "경기 결과"),
+      safe(getLeagueBoard(39), null as LeagueBoardData | null, "리그 순위"),
+    ])
+    return { weeks, board, allColumns, results, leagueBoard }
+  },
+  ["home-data-v1"],
+  { revalidate: 60 }
+)
+
 export default async function Home() {
-  const [weeks, board, allColumns, results, leagueBoard] = await Promise.all([
-    safe(getKoreanPlayersWeek(), [] as PlayerWeek[], "해외파"),
-    safe(getPosts(null, 1, 4), { posts: [] as Post[], total: 0 }, "게시판"),
-    safe(getColumns({ limit: 80 }), [] as Column[], "칼럼"),
-    safe(getHomeResults(60), [] as HomeResult[], "경기 결과"),
-    safe(getLeagueBoard(39), null as LeagueBoardData | null, "리그 순위"),
-  ])
+  const { weeks, board, allColumns, results, leagueBoard } = await getHomeData()
 
   const published = allColumns.filter((c) => c.published && !c.content.includes(OPINION_PLACEHOLDER))
   const columns = published.slice(0, 3)
