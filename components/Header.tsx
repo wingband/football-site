@@ -9,13 +9,13 @@ import { UserButton, SignInButton, SignUpButton, useUser } from "@clerk/nextjs"
 // (2026-10-11 메인 개편) 상단에는 자주 쓰는 메뉴만 (2026-10-12: 예측 → 더보기, 일정·리뷰 추가), 나머지는 "더보기"에 모은다.
 // 되돌리려면 git 브랜치 backup/before-home-redesign 참고.
 const NAV_LINKS = [
-  { href: "/korean-players", label: "해외파" },
-  { href: "/matches", label: "경기" },
-  { href: "/schedule", label: "일정" },
-  { href: "/columns", label: "칼럼" },
-  { href: "/stories", label: "리뷰" },
-  { href: "/board", label: "게시판" },
-  { href: "/standings", label: "순위표" },
+  { href: "/korean-players", label: "해외파", icon: "🇰🇷" },
+  { href: "/matches", label: "경기", icon: "⚽" },
+  { href: "/schedule", label: "일정", icon: "📅" },
+  { href: "/columns", label: "칼럼", icon: "📝" },
+  { href: "/stories", label: "리뷰", icon: "📰" },
+  { href: "/board", label: "게시판", icon: "💬" },
+  { href: "/standings", label: "순위표", icon: "🏆" },
 ]
 
 // (2026-09-21) NewsData.io 크레딧 소진으로 뉴스 페이지는 메뉴에서 숨김. 복구되면 { href: "/news", label: "뉴스" } 추가.
@@ -67,13 +67,14 @@ export default function Header() {
         </Link>
 
         {/* 데스크톱 메뉴 */}
-        <nav className="hidden md:flex items-center gap-6 text-sm text-floodlight/70 shrink-0">
+        <nav className="hidden md:flex items-center gap-5 text-sm text-floodlight/70 shrink-0">
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               className={`hover:text-floodlight transition-colors ${pathname.startsWith(link.href) ? "text-score-amber" : ""}`}
             >
+              <span className="mr-1.5 text-base align-[-1px] hidden lg:inline" aria-hidden="true">{link.icon}</span>
               {link.label}
               {badge(link.href)}
             </Link>
@@ -206,6 +207,7 @@ export default function Header() {
                 onClick={() => setMenuOpen(false)}
                 className="py-2.5 px-2 rounded text-floodlight/80 hover:bg-turf-line/40 hover:text-floodlight transition-colors"
               >
+                <span className="mr-2" aria-hidden="true">{link.icon}</span>
                 {link.label}
                 {badge(link.href)}
               </Link>

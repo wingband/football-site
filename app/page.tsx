@@ -103,7 +103,7 @@ export default async function Home() {
 
   return (
     <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
         {/* 최근 경기 결과 — 리그 탭 · 날짜/시각 */}
         <HomeResults tabs={HOME_LEAGUE_TABS.map((t) => ({ id: t.id, label: t.label }))} results={results} />
 
@@ -154,7 +154,9 @@ export default async function Home() {
             )}
           </section>
 
-          <CoupangBanner />
+          <div className="bg-turf/40 border border-turf-line/60 rounded-none p-3">
+            <CoupangBanner />
+          </div>
         </aside>
       </div>
 

@@ -126,6 +126,7 @@ export default function RootLayout({
             문제가 있었다 (2026-09-21, 모바일 화면 배너 잘림 확인 → 320x50
             전용 광고단위(DAN-BIe8FUOzKHZPUiH5) 신규 생성 후 분기 처리). */}
         <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 pt-3">
+          <div className="bg-turf/40 border border-turf-line/60 rounded-none py-2 px-2">
           <div className="hidden md:block">
             <KakaoAdBanner
               adUnit="DAN-y9b1xdwBphlFmU6b"
@@ -141,6 +142,7 @@ export default function RootLayout({
               height={50}
               className="w-full h-[50px]"
             />
+          </div>
           </div>
         </div>
         <div className="flex-1">{children}</div>
