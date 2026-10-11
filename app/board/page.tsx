@@ -1,19 +1,20 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { getPosts } from "@/lib/board"
+import { BOARD_CATEGORIES, boardCategory, boardCategoryLabel as categoryLabel, isBoardCategory } from "@/lib/boardCategories"
 
-export const metadata: Metadata = {
-  title: "자유게시판",
-  description: "GoalLine 이용자들의 자유게시판입니다.",
-}
-
-// 팀별 게시판으로 확장되면 여기에 카테고리 라벨만 추가하면 됨
-const CATEGORY_LABELS: Record<string, string> = {
-  free: "자유",
-}
-
-function categoryLabel(category: string) {
-  return CATEGORY_LABELS[category] ?? category
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string }>
+}): Promise<Metadata> {
+  const { category } = await searchParams
+  const cat = boardCategory(category)
+  return {
+    title: cat ? cat.title : "게시판",
+    description: cat ? `GoalLine ${cat.title} — ${cat.desc}` : "GoalLine 축구 팬 게시판 — 자유, 해외파, 리그별 이야기를 나눠보세요.",
+    alternates: { canonical: cat ? `/board?category=${cat.key}` : "/board" },
+  }
 }
 
 // 서버가 어느 시간대(Vercel 서버리스는 보통 UTC)로 돌든 항상 한국 시간
@@ -58,11 +59,15 @@ const ROW_GRID_COLS = "md:grid-cols-[56px_minmax(0,1fr)_100px_70px_56px_56px]"
 export default async function BoardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>
+  searchParams: Promise<{ page?: string; category?: string }>
 }) {
   const sp = await searchParams
   const page = Math.max(parseInt(sp.page ?? "1"), 1)
-  const { posts, total } = await getPosts(null, page, 20)
+  // 분류를 안 고르면 "전체" — 게시판이 여러 개라도 글이 한곳에 모여 보이게 기본값을 전체로 둔다
+  const category = isBoardCategory(sp.category) ? sp.category : null
+  const cat = boardCategory(category)
+  const qs = (p: number) => `/board?${category ? `category=${category}&` : ""}page=${p}`
+  const { posts, total } = await getPosts(category, page, 20)
   const totalPages = Math.max(Math.ceil(total / 20), 1)
 
   const pageWindowStart = Math.max(1, page - 4)
@@ -79,21 +84,41 @@ export default async function BoardPage({
           <div>
             <div className="flex items-center gap-2 mb-2">
               <span className="text-2xl">💬</span>
-              <h1 className="font-display uppercase text-2xl text-score-amber">자유게시판</h1>
+              <h1 className="font-display uppercase text-2xl text-score-amber">{cat ? cat.title : "게시판"}</h1>
             </div>
-            <p className="text-sm text-floodlight/50">축구 얘기, 아무 얘기나 편하게 남겨주세요</p>
+            <p className="text-sm text-floodlight/50">{cat ? cat.desc : "자유, 해외파, 리그별로 축구 이야기를 나눠보세요"}</p>
           </div>
           <Link
-            href="/board/write"
+            href={category ? `/board/write?category=${category}` : "/board/write"}
             className="shrink-0 text-xs px-4 py-2 bg-score-amber text-pitch-night font-bold rounded hover:bg-score-amber/80 transition-colors"
           >
             글쓰기
           </Link>
         </div>
 
+        {/* 게시판 분류 탭 — 모바일에서는 가로 스크롤 */}
+        <nav className="flex gap-1.5 overflow-x-auto py-3 -mx-4 px-4 border-b border-turf-line/30 [scrollbar-width:none]">
+          {[{ key: null as string | null, label: "전체" }, ...BOARD_CATEGORIES.map((c) => ({ key: c.key as string | null, label: c.label }))].map((t) => {
+            const active = t.key === category
+            return (
+              <Link
+                key={t.key ?? "all"}
+                href={t.key ? `/board?category=${t.key}` : "/board"}
+                className={`shrink-0 text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                  active
+                    ? "bg-score-amber text-pitch-night border-score-amber font-bold"
+                    : "border-turf-line text-floodlight/60 hover:text-floodlight hover:border-floodlight/40"
+                }`}
+              >
+                {t.label}
+              </Link>
+            )
+          })}
+        </nav>
+
         {posts.length === 0 ? (
           <div className="mt-8 text-center text-floodlight/40 text-sm py-12">
-            아직 게시글이 없습니다. 첫 글을 남겨보세요!
+            {cat ? `${cat.title}에 아직 글이 없어요. 첫 글을 남겨보세요!` : "아직 게시글이 없습니다. 첫 글을 남겨보세요!"}
           </div>
         ) : (
           <div className="mt-4">
@@ -157,7 +182,7 @@ export default async function BoardPage({
           <div className="flex items-center justify-center gap-1 mt-8 text-xs">
             {pageWindowStart > 1 && (
               <Link
-                href={`/board?page=${Math.max(1, page - 10)}`}
+                href={qs(Math.max(1, page - 10))}
                 className="px-2 py-1 text-floodlight/50 hover:text-floodlight"
               >
                 ‹ 이전
@@ -166,7 +191,7 @@ export default async function BoardPage({
             {pageNumbers.map((p) => (
               <Link
                 key={p}
-                href={`/board?page=${p}`}
+                href={qs(p)}
                 className={`w-8 h-8 flex items-center justify-center rounded ${
                   p === page ? "bg-score-amber text-pitch-night font-bold" : "text-floodlight/50 hover:bg-turf-line/30"
                 }`}
@@ -176,7 +201,7 @@ export default async function BoardPage({
             ))}
             {pageWindowEnd < totalPages && (
               <Link
-                href={`/board?page=${Math.min(totalPages, page + 10)}`}
+                href={qs(Math.min(totalPages, page + 10))}
                 className="px-2 py-1 text-floodlight/50 hover:text-floodlight"
               >
                 다음 ›

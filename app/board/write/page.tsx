@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useUser, SignInButton } from "@clerk/nextjs"
 import { applyFormat, FORMAT_BUTTONS, TITLE_MAX, CONTENT_MAX } from "@/lib/boardEditor"
+import { BOARD_CATEGORIES, isBoardCategory } from "@/lib/boardCategories"
 
 export default function BoardWritePage() {
   const { isSignedIn, isLoaded, user } = useUser()
@@ -14,6 +15,13 @@ export default function BoardWritePage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  // 게시판 탭에서 글쓰기를 누르면 ?category=epl 처럼 넘어온다 — 그 게시판을 기본 선택.
+  // (이 페이지는 Clerk 로딩 전까지 아무것도 그리지 않아서 서버/클라이언트 초기값 차이로 인한 hydration 문제는 없다)
+  const [category, setCategory] = useState<string>(() => {
+    if (typeof window === "undefined") return "free"
+    const c = new URLSearchParams(window.location.search).get("category")
+    return isBoardCategory(c) ? c : "free"
+  })
 
   function handleFormat(action: Parameters<typeof applyFormat>[1]) {
     const el = textareaRef.current
@@ -39,7 +47,7 @@ export default function BoardWritePage() {
       const res = await fetch("/api/board", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, content, nickname }),
+        body: JSON.stringify({ title, content, nickname, category }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -76,7 +84,7 @@ export default function BoardWritePage() {
       <div className="max-w-2xl mx-auto px-4 py-8">
         <div className="flex items-center gap-1.5 text-[11px] text-floodlight/40 mb-3">
           <Link href="/board" className="hover:text-floodlight/70 transition-colors">
-            자유게시판
+            게시판
           </Link>
           <span>/</span>
           <span>글쓰기</span>
@@ -84,9 +92,25 @@ export default function BoardWritePage() {
 
         <div className="flex items-center justify-between mb-6">
           <h1 className="font-display uppercase text-xl text-score-amber">글쓰기</h1>
-          <span className="text-[11px] px-2.5 py-1 rounded border border-turf-line text-floodlight/50">
-            자유
-          </span>
+        </div>
+
+        <div className="flex flex-wrap gap-1.5 mb-4" role="radiogroup" aria-label="게시판 선택">
+          {BOARD_CATEGORIES.map((c) => (
+            <button
+              key={c.key}
+              type="button"
+              role="radio"
+              aria-checked={category === c.key}
+              onClick={() => setCategory(c.key)}
+              className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                category === c.key
+                  ? "bg-score-amber text-pitch-night border-score-amber font-bold"
+                  : "border-turf-line text-floodlight/60 hover:text-floodlight"
+              }`}
+            >
+              {c.label}
+            </button>
+          ))}
         </div>
 
         <div className="border border-turf-line rounded-lg overflow-hidden bg-turf/20">
@@ -141,7 +165,7 @@ export default function BoardWritePage() {
 
         <div className="flex justify-end gap-2 mt-4">
           <Link
-            href="/board"
+            href={category === "free" ? "/board" : `/board?category=${category}`}
             className="text-sm px-6 py-2.5 border border-turf-line text-floodlight/60 rounded hover:bg-turf-line/20 transition-colors"
           >
             취소

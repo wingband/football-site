@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
 import { createPost, getPosts } from "@/lib/board"
+import { isBoardCategory } from "@/lib/boardCategories"
 
 const MAX_TITLE_LENGTH = 100
 const MAX_CONTENT_LENGTH = 5000
@@ -8,7 +9,8 @@ const MIN_CONTENT_LENGTH = 5
 
 export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams
-  const category = sp.get("category") ?? "free"
+  const cat = sp.get("category")
+  const category = isBoardCategory(cat) ? cat : null
   const page = Math.max(parseInt(sp.get("page") ?? "1"), 1)
 
   const { posts, total } = await getPosts(category, page, 20)
@@ -44,7 +46,8 @@ export async function POST(req: NextRequest) {
     nickname: typeof nickname === "string" && nickname.trim() ? nickname.trim() : "익명",
     title: trimmedTitle,
     content: trimmedContent,
-    category: typeof category === "string" ? category : "free",
+    // 정해진 게시판만 허용 (임의 문자열로 숨은 게시판이 생기지 않게)
+    category: isBoardCategory(category) ? category : "free",
   })
 
   return NextResponse.json({ ok: true, id })
