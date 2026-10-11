@@ -4,6 +4,8 @@ import Logo from "@/components/Logo"
 import PlayerAvatar from "@/components/PlayerAvatar"
 import { teamHref } from "@/lib/slug"
 import { fetchApiFootball } from "@/lib/apiFootballClient"
+import { TEAM_NAME_KO, LEAGUE_NAME_KO, teamKo, leagueKo } from "@/lib/koreanNames"
+import { KOREAN_PLAYERS_ABROAD } from "@/lib/koreanPlayersAbroad"
 
 type TeamResult = { team: { id: number; name: string; logo: string; country: string } }
 type PlayerResult = { player: { id: number; name: string; photo: string; nationality: string } }
@@ -49,6 +51,58 @@ async function searchPlayers(q: string, season: number): Promise<PlayerResult[]>
   }
 }
 
+// 제공처(API-Football) 검색은 영어만 알아듣는다 — "손흥민"을 치면 0건이 나오던 이유.
+// 한글로 검색하면: 해외파 선수는 우리 목록에서 바로 찾고, 팀·리그는 한글 이름표에서 영어 이름을 찾아 그걸로 조회한다.
+const HANGUL = /[가-힣]/
+const squash = (v: string) => v.replace(/\s+/g, "").toLowerCase()
+
+function koreanPlayers(q: string): PlayerResult[] {
+  const nq = squash(q)
+  return KOREAN_PLAYERS_ABROAD.filter((p) => squash(p.name).includes(nq)).map((p) => ({
+    player: { id: p.id, name: p.name, photo: `https://media.api-sports.io/football/players/${p.id}.png`, nationality: "대한민국" },
+  }))
+}
+
+async function searchTeamsKo(q: string): Promise<TeamResult[]> {
+  const nq = squash(q)
+  const names = Object.entries(TEAM_NAME_KO)
+    .filter(([, ko]) => squash(ko).includes(nq))
+    .map(([en]) => en)
+    .slice(0, 4)
+  const found = await Promise.all(
+    names.map(async (en) => {
+      try {
+        const r = (await fetchApiFootball(`/teams?search=${encodeURIComponent(en)}`, { revalidate: 86400 })) as TeamResult[]
+        return r.find((x) => x.team.name === en) ?? r[0] ?? null
+      } catch {
+        return null
+      }
+    })
+  )
+  const seen = new Set<number>()
+  return found.filter((x): x is TeamResult => !!x && !seen.has(x.team.id) && !!seen.add(x.team.id))
+}
+
+async function searchLeaguesKo(q: string): Promise<LeagueResult[]> {
+  const nq = squash(q)
+  const names = Object.entries(LEAGUE_NAME_KO)
+    .filter(([, ko]) => squash(ko).includes(nq))
+    .map(([en]) => en)
+    .slice(0, 3)
+  const found = await Promise.all(
+    names.map(async (en) => {
+      try {
+        const r = (await fetchApiFootball(`/leagues?search=${encodeURIComponent(en)}`, { revalidate: 86400 })) as LeagueResult[]
+        return r.find((x) => x.league.name === en) ?? r[0] ?? null
+      } catch {
+        return null
+      }
+    })
+  )
+  const seen = new Set<number>()
+  return found.filter((x): x is LeagueResult => !!x && !seen.has(x.league.id) && !!seen.add(x.league.id))
+}
+
 export default async function SearchPage({
   searchParams,
 }: {
@@ -59,31 +113,30 @@ export default async function SearchPage({
 
   if (!q) {
     return (
-      <main className="min-h-screen bg-pitch-night text-floodlight p-8 font-sans">
-        <p className="text-floodlight/50">검색어를 입력해주세요.</p>
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-6 text-floodlight">
+        <p className="text-sm text-floodlight/75">검색어를 입력해주세요.</p>
       </main>
     )
   }
 
-  const [teams, leagues, players] = await Promise.all([
-    searchTeams(q),
-    searchLeagues(q),
-    searchPlayers(q, new Date().getFullYear()),
-  ])
+  const korean = HANGUL.test(q)
+  const [teams, leagues, players] = korean
+    ? await Promise.all([searchTeamsKo(q), searchLeaguesKo(q), Promise.resolve(koreanPlayers(q))])
+    : await Promise.all([searchTeams(q), searchLeagues(q), searchPlayers(q, new Date().getFullYear())])
 
   const totalResults = teams.length + leagues.length + players.length
 
   return (
-    <main className="min-h-screen bg-pitch-night text-floodlight p-8 font-sans">
-      <div className="max-w-xl mx-auto">
-        <p className="text-xs text-floodlight/40 mb-6">
+    <main className="max-w-3xl mx-auto px-4 sm:px-6 py-6 text-floodlight">
+      <div>
+        <p className="text-sm text-floodlight/75 mb-4">
           &apos;{q}&apos; 검색 결과 {totalResults}건
         </p>
 
 
         {leagues.length > 0 && (
           <section className="mb-6">
-            <h2 className="font-display uppercase text-sm text-floodlight/60 mb-2">리그</h2>
+            <h2 className="font-display uppercase text-sm text-floodlight/80 mb-2">리그</h2>
             <div className="bg-turf/40 border-l-2 border-score-amber">
               {leagues.map((l) => (
                 <Link
@@ -92,8 +145,8 @@ export default async function SearchPage({
                   className="flex items-center gap-3 px-4 py-3 hover:bg-turf-line/40 border-b border-turf-line/40 last:border-b-0"
                 >
                   <Logo src={l.league.logo} alt="" className="w-6 h-6" />
-                  <span className="text-sm">{l.league.name}</span>
-                  <span className="text-xs text-floodlight/40 ml-auto">{l.league.country}</span>
+                  <span className="text-sm">{leagueKo(l.league.name)}</span>
+                  <span className="text-xs text-floodlight/65 ml-auto">{l.league.country}</span>
                 </Link>
               ))}
             </div>
@@ -102,7 +155,7 @@ export default async function SearchPage({
 
         {teams.length > 0 && (
           <section className="mb-6">
-            <h2 className="font-display uppercase text-sm text-floodlight/60 mb-2">팀</h2>
+            <h2 className="font-display uppercase text-sm text-floodlight/80 mb-2">팀</h2>
             <div className="bg-turf/40 border-l-2 border-score-amber">
               {teams.map((t) => (
                 <Link
@@ -111,8 +164,8 @@ export default async function SearchPage({
                   className="flex items-center gap-3 px-4 py-3 hover:bg-turf-line/40 border-b border-turf-line/40 last:border-b-0"
                 >
                   <Logo src={t.team.logo} alt="" className="w-6 h-6" />
-                  <span className="text-sm">{t.team.name}</span>
-                  <span className="text-xs text-floodlight/40 ml-auto">{t.team.country}</span>
+                  <span className="text-sm">{teamKo(t.team.name)}</span>
+                  <span className="text-xs text-floodlight/65 ml-auto">{t.team.country}</span>
                 </Link>
               ))}
             </div>
@@ -121,7 +174,7 @@ export default async function SearchPage({
 
         {players.length > 0 && (
           <section className="mb-6">
-            <h2 className="font-display uppercase text-sm text-floodlight/60 mb-2">선수</h2>
+            <h2 className="font-display uppercase text-sm text-floodlight/80 mb-2">선수</h2>
             <div className="bg-turf/40 border-l-2 border-score-amber">
               {players.map((p) => (
                 <Link
@@ -131,7 +184,7 @@ export default async function SearchPage({
                 >
                   <PlayerAvatar src={p.player.photo} alt={p.player.name} className="w-8 h-8 rounded-full" />
                   <span className="text-sm">{p.player.name}</span>
-                  <span className="text-xs text-floodlight/40 ml-auto">{p.player.nationality}</span>
+                  <span className="text-xs text-floodlight/65 ml-auto">{p.player.nationality}</span>
                 </Link>
               ))}
             </div>
@@ -139,7 +192,10 @@ export default async function SearchPage({
         )}
 
         {totalResults === 0 && (
-          <p className="text-floodlight/40 text-sm">검색 결과가 없습니다.</p>
+          <div className="bg-turf/40 border border-turf-line/60 p-4 sm:p-5 text-sm text-floodlight/80 leading-relaxed">
+            <p className="font-semibold text-floodlight">검색 결과가 없어요</p>
+            <p className="mt-1">한글로는 해외파 선수, 주요 팀, 리그 이름을 찾을 수 있어요. 그 밖의 선수는 영어 이름(예: Haaland)으로 검색해 주세요.</p>
+          </div>
         )}
       </div>
     </main>
