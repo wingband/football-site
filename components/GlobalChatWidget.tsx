@@ -21,7 +21,7 @@ function timeAgo(dateStr: string) {
   if (m < 1) return "방금"
   if (m < 60) return `${m}분 전`
   if (h < 24) return `${h}시간 전`
-  return new Date(dateStr).toLocaleDateString("ko-KR", { month: "numeric", day: "numeric" })
+  return new Date(dateStr).toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul", month: "numeric", day: "numeric" })
 }
 
 // 채팅 목록 컨테이너만 맨 아래로 내린다.

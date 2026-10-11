@@ -92,7 +92,7 @@ function isFeatured(country: string, name: string) {
 }
 
 function formatKickoff(dateStr: string) {
-  return new Date(dateStr).toLocaleTimeString("ko-KR", {
+  return new Date(dateStr).toLocaleTimeString("ko-KR", { timeZone: "Asia/Seoul",
     hour: "2-digit",
     minute: "2-digit",
   })

@@ -66,7 +66,7 @@ function RoundFixturesWidget({ fixtures }: { fixtures: LeagueFixture[] }) {
   const sorted = [...fixtures].sort((a, b) => new Date(a.fixture.date).getTime() - new Date(b.fixture.date).getTime())
   const groups = new Map<string, LeagueFixture[]>()
   for (const fx of sorted) {
-    const key = new Date(fx.fixture.date).toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "long" })
+    const key = new Date(fx.fixture.date).toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul", month: "long", day: "numeric", weekday: "long" })
     if (!groups.has(key)) groups.set(key, [])
     groups.get(key)!.push(fx)
   }
@@ -80,7 +80,7 @@ function RoundFixturesWidget({ fixtures }: { fixtures: LeagueFixture[] }) {
           <p className="px-4 py-2 bg-turf-line/30 text-xs text-floodlight/60">{date}</p>
           {list.map((fx) => {
             const finished = FINISHED_CODES.includes(fx.fixture.status.short)
-            const timeText = new Date(fx.fixture.date).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })
+            const timeText = new Date(fx.fixture.date).toLocaleTimeString("ko-KR", { timeZone: "Asia/Seoul", hour: "2-digit", minute: "2-digit" })
             return (
               <Link key={fx.fixture.id} href={matchLinkHref(fx)} prefetch={false}
                 className="flex items-center justify-center gap-2 px-4 py-3 text-xs hover:bg-turf-line/20 border-b border-turf-line/20 last:border-b-0">
@@ -292,7 +292,7 @@ export default async function LeagueOverviewPage({ params, searchParams }: { par
                   <div className="min-w-0 flex-1">
                     <p className="text-sm text-floodlight/90 leading-snug line-clamp-2">{a.title}</p>
                     <p className="text-xs text-floodlight/40 mt-1">
-                      {a.source_name} · {new Date(a.pubDate).toLocaleDateString("ko-KR")}
+                      {a.source_name} · {new Date(a.pubDate).toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul" })}
                     </p>
                   </div>
                   {a.image_url && <img src={a.image_url} alt="" className="w-24 h-16 object-cover shrink-0 rounded" />}

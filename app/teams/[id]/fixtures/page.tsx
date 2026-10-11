@@ -29,7 +29,7 @@ export default async function TeamFixturesPage({ params }: { params: Promise<{ i
   )
   const groups = new Map<string, TeamFixture[]>()
   for (const fx of sorted) {
-    const key = new Date(fx.fixture.date).toLocaleDateString("ko-KR", {
+    const key = new Date(fx.fixture.date).toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul",
       year: "numeric",
       month: "long",
       day: "numeric",
@@ -53,7 +53,7 @@ export default async function TeamFixturesPage({ params }: { params: Promise<{ i
             </div>
             {list.map((fx) => {
               const finished = FINISHED_CODES.includes(fx.fixture.status.short)
-              const timeText = new Date(fx.fixture.date).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })
+              const timeText = new Date(fx.fixture.date).toLocaleTimeString("ko-KR", { timeZone: "Asia/Seoul", hour: "2-digit", minute: "2-digit" })
               const isOwnHome = fx.teams.home.id === info.team.id
               const own = isOwnHome ? fx.goals.home : fx.goals.away
               const opp = isOwnHome ? fx.goals.away : fx.goals.home

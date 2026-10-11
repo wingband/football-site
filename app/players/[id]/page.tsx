@@ -218,7 +218,7 @@ export default async function PlayerPage({
   const winnerTrophies = trophies.filter((t) => t.place.toLowerCase().includes("winner"))
 
   const ageText = player.birth?.date
-    ? `${player.age}세 (${new Date(player.birth.date).toLocaleDateString("ko-KR")})`
+    ? `${player.age}세 (${new Date(player.birth.date).toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul" })})`
     : `${player.age}세`
 
   // 시즌 선택 드롭다운용 (최근 5시즌)
@@ -266,7 +266,7 @@ export default async function PlayerPage({
             <span>{latestTransfer.teams.out.name}에서 이적</span>
             {latestTransfer.type && <span className="text-score-amber">({latestTransfer.type})</span>}
             <span className="ml-auto">
-              {new Date(latestTransfer.date).toLocaleDateString("ko-KR")}
+              {new Date(latestTransfer.date).toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul" })}
             </span>
           </div>
         )}
@@ -450,8 +450,8 @@ export default async function PlayerPage({
                   <span className="text-red-400 shrink-0">●</span>
                   <span className="flex-1 text-floodlight/80">{s.type}</span>
                   <span className="text-floodlight/65 font-data shrink-0">
-                    {s.start ? new Date(s.start).toLocaleDateString("ko-KR", { year: "numeric", month: "short" }) : "–"}
-                    {s.end ? ` ~ ${new Date(s.end).toLocaleDateString("ko-KR", { month: "short", day: "numeric" })}` : " ~ 진행중"}
+                    {s.start ? new Date(s.start).toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul", year: "numeric", month: "short" }) : "–"}
+                    {s.end ? ` ~ ${new Date(s.end).toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul", month: "short", day: "numeric" })}` : " ~ 진행중"}
                   </span>
                 </div>
               ))}

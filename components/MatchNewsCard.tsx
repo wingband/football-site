@@ -37,7 +37,7 @@ export default function MatchNewsCard({
           <div className="min-w-0">
             <p className="text-sm text-floodlight/90 leading-snug line-clamp-2">{a.title}</p>
             <p className="text-xs text-floodlight/40 mt-1">
-              {a.source_name} · {new Date(a.pubDate).toLocaleDateString("ko-KR")}
+              {a.source_name} · {new Date(a.pubDate).toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul" })}
             </p>
           </div>
         </a>

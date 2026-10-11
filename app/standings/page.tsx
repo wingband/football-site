@@ -135,7 +135,7 @@ export default async function StandingsPage({
   const hasAnyStandings = allData.some((d) => d.data?.league?.standings?.length)
 
   const week = Math.ceil(new Date().getDate() / 7)
-  const monthName = new Date().toLocaleDateString("ko-KR", { month: "long" })
+  const monthName = new Date().toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul", month: "long" })
 
   return (
     <main className="text-floodlight font-sans">

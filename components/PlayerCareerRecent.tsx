@@ -80,7 +80,7 @@ export default function PlayerCareerRecent({
                 className="flex items-center gap-3 py-2.5 hover:bg-turf-line/20 transition-colors -mx-1 px-1"
               >
                 <span className="text-xs text-floodlight/65 w-14 shrink-0">
-                  {new Date(m.fixture.date).toLocaleDateString("ko-KR", { month: "numeric", day: "numeric" })}
+                  {new Date(m.fixture.date).toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul", month: "numeric", day: "numeric" })}
                 </span>
                 <Logo src={m.teams.home.logo} alt="" className="w-4 h-4 shrink-0" />
                 <span className="text-xs flex-1 truncate">

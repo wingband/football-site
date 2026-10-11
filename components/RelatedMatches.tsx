@@ -62,7 +62,7 @@ export default function RelatedMatches({
                 <span className={`text-xs font-data shrink-0 ${finished ? "text-floodlight/40" : "text-score-amber"}`}>
                   {finished
                     ? "종료"
-                    : `${kickoff.toLocaleDateString("ko-KR", { month: "numeric", day: "numeric" })} ${kickoff.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}`}
+                    : `${kickoff.toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul", month: "numeric", day: "numeric" })} ${kickoff.toLocaleTimeString("ko-KR", { timeZone: "Asia/Seoul", hour: "2-digit", minute: "2-digit" })}`}
                 </span>
               </div>
 

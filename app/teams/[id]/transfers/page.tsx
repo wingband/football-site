@@ -65,7 +65,7 @@ export default async function TeamTransfersPage({ params }: { params: Promise<{ 
                   {transferTypeLabel(row.type)}
                 </span>
                 <span className="text-xs text-floodlight/40 font-data shrink-0 w-20 text-right">
-                  {new Date(row.date).toLocaleDateString("ko-KR", { month: "numeric", day: "numeric" })}
+                  {new Date(row.date).toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul", month: "numeric", day: "numeric" })}
                 </span>
               </div>
             )

@@ -11,7 +11,7 @@ type Mode = "date" | "round" | "team"
 
 function FixtureRow({ fx }: { fx: LeagueFixture }) {
   const finished = FINISHED_CODES.includes(fx.fixture.status.short)
-  const timeText = new Date(fx.fixture.date).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })
+  const timeText = new Date(fx.fixture.date).toLocaleTimeString("ko-KR", { timeZone: "Asia/Seoul", hour: "2-digit", minute: "2-digit" })
   return (
     <Link
       href={matchLinkHref(fx)} prefetch={false}
@@ -58,7 +58,7 @@ export default function FixturesView({ fixtures }: { fixtures: LeagueFixture[] }
 
   if (mode === "date") {
     groups = groupBy(sorted, (fx) =>
-      new Date(fx.fixture.date).toLocaleDateString("ko-KR", {
+      new Date(fx.fixture.date).toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul",
         year: "numeric",
         month: "long",
         day: "numeric",
@@ -73,7 +73,7 @@ export default function FixturesView({ fixtures }: { fixtures: LeagueFixture[] }
         ? sorted
         : sorted.filter((fx) => fx.teams.home.name === teamFilter || fx.teams.away.name === teamFilter)
     groups = groupBy(filtered, (fx) =>
-      new Date(fx.fixture.date).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })
+      new Date(fx.fixture.date).toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul", year: "numeric", month: "long", day: "numeric" })
     )
   }
 

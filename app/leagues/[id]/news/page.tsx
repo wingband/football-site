@@ -63,7 +63,7 @@ export default async function LeagueNewsPage({
               <div className="p-5">
                 <p className="text-lg font-medium leading-snug">{hero.title}</p>
                 <p className="text-xs text-floodlight/40 mt-2">
-                  {hero.source_name} · {new Date(hero.pubDate).toLocaleDateString("ko-KR")}
+                  {hero.source_name} · {new Date(hero.pubDate).toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul" })}
                 </p>
               </div>
             </a>
@@ -81,7 +81,7 @@ export default async function LeagueNewsPage({
                   <div className="min-w-0 flex-1">
                     <p className="text-sm text-floodlight/90 leading-snug line-clamp-2">{a.title}</p>
                     <p className="text-xs text-floodlight/40 mt-1">
-                      {a.source_name} · {new Date(a.pubDate).toLocaleDateString("ko-KR")}
+                      {a.source_name} · {new Date(a.pubDate).toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul" })}
                     </p>
                   </div>
                   {a.image_url && (
@@ -107,7 +107,7 @@ export default async function LeagueNewsPage({
                 <div className="min-w-0 flex-1">
                   <p className="text-sm text-floodlight/90 leading-snug line-clamp-2">{a.title}</p>
                   <p className="text-xs text-floodlight/40 mt-1">
-                    {a.source_name} · {new Date(a.pubDate).toLocaleDateString("ko-KR")}
+                    {a.source_name} · {new Date(a.pubDate).toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul" })}
                   </p>
                 </div>
                 {a.image_url && (

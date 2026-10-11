@@ -322,7 +322,7 @@ export default async function MatchDetailPage({
   const awayXg = getStatValue(awayStats, "expected_goals")
   const hasXg = homeXg !== null || awayXg !== null
 
-  const dateText = new Date(match.fixture.date).toLocaleString("ko-KR", {
+  const dateText = new Date(match.fixture.date).toLocaleString("ko-KR", { timeZone: "Asia/Seoul",
     month: "long",
     day: "numeric",
     weekday: "short",

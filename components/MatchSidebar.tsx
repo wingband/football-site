@@ -128,9 +128,9 @@ function RoundFixturesCard({
                 "FT"
               ) : (
                 <>
-                  {new Date(fx.fixture.date).toLocaleDateString("ko-KR", { month: "numeric", day: "numeric" })}
+                  {new Date(fx.fixture.date).toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul", month: "numeric", day: "numeric" })}
                   <br />
-                  {new Date(fx.fixture.date).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
+                  {new Date(fx.fixture.date).toLocaleTimeString("ko-KR", { timeZone: "Asia/Seoul", hour: "2-digit", minute: "2-digit" })}
                 </>
               )}
             </div>

@@ -19,7 +19,7 @@ function NextMatchColumn({ teamId, fixture }: { teamId: number; fixture: TeamFix
   const isHome = fixture.teams.home.id === teamId
   const self = isHome ? fixture.teams.home : fixture.teams.away
   const opponent = isHome ? fixture.teams.away : fixture.teams.home
-  const dateText = new Date(fixture.fixture.date).toLocaleString("ko-KR", {
+  const dateText = new Date(fixture.fixture.date).toLocaleString("ko-KR", { timeZone: "Asia/Seoul",
     month: "long",
     day: "numeric",
     weekday: "short",
@@ -39,7 +39,7 @@ function NextMatchColumn({ teamId, fixture }: { teamId: number; fixture: TeamFix
       <div className="flex items-center gap-3">
         <Logo src={self.logo} alt="" className="w-7 h-7" />
         <span className="font-data text-sm text-score-amber">
-          {new Date(fixture.fixture.date).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
+          {new Date(fixture.fixture.date).toLocaleTimeString("ko-KR", { timeZone: "Asia/Seoul", hour: "2-digit", minute: "2-digit" })}
         </span>
         <Logo src={opponent.logo} alt="" className="w-7 h-7" />
       </div>

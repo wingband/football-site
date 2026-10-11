@@ -91,7 +91,7 @@ export default function H2HPanel({
           const row = (
             <div className="py-3">
               <p className="text-xs text-floodlight/40 mb-1.5 text-center">
-                {new Date(m.fixture.date).toLocaleDateString("ko-KR", {
+                {new Date(m.fixture.date).toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul",
                   year: "numeric",
                   month: "long",
                   day: "numeric",
