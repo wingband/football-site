@@ -20,6 +20,8 @@ export const SCOPE_LEAGUES = [
   { id: 40, name: "Championship" },
   { id: 79, name: "2. Bundesliga" },
   { id: 144, name: "Belgian Pro League" },
+  // (2026-10-12) 손흥민(LAFC)이 뛰는 리그. 안 넣으면 손흥민 경기 리포트·선수 페이지의 경기 링크가 404가 떴다
+  { id: 253, name: "Major League Soccer" },
 ]
 
 export const SCOPE_LEAGUE_IDS = new Set(SCOPE_LEAGUES.map((l) => l.id))
