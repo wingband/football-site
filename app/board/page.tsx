@@ -142,7 +142,7 @@ export default async function BoardPage({
               const hot = post.likeCount >= 3 || post.commentCount >= 5 || post.viewCount >= 100
               const title = (
                 <span className="min-w-0">
-                  <span className="text-[15px] text-floodlight group-hover:text-score-amber transition-colors">{post.title}</span>
+                  <span className="text-sm text-floodlight group-hover:text-score-amber transition-colors">{post.title}</span>
                   {post.commentCount > 0 && <span className="ml-1.5 text-score-amber text-xs font-bold font-data">[{post.commentCount}]</span>}
                   {fresh && <span className="ml-1.5 text-xs font-bold px-1 py-px rounded bg-red-500 text-white align-middle">N</span>}
                   {hot && <span className="ml-1 text-xs font-bold px-1 py-px rounded bg-score-amber text-pitch-night align-middle">HOT</span>}

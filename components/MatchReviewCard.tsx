@@ -25,7 +25,7 @@ export default function MatchReviewCard({
       <div className="flex items-center gap-2 px-5 py-3 bg-score-amber/10 border-b border-score-amber/20">
         <span className="text-score-amber text-xs">✦</span>
         <h2 className="text-base font-semibold text-floodlight">
-          Match Review
+          경기 리뷰
         </h2>
         <span className="flex items-center ml-1.5">
           <Logo src={homeLogo} alt="" className="w-5 h-5" />
@@ -35,8 +35,8 @@ export default function MatchReviewCard({
 
       {/* 본문 */}
       <div className="px-5 py-5">
-        <p className="font-semibold text-[15px] leading-snug text-floodlight mb-2">{headline}</p>
-        <p className="text-sm text-floodlight/65 leading-relaxed whitespace-pre-line">{summary}</p>
+        <p className="font-semibold text-sm leading-snug text-floodlight mb-2">{headline}</p>
+        <p className="text-sm text-floodlight/80 leading-relaxed whitespace-pre-line">{summary}</p>
 
         {tags && tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-4">
