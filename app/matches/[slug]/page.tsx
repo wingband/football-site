@@ -559,13 +559,22 @@ export default async function MatchDetailPage({
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
     sport: "Soccer",
     url: `${SITE_URL}${matchHref(match)}`,
+    // (2026-10-11) Search Console "이벤트 구조화 데이터 문제" 대응:
+    //  - address를 문자열 대신 PostalAddress로 (문자열이면 "잘못된 값" 경고)
+    //  - image 추가 (권장 필드) — 이 경기 페이지가 이미 만들고 있는 공유 카드 이미지
+    // location은 이벤트 필수 필드라, 경기장 정보가 없는 경기는 아래에서 마크업 자체를 생략한다
     location: match.fixture.venue?.name
       ? {
           "@type": "Place",
           name: match.fixture.venue.name,
-          address: match.fixture.venue.city || undefined,
+          address: {
+            "@type": "PostalAddress",
+            ...(match.fixture.venue.city ? { addressLocality: match.fixture.venue.city } : {}),
+            ...(match.league.country && match.league.country !== "World" ? { addressCountry: match.league.country } : {}),
+          },
         }
       : undefined,
+    image: [`${SITE_URL}${matchHref(match)}/opengraph-image`],
     organizer: {
       "@type": "Organization",
       name: match.league.name,
@@ -607,10 +616,13 @@ export default async function MatchDetailPage({
 
   return (
     <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(sportsEventJsonLd) }}
-      />
+      {/* 경기장 정보(location, 이벤트 필수 필드)가 없으면 불완전한 마크업으로 오류를 쌓지 않도록 생략 */}
+      {sportsEventJsonLd.location && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(sportsEventJsonLd) }}
+        />
+      )}
       <div className="max-w-5xl mx-auto pb-16 lg:grid lg:grid-cols-[1fr_320px] lg:gap-6 lg:items-start lg:px-4">
       <div className="max-w-2xl mx-auto lg:mx-0 lg:max-w-none">
         {/* 상단 바 */}
