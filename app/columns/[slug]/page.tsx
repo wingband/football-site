@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
-import { getColumnBySlug, isValidColumnSlug, readingMinutes } from "@/lib/columns"
+import { getColumnBySlug, isValidColumnSlug } from "@/lib/columns"
 import { isAdmin } from "@/lib/admin"
 import { SITE_URL } from "@/lib/siteConfig"
 import ColumnBody from "@/components/ColumnBody"
@@ -79,10 +79,11 @@ export default async function ColumnPage({ params }: { params: Promise<{ slug: s
   const views = admin && column.published ? (await getColumnViews()).get(column.slug) : undefined
 
   return (
-    <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
+    <main className="bg-pitch-night text-floodlight">
       {column.published && <ColumnViewBeacon slug={column.slug} />}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <article className="max-w-2xl mx-auto px-4 pt-8 pb-16">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+      <article className="bg-turf/40 border border-turf-line/60 rounded-none p-5 sm:p-8">
         <Link href="/columns" className="text-xs text-floodlight/50 hover:text-floodlight transition-colors">
           ← 칼럼 목록
         </Link>
@@ -99,7 +100,7 @@ export default async function ColumnPage({ params }: { params: Promise<{ slug: s
           {column.summary && <p className="text-sm text-floodlight/60 mt-3 leading-relaxed">{column.summary}</p>}
           <p className="text-xs text-floodlight/40 mt-4">
             GoalLine 칼럼 · {formatDate(column.createdAt)}
-            {edited && ` (수정 ${formatDate(column.updatedAt)})`} · {readingMinutes(column.content)}분 읽기
+            {edited && ` (수정 ${formatDate(column.updatedAt)})`}
             {!column.published && " · 비공개"}
             {admin && column.published && (
               <span className="text-score-amber/70"> · 조회 {views?.total ?? 0} (오늘 {views?.today ?? 0}) · 관리자만 보임</span>
@@ -139,6 +140,7 @@ export default async function ColumnPage({ params }: { params: Promise<{ slug: s
           )}
         </footer>
       </article>
+      </div>
     </main>
   )
 }
