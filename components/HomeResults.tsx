@@ -87,7 +87,9 @@ export default function HomeResults({ tabs, results }: { tabs: Tab[]; results: H
           {list.length > PAGE && (
             <button
               onClick={() => setOpen((v) => !v)}
-              className="mt-2 w-full text-sm text-floodlight/80 hover:text-score-amber py-2 border border-turf-line/60 hover:border-score-amber/60"
+              className={`mt-2 w-full text-sm text-floodlight/80 hover:text-score-amber py-2 border border-turf-line/60 hover:border-score-amber/60 ${
+                open ? "sticky bottom-[4.75rem] md:bottom-3 z-10 bg-pitch-night shadow-[0_-8px_12px_-4px_rgba(0,0,0,0.6)]" : ""
+              }`}
             >
               {open ? "경기 접기 ▴" : `나머지 ${list.length - PAGE}경기 펼치기 ▾`}
             </button>

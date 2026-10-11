@@ -118,7 +118,7 @@ export default function LeagueHub({ tabs, initial }: { tabs: Tab[]; initial: Lea
             {data.table.length > FOLD && (
               <button
                 onClick={() => setExpanded((v) => !v)}
-                className="mt-2 w-full text-sm text-floodlight/80 hover:text-score-amber py-2 rounded-lg border border-turf-line/60 hover:border-score-amber/60"
+                className="mt-2 w-full text-sm text-floodlight/80 hover:text-score-amber py-2 border border-turf-line/60 hover:border-score-amber/60"
               >
                 {expanded ? "순위표 접기 ▴" : `전체 순위 펼치기 · ${data.table.length}팀 ▾`}
               </button>
