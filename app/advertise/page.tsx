@@ -23,7 +23,7 @@ function Row({ title, children }: { title: string; children: React.ReactNode }) 
   return (
     <section className="grid grid-cols-1 gap-3 border-t border-turf-line/50 pt-5 md:grid-cols-[200px_minmax(0,1fr)] md:gap-8">
       <h2 className="text-base font-semibold text-floodlight">{title}</h2>
-      <div className="text-sm text-floodlight/80 leading-relaxed space-y-3">{children}</div>
+      <div className="text-sm text-floodlight/80 leading-relaxed break-keep space-y-3">{children}</div>
     </section>
   )
 }
@@ -33,7 +33,7 @@ export default function AdvertisePage() {
     <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-8 text-floodlight">
       <header>
         <h1 className="text-xl font-bold text-floodlight">광고하기</h1>
-        <p className="text-sm text-floodlight/75 mt-2 max-w-3xl leading-relaxed">
+        <p className="text-sm text-floodlight/75 mt-2 max-w-4xl leading-relaxed break-keep">
           GoalLine은 축구를 즐겨 보는 방문자에게 도달하고 싶은 브랜드와 파트너십을 열어두고 있습니다.
           콘텐츠와 결이 맞는 광고를 통해 광고주에게는 정확한 타깃을, 방문자에게는 불편하지 않은 경험을 드리는 것이 목표입니다.
         </p>

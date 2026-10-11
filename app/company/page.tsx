@@ -27,7 +27,7 @@ function Row({ title, children }: { title: string; children: React.ReactNode }) 
   return (
     <section className="grid grid-cols-1 gap-3 border-t border-turf-line/50 pt-5 md:grid-cols-[200px_minmax(0,1fr)] md:gap-8">
       <h2 className="text-base font-semibold text-floodlight">{title}</h2>
-      <div className="text-sm text-floodlight/80 leading-relaxed space-y-3">{children}</div>
+      <div className="text-sm text-floodlight/80 leading-relaxed break-keep space-y-3">{children}</div>
     </section>
   )
 }
@@ -37,7 +37,7 @@ export default function CompanyPage() {
     <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-8 text-floodlight">
       <header>
         <h1 className="text-xl font-bold text-floodlight">회사소개</h1>
-        <p className="text-sm text-floodlight/75 mt-2 max-w-3xl leading-relaxed">
+        <p className="text-sm text-floodlight/75 mt-2 max-w-4xl leading-relaxed break-keep">
           GoalLine은 한국 축구 팬을 위한 정보 서비스입니다. 흩어져 있는 경기 결과와 순위, 해외파 선수의 기록을 한곳에 모으고,
           숫자만으로는 보이지 않는 이야기를 칼럼으로 풀어냅니다.
         </p>
