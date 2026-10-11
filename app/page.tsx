@@ -109,7 +109,7 @@ export default async function Home() {
 
         {/* 오른쪽: 게시판 + 광고 */}
         <aside className="space-y-4">
-          <section className="bg-turf/40 border border-turf-line/60 rounded-none p-4">
+          <section className="border-t border-turf-line/50 pt-4">
             <div className="flex items-center justify-between mb-3">
               <Link href="/board" className="text-base font-semibold text-floodlight hover:text-score-amber">
                 게시판
@@ -154,9 +154,7 @@ export default async function Home() {
             )}
           </section>
 
-          <div className="bg-turf/40 border border-turf-line/60 rounded-none p-3">
-            <CoupangBanner />
-          </div>
+          <CoupangBanner />
         </aside>
       </div>
 
@@ -164,7 +162,7 @@ export default async function Home() {
       <LeagueHub tabs={BOARD_LEAGUES.map((l) => ({ id: l.id, label: l.label }))} initial={leagueBoard} />
 
       {/* 이번 주 해외파 */}
-      <section className="bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5">
+      <section className="border-t border-turf-line/50 pt-4">
         <div className="flex items-baseline justify-between mb-4">
  <h2 className="text-base font-semibold text-floodlight">이번 주 해외파</h2>
           <Link href="/korean-players" className="text-xs text-floodlight/75 hover:text-score-amber">

@@ -261,7 +261,7 @@ export default async function PlayerPage({
 
         {/* 최신 이적 배너 */}
         {latestTransfer && (
-          <div className="flex items-center gap-2 text-sm text-floodlight/80 bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5">
+          <div className="flex items-center gap-2 text-sm text-floodlight/80 border-t border-turf-line/50 pt-4">
             <Logo src={latestTransfer.teams.out.logo} alt="" className="w-4 h-4" />
             <span>{latestTransfer.teams.out.name}에서 이적</span>
             {latestTransfer.type && <span className="text-score-amber">({latestTransfer.type})</span>}
@@ -272,7 +272,7 @@ export default async function PlayerPage({
         )}
 
         {/* ── 기본 정보 ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-2 bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-2 border-t border-turf-line/50 pt-4">
           <div className="space-y-2.5 text-sm">
             {player.height && (
               <div className="flex justify-between">
@@ -311,7 +311,7 @@ export default async function PlayerPage({
 
         {/* ── 시즌 성적 요약 + 시즌 선택 ── */}
         {stat && (
-          <div className="bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5">
+          <div className="border-t border-turf-line/50 pt-4">
             {/* 헤더: 리그명 + 시즌 선택 */}
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -381,7 +381,7 @@ export default async function PlayerPage({
 
         {/* ── 시즌 상세 통계 ── */}
         {stat && (
-          <div className="bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5">
+          <div className="border-t border-turf-line/50 pt-4">
             <p className="text-base font-semibold mb-4">
               시즌 상세 통계
               <span className="text-xs text-floodlight/65 ml-2">{stat.league.name} {season}/{season + 1}</span>
@@ -426,7 +426,7 @@ export default async function PlayerPage({
 
         {/* ── 트로피 ── */}
         {winnerTrophies.length > 0 && (
-          <div className="bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5">
+          <div className="border-t border-turf-line/50 pt-4">
             <p className="text-base font-semibold mb-3">트로피</p>
             <div className="space-y-2">
               {winnerTrophies.slice(0, 8).map((t, i) => (
@@ -442,7 +442,7 @@ export default async function PlayerPage({
 
         {/* ── 부상 이력 ── */}
         {sidelined.length > 0 && (
-          <div className="bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5">
+          <div className="border-t border-turf-line/50 pt-4">
             <p className="text-base font-semibold mb-3">⚕️ 부상 이력</p>
             <div className="space-y-2">
               {sidelined.slice(0, 8).map((s, i) => (
@@ -461,7 +461,7 @@ export default async function PlayerPage({
 
         {/* ── 소개 ── */}
         {stat && (
-          <div className="bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5">
+          <div className="border-t border-turf-line/50 pt-4">
             <p className="text-base font-semibold mb-3">소개</p>
             <p className="text-sm text-floodlight/80 leading-relaxed">
               {player.name}은(는) {player.nationality} 국적의 {player.age}세 선수로, 현재 {stat.team.name} 소속 {POSITION_KR[stat.games.position] ?? stat.games.position}입니다.{" "}

@@ -47,7 +47,7 @@ export default function LeagueHub({ tabs, initial }: { tabs: Tab[]; initial: Lea
   const label = tabs.find((t) => t.id === active)?.label ?? ""
 
   return (
-    <section className={`bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5 grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_300px] transition-opacity ${loading ? "opacity-60" : ""}`}>
+    <section className={`border-t border-turf-line/50 pt-4 grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_300px] transition-opacity ${loading ? "opacity-60" : ""}`}>
       <div className="min-w-0">
       <div className="flex items-center justify-between gap-3 mb-3">
  <h2 className="text-base font-semibold text-floodlight shrink-0">리그 순위</h2>

@@ -76,7 +76,7 @@ function HeroSection({ articles }: { articles: Article[] }) {
       </a>
 
       {/* 트렌딩 */}
-      <div className="bg-turf/30 border border-turf-line/40">
+      <div className="border-t border-turf-line/50">
         <p className="text-sm font-semibold px-4 py-3 border-b border-turf-line/40 text-floodlight/80">트렌딩</p>
         <div className="divide-y divide-turf-line/20">
           {trending.map((a, i) => (

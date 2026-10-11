@@ -24,7 +24,7 @@ export default function HomeResults({ tabs, results }: { tabs: Tab[]; results: H
   }
 
   return (
-    <section className="bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5">
+    <section className="border-t border-turf-line/50 pt-4">
       <div className="flex items-baseline justify-between gap-3 mb-3">
  <h2 className="text-base font-semibold text-floodlight">최근 경기 결과</h2>
         <Link href="/matches" className="text-xs sm:text-sm text-floodlight/70 hover:text-score-amber shrink-0">

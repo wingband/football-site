@@ -135,7 +135,7 @@ export default async function SearchPage({
 
 
         {leagues.length > 0 && (
-          <section className="bg-turf/40 border border-turf-line/60 p-4 sm:p-5">
+          <section className="border-t border-turf-line/50 pt-4">
             <h2 className="text-base font-semibold text-floodlight mb-2">리그 <span className="text-sm font-normal text-floodlight/65 font-data">{leagues.length}</span></h2>
             <div className="divide-y divide-turf-line/40">
               {leagues.map((l) => (
@@ -154,7 +154,7 @@ export default async function SearchPage({
         )}
 
         {teams.length > 0 && (
-          <section className="bg-turf/40 border border-turf-line/60 p-4 sm:p-5">
+          <section className="border-t border-turf-line/50 pt-4">
             <h2 className="text-base font-semibold text-floodlight mb-2">팀 <span className="text-sm font-normal text-floodlight/65 font-data">{teams.length}</span></h2>
             <div className="divide-y divide-turf-line/40">
               {teams.map((t) => (
@@ -173,7 +173,7 @@ export default async function SearchPage({
         )}
 
         {players.length > 0 && (
-          <section className="bg-turf/40 border border-turf-line/60 p-4 sm:p-5">
+          <section className="border-t border-turf-line/50 pt-4">
             <h2 className="text-base font-semibold text-floodlight mb-2">선수 <span className="text-sm font-normal text-floodlight/65 font-data">{players.length}</span></h2>
             <div className="divide-y divide-turf-line/40">
               {players.map((p) => (
@@ -192,7 +192,7 @@ export default async function SearchPage({
         )}
 
         {totalResults === 0 && (
-          <div className="bg-turf/40 border border-turf-line/60 p-4 sm:p-5 text-sm text-floodlight/80 leading-relaxed">
+          <div className="border-t border-turf-line/50 pt-4 text-sm text-floodlight/80 leading-relaxed">
             <p className="font-semibold text-floodlight">검색 결과가 없어요</p>
             <p className="mt-1">한글로는 해외파 선수, 주요 팀, 리그 이름을 찾을 수 있어요. 그 밖의 선수는 영어 이름(예: Haaland)으로 검색해 주세요.</p>
           </div>

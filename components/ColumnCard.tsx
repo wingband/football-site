@@ -44,7 +44,7 @@ export default function ColumnCard({ column: c, extra }: { column: Column; extra
   return (
     <Link
       href={`/columns/${c.slug}`}
-      className="group flex flex-col gap-3 bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5 hover:border-score-amber/60 transition-colors"
+      className="group flex flex-col gap-3 border-t border-turf-line/50 pt-4 hover:border-score-amber/60 transition-colors"
     >
       <div className="flex items-center justify-between gap-2">
         <span className={`text-xs sm:text-sm font-semibold px-2.5 py-1 rounded-full ${BADGE_TONE[info.badge] ?? "bg-turf-line/60 text-floodlight/80"}`}>

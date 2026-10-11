@@ -150,7 +150,7 @@ export default async function StandingsPage({
 
         {/* 해당 시즌 데이터가 아예 없을 때 (예: API 플랜이 커버하지 않는 과거 시즌) */}
         {!hasAnyStandings && (
-          <div className="bg-turf/40 border border-turf-line/60 rounded-none px-5 py-8 text-center">
+          <div className="border-t border-turf-line/50 px-5 py-8 text-center">
             <p className="text-sm text-floodlight/50">
               {formatSeasonLabel(season)} 시즌 순위표 데이터가 없습니다.
             </p>
@@ -166,7 +166,7 @@ export default async function StandingsPage({
             if (!standings?.length) return null
 
             return (
-              <section key={id} id={`league-${id}`} className="bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5 scroll-mt-20">
+              <section key={id} id={`league-${id}`} className="border-t border-turf-line/50 pt-4 scroll-mt-20">
                 {/* 리그 헤더 */}
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2.5">
@@ -267,7 +267,7 @@ export default async function StandingsPage({
         </div>
 
         {/* SEO 텍스트 */}
-        <section className="bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5">
+        <section className="border-t border-turf-line/50 pt-4">
  <h2 className="text-base font-semibold text-floodlight mb-2">유럽 축구 리그 순위표 안내</h2>
           <p className="text-sm text-floodlight/70 leading-relaxed">
             본 페이지에서는 {formatSeasonLabel(season)} 시즌 프리미어리그(잉글랜드), 라리가(스페인),

@@ -65,12 +65,12 @@ export default function PlayerCareerRecent({
     <>
       {/* ── 최근 경기 ── */}
       {recentMatches === null ? (
-        <div className="bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5">
+        <div className="border-t border-turf-line/50 pt-4">
           <p className="text-base font-semibold mb-3">최근 경기</p>
           <div className="h-24 animate-pulse bg-turf-line/10 rounded" />
         </div>
       ) : recentMatches.length > 0 ? (
-        <div className="bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5">
+        <div className="border-t border-turf-line/50 pt-4">
           <p className="text-base font-semibold mb-3">최근 경기</p>
           <div className="divide-y divide-turf-line/20">
             {recentMatches.map((m) => (
@@ -105,12 +105,12 @@ export default function PlayerCareerRecent({
 
       {/* ── 경력 ── */}
       {career === null ? (
-        <div className="bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5">
+        <div className="border-t border-turf-line/50 pt-4">
           <p className="text-base font-semibold mb-3">경력</p>
           <div className="h-20 animate-pulse bg-turf-line/10 rounded" />
         </div>
       ) : clubCareer.length > 0 || nationalCareer.length > 0 ? (
-        <div className="bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5">
+        <div className="border-t border-turf-line/50 pt-4">
           <p className="text-base font-semibold mb-3">경력</p>
           {clubCareer.length > 0 && (
             <div className="mb-4">
