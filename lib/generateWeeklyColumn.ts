@@ -1,5 +1,7 @@
 import { getKoreanPlayersWeek, formatKickoffKst, koLeague, koTeam, type PlayerWeek } from "@/lib/koreanWeekly"
 import { getColumns, makeColumnSlug, saveColumn } from "@/lib/columns"
+import { put } from "@vercel/blob"
+import { pickTopRows, renderWeeklyCard, periodLabel } from "@/lib/weeklyCard"
 
 // 주간 해외파 칼럼 "초안" 자동 생성 (2026-10-10 신설).
 // 데이터(경기 결과·출전 시간·평점·공격포인트)로 뼈대를 AI가 쓰고, 선수별 섹션마다
@@ -117,7 +119,16 @@ export async function generateWeeklyKoreanDraft({ refreshDraft = false } = {}): 
   const raw = (await callOpenAI(buildPrompt(weeks))).trim()
   if (!raw) return { ok: false, error: "AI 응답이 비어 있습니다" }
 
-  const { title, summary, content } = shapeDraft(raw)
+  const shaped = shapeDraft(raw)
+  const { title, summary } = shaped
+  let content = shaped.content
+
+  // 글 맨 위에 "평점 TOP 5" 카드 이미지를 붙인다. 이미지 저장소가 없거나 그리기에
+  // 실패해도 초안 자체는 그대로 만든다(카드는 있으면 좋은 부가 요소).
+  const cardUrl = await makeWeeklyCard(weeks)
+  if (cardUrl) {
+    content = `![이번 주 해외파 평점 TOP 5 — GoalLine 자체 집계](${cardUrl})\n\n${content}`
+  }
 
   const slug = existing?.slug ?? makeColumnSlug(WEEKLY_SLUG_MARK)
   await saveColumn({
@@ -169,4 +180,22 @@ export function shapeDraft(raw: string): { title: string; summary: string; conte
   }
   text = `${text.trim()}\n\n## 한 줄 총평\n${slot}`
   return { title, summary, content: text }
+}
+
+async function makeWeeklyCard(weeks: Awaited<ReturnType<typeof getKoreanPlayersWeek>>): Promise<string | null> {
+  if (!process.env.BLOB_READ_WRITE_TOKEN) return null
+  const rows = pickTopRows(weeks, 5)
+  if (rows.length < 2) return null // 1명뿐이면 "TOP" 카드가 어색해서 생략
+  try {
+    const png = await renderWeeklyCard(rows, periodLabel())
+    const blob = await put(`columns/weekly-card-${new Date().toISOString().slice(0, 10)}.png`, png, {
+      access: "public",
+      addRandomSuffix: true,
+      contentType: "image/png",
+    })
+    return blob.url
+  } catch (err) {
+    console.error("주간 카드 이미지 생성 실패:", err)
+    return null
+  }
 }

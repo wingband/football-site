@@ -22,7 +22,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const column = await loadColumn(slug)
   if (!column) return { title: "칼럼을 찾을 수 없습니다", robots: { index: false, follow: false } }
 
-  const description = column.summary || column.content.replace(/[#>*~\-\[\]()]/g, "").slice(0, 150)
+  const firstImage = column.content.match(/^!\[[^\]]*\]\((https:\/\/[^\s)]+)\)\s*$/m)?.[1]
+  const description = column.summary || column.content.replace(/^!\[.*$/gm, "").replace(/[#>*~\-\[\]()]/g, "").trim().slice(0, 150)
   return {
     title: column.title,
     description,
@@ -32,6 +33,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       title: column.title,
       description,
       type: "article",
+      // 본문 첫 이미지(주간 칼럼이면 평점 TOP 5 카드)를 공유 미리보기 이미지로 쓴다
+      ...(firstImage ? { images: [{ url: firstImage, width: 1200, height: 630 }] } : {}),
       publishedTime: column.createdAt,
       modifiedTime: column.updatedAt,
     },
