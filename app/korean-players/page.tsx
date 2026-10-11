@@ -106,17 +106,6 @@ export default async function KoreanPlayersPage() {
         </div>
       </section>
 
-      {/* SEO 텍스트 블록 */}
-      <section className={CARD}>
- <h2 className="text-base font-semibold text-floodlight mb-2">한국 축구 해외파 현황</h2>
-        <p className="text-sm text-floodlight/70 leading-relaxed">
-          현재 유럽 무대에서 활약 중인 한국 선수는 라리가의 이강인(아틀레티코 마드리드),
-          분데스리가의 김민재(바이에른 뮌헨)·황희찬(샬케04)·이재성·정우영·옌스 카스트로프 등이 있습니다.
-          잉글랜드에서는 김지수(브렌트퍼드)와 챔피언십의 배준호·백승호·엄지성이 뛰고 있고,
-          손흥민은 MLS LAFC에서 새로운 도전을 이어가고 있습니다.
-          GoalLine은 이 선수들의 매 경기 성적, 평점, 출전 시간을 실시간으로 추적합니다.
-        </p>
-      </section>
       <CoupangBanner />
     </main>
   )
