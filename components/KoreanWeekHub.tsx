@@ -23,7 +23,7 @@ function ratingColor(r: number | null) {
   return "text-floodlight/70"
 }
 
-const CARD = "bg-turf/40 border border-turf-line/60 rounded-2xl p-4 sm:p-5"
+const CARD = "bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5"
 const photo = (id: number) => `https://media.api-sports.io/football/players/${id}.png`
 
 function shortKst(iso: string) {

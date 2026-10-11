@@ -99,7 +99,7 @@ export default function ScheduleCalendar({ month, today, prevMonth, nextMonth, i
       </p>
 
       {/* 달력 */}
-      <div className="border border-turf-line/60 rounded-2xl overflow-hidden bg-turf/30">
+      <div className="border border-turf-line/60 rounded-none overflow-hidden bg-turf/30">
         <div className="grid grid-cols-7 border-b border-turf-line/60 text-xs">
           {WEEK.map((w, i) => (
             <div
@@ -167,7 +167,7 @@ export default function ScheduleCalendar({ month, today, prevMonth, nextMonth, i
       </div>
 
       {/* 선택한 날짜 경기 목록 */}
-      <section className="mt-5 bg-turf/40 border border-turf-line/60 rounded-2xl p-4 sm:p-5">
+      <section className="mt-5 bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5">
  <h3 className="text-sm font-semibold font-display text-floodlight mb-3">
           {Number(selected.slice(5, 7))}월 {Number(selected.slice(8))}일 ({WEEK[new Date(`${selected}T00:00:00Z`).getUTCDay()]}) 경기
           <span className="ml-2 text-xs text-floodlight/40 font-sans">한국 시간</span>

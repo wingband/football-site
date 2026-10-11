@@ -126,7 +126,7 @@ export default async function StandingsPage({
   return (
     <main className="text-floodlight font-sans">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-        <div className="bg-turf/40 border border-turf-line/60 rounded-2xl p-4 sm:p-5">
+        <div className="bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5">
  <h1 className="text-xl font-display text-floodlight">
             {formatSeasonLabel(season)} 리그 순위표
           </h1>
@@ -150,7 +150,7 @@ export default async function StandingsPage({
 
         {/* 해당 시즌 데이터가 아예 없을 때 (예: API 플랜이 커버하지 않는 과거 시즌) */}
         {!hasAnyStandings && (
-          <div className="bg-turf/40 border border-turf-line/60 rounded-2xl px-5 py-8 text-center">
+          <div className="bg-turf/40 border border-turf-line/60 rounded-none px-5 py-8 text-center">
             <p className="text-sm text-floodlight/50">
               {formatSeasonLabel(season)} 시즌 순위표 데이터가 없습니다.
             </p>
@@ -166,7 +166,7 @@ export default async function StandingsPage({
             if (!standings?.length) return null
 
             return (
-              <section key={id} id={`league-${id}`} className="bg-turf/40 border border-turf-line/60 rounded-2xl p-4 sm:p-5 scroll-mt-20">
+              <section key={id} id={`league-${id}`} className="bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5 scroll-mt-20">
                 {/* 리그 헤더 */}
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2.5">
@@ -190,7 +190,7 @@ export default async function StandingsPage({
                         {group[0]?.group}
                       </p>
                     )}
-                    <div className="overflow-hidden rounded-xl border border-turf-line/40">
+                    <div className="overflow-hidden rounded-none border border-turf-line/40">
                       {/* 컬럼 헤더 */}
                       <div className="grid grid-cols-[24px_1fr_32px_32px_32px_32px_40px_48px_80px] gap-1 px-3 py-2 text-xs text-floodlight/60 border-b border-turf-line/20">
                         <span>#</span>
@@ -267,7 +267,7 @@ export default async function StandingsPage({
         </div>
 
         {/* SEO 텍스트 */}
-        <section className="bg-turf/40 border border-turf-line/60 rounded-2xl p-4 sm:p-5">
+        <section className="bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5">
  <h2 className="text-base font-semibold font-display text-floodlight mb-2">유럽 축구 리그 순위표 안내</h2>
           <p className="text-sm text-floodlight/70 leading-relaxed">
             본 페이지에서는 {formatSeasonLabel(season)} 시즌 프리미어리그(잉글랜드), 라리가(스페인),

@@ -112,7 +112,7 @@ export default function BoardWritePage() {
         {cat ? cat.title : "게시판"} 글쓰기
       </h1>
 
-      <div className="bg-turf/40 border border-turf-line/60 rounded-2xl p-4 sm:p-5 space-y-3">
+      <div className="bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5 space-y-3">
         {/* 게시판 선택 + 제목 */}
         <div className="flex flex-col sm:flex-row gap-2">
           <select

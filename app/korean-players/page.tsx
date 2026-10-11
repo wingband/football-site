@@ -59,7 +59,7 @@ export default async function KoreanPlayersPage() {
     .filter(l => byLeague.has(l))
     .map(l => ({ league: l, players: byLeague.get(l)! }))
 
-  const CARD = "bg-turf/40 border border-turf-line/60 rounded-2xl p-4 sm:p-5"
+  const CARD = "bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5"
   return (
     <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6 text-floodlight">
       {/* 헤더 */}

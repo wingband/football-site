@@ -47,7 +47,7 @@ export default function LeagueHub({ tabs, initial }: { tabs: Tab[]; initial: Lea
   const label = tabs.find((t) => t.id === active)?.label ?? ""
 
   return (
-    <section className="bg-turf/40 border border-turf-line/60 rounded-2xl p-4 sm:p-5">
+    <section className="bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5">
       <div className="flex items-center justify-between gap-3 mb-3">
  <h2 className="text-base font-semibold font-display text-floodlight shrink-0">리그 순위</h2>
         <Link href={`/leagues/${active}`} className="text-xs text-floodlight/50 hover:text-score-amber shrink-0">
@@ -158,7 +158,7 @@ function PlayerCard({
   const rows = (tab === "scorers" ? scorers : assists).slice(0, 5)
   const unit = tab === "scorers" ? "골" : "도움"
   return (
-    <div className="bg-pitch-night/50 border border-turf-line/40 rounded-xl p-3 self-start">
+    <div className="bg-pitch-night/50 border border-turf-line/40 rounded-none p-3 self-start">
       <div className="grid grid-cols-2 gap-1 p-1 mb-2 rounded-lg bg-turf/50">
         {([["scorers", "득점 순위"], ["assists", "도움 순위"]] as const).map(([k, l]) => (
           <button

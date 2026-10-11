@@ -96,7 +96,7 @@ export default async function BoardPage({
       </div>
 
       {/* 게시판 탭 (커뮤니티식 가로 탭) */}
-      <nav aria-label="게시판 분류" className="bg-turf/40 border border-turf-line/60 rounded-t-xl border-b-0">
+      <nav aria-label="게시판 분류" className="bg-turf/40 border border-turf-line/60 rounded-t-none border-b-0">
         <ul className="flex flex-wrap">
           {tabs.map((t) => {
             const active = t.key === category
@@ -117,7 +117,7 @@ export default async function BoardPage({
       </nav>
 
       {/* 글 목록 — 표 형태 */}
-      <div className="border border-turf-line/60 rounded-b-xl overflow-hidden bg-turf/20">
+      <div className="border border-turf-line/60 rounded-b-none overflow-hidden bg-turf/20">
         <div className="hidden sm:grid grid-cols-[88px_minmax(0,1fr)_120px_64px_56px_48px] gap-2 px-3 py-2 text-xs text-floodlight/60 bg-turf/50 border-b border-turf-line/60 text-center">
           <span>분류</span>
           <span>제목</span>

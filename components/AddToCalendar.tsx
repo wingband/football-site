@@ -45,7 +45,7 @@ export default function AddToCalendar({ title, startIso, id, compact = false }: 
         {compact ? "📅" : "📅 내 캘린더에 저장 ▾"}
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1.5 z-30 w-64 bg-pitch-night border border-turf-line rounded-xl shadow-xl p-1.5 text-sm">
+        <div className="absolute right-0 top-full mt-1.5 z-30 w-64 bg-pitch-night border border-turf-line rounded-none shadow-xl p-1.5 text-sm">
           <a href={google} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)} className="block px-3 py-2 rounded-lg text-floodlight hover:bg-turf-line/40">
             구글 캘린더에 저장
           </a>

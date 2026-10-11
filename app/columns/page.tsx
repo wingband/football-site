@@ -35,7 +35,7 @@ export default async function ColumnsPage({ searchParams }: { searchParams: Prom
 
   return (
     <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6 text-floodlight">
-      <section className="bg-turf/40 border border-turf-line/60 rounded-2xl p-4 sm:p-5">
+      <section className="bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
  <h1 className="text-xl font-display text-floodlight">GoalLine 칼럼</h1>
@@ -58,7 +58,7 @@ export default async function ColumnsPage({ searchParams }: { searchParams: Prom
       </section>
 
       {pendingDrafts.length > 0 && (
-        <section className="p-4 rounded-2xl border border-score-amber/50 bg-score-amber/10">
+        <section className="p-4 rounded-none border border-score-amber/50 bg-score-amber/10">
           <p className="text-sm font-semibold text-score-amber mb-3">
             ✍️ 한 줄 총평을 기다리는 초안 {pendingDrafts.length}개 — 총평만 쓰면 바로 발행돼요
           </p>

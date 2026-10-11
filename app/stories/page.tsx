@@ -120,7 +120,7 @@ export default function StoriesPage() {
 
   return (
     <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6 text-floodlight">
-      <section className="bg-turf/40 border border-turf-line/60 rounded-2xl p-4 sm:p-5">
+      <section className="bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5">
  <h1 className="text-xl font-display text-floodlight">경기 리뷰</h1>
         <p className="text-sm text-floodlight/75 mt-2">주요 경기 분석 · {articles.length}개</p>
 
@@ -181,7 +181,7 @@ export default function StoriesPage() {
       {loading ? (
         <div className="grid gap-4 md:grid-cols-2">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="bg-turf/30 border border-turf-line/40 animate-pulse h-36 rounded-2xl" />
+            <div key={i} className="bg-turf/30 border border-turf-line/40 animate-pulse h-36 rounded-none" />
           ))}
         </div>
       ) : displayed.length === 0 ? (
@@ -198,7 +198,7 @@ export default function StoriesPage() {
               <Link
                 key={a.slug}
                 href={`/stories/${a.slug}`}
-                className="group block bg-turf/40 border border-turf-line/60 rounded-2xl p-4 sm:p-5 hover:border-score-amber/60 transition-colors"
+                className="group block bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5 hover:border-score-amber/60 transition-colors"
               >
                 {/* 리그 · 날짜 */}
                 <div className="flex items-center gap-2 mb-3">
