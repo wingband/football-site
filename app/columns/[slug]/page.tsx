@@ -5,6 +5,7 @@ import { getColumnBySlug, isValidColumnSlug, readingMinutes } from "@/lib/column
 import { isAdmin } from "@/lib/admin"
 import { SITE_URL } from "@/lib/siteConfig"
 import ColumnBody from "@/components/ColumnBody"
+import ShareButtons from "@/components/ShareButtons"
 
 export const dynamic = "force-dynamic"
 
@@ -95,11 +96,23 @@ export default async function ColumnPage({ params }: { params: Promise<{ slug: s
             {edited && ` (수정 ${formatDate(column.updatedAt)})`} · {readingMinutes(column.content)}분 읽기
             {!column.published && " · 비공개"}
           </p>
+          {column.published && (
+            <div className="mt-5">
+              <ShareButtons url={`${SITE_URL}/columns/${column.slug}`} title={column.title} />
+            </div>
+          )}
         </header>
 
         <div className="py-8">
           <ColumnBody content={column.content} />
         </div>
+
+        {column.published && (
+          <div className="pb-8">
+            <p className="text-sm text-floodlight/70 mb-3">이 글이 도움이 됐다면 축구 좋아하는 친구에게 공유해 주세요 ⚽</p>
+            <ShareButtons url={`${SITE_URL}/columns/${column.slug}`} title={column.title} />
+          </div>
+        )}
 
         <footer className="pt-6 border-t border-turf-line/40 flex items-center justify-between">
           <Link href="/columns" className="text-sm text-floodlight/60 hover:text-floodlight transition-colors">
