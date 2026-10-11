@@ -4,6 +4,8 @@ import { teamHref } from "@/lib/slug"
 import { getSeasonYear, formatSeasonLabel } from "@/lib/season"
 import { getLeagueStandings } from "@/lib/leagueData"
 import SeasonSelect from "@/components/SeasonSelect"
+import { getCachedOrFetch } from "@/lib/apiCache"
+import type { StandingRow } from "@/lib/matchApi"
 import Logo from "@/components/Logo"
 import { teamKo } from "@/lib/koreanNames"
 
@@ -94,8 +96,19 @@ function FormBadge({ result }: { result: string }) {
 
 async function getStandingsData(leagueId: number, season: number) {
   const data = await getLeagueStandings(String(leagueId), season)
-  if (!data) return null
-  return data
+  if (data) return data
+  // API가 막혔을 때(일일 한도 소진 등): 홈 화면이 쓰는 DB 캐시에 남은 순위표로라도 보여준다
+  try {
+    const rows = await getCachedOrFetch<StandingRow[][]>(`standings:${leagueId}:${season}`, 10800, async () => {
+      throw new Error("cache only")
+    })
+    if (Array.isArray(rows) && rows.length > 0) {
+      return { league: { season, standings: rows } } as unknown as NonNullable<Awaited<ReturnType<typeof getLeagueStandings>>>
+    }
+  } catch {
+    // 캐시도 없으면 null
+  }
+  return null
 }
 
 export default async function StandingsPage({
