@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function CompanyPage() {
   return (
     <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
-      <div className="max-w-2xl mx-auto px-4 py-12">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
         <Link href="/" className="text-xs text-floodlight/40 hover:text-score-amber mb-8 inline-block">
           ← GoalLine 홈으로
         </Link>

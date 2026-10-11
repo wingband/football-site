@@ -36,7 +36,7 @@ export default async function TeamLayout({
   if (!info) {
     return (
       <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
-        <div className="max-w-4xl mx-auto pb-16 px-4">
+        <div className="max-w-6xl mx-auto pb-16 px-4 sm:px-6">
           <p className="text-floodlight/40 pt-8">팀 정보를 찾을 수 없습니다.</p>
         </div>
       </main>
@@ -59,7 +59,7 @@ export default async function TeamLayout({
 
   return (
     <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
-      <div className="max-w-4xl mx-auto pb-16 px-4">
+      <div className="max-w-6xl mx-auto pb-16 px-4 sm:px-6">
         <TeamHeader teamId={id} name={info.team.name} country={info.team.country} logo={info.team.logo} />
         {children}
       </div>

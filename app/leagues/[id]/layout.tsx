@@ -37,7 +37,7 @@ export default async function LeagueLayout({
 
   return (
     <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
-      <div className="max-w-4xl mx-auto pb-16 px-4">
+      <div className="max-w-6xl mx-auto pb-16 px-4 sm:px-6">
         {data ? (
           <LeagueHeader
             leagueId={id}

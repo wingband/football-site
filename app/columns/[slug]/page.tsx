@@ -83,7 +83,7 @@ export default async function ColumnPage({ params }: { params: Promise<{ slug: s
       {column.published && <ColumnViewBeacon slug={column.slug} />}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
-      <article className="max-w-4xl mx-auto">
+      <article>
         <Link href="/columns" className="text-xs text-floodlight/50 hover:text-floodlight transition-colors">
           ← 칼럼 목록
         </Link>

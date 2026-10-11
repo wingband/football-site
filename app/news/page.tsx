@@ -214,7 +214,7 @@ export default async function NewsPage() {
 
   return (
     <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
-      <div className="max-w-5xl mx-auto px-4 pb-16">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 pb-16">
         <div className="pt-8 pb-4">
           <h1 className="text-xl font-bold text-floodlight">뉴스</h1>
         </div>

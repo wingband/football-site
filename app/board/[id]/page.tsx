@@ -20,7 +20,7 @@ export default async function BoardPostPage({
 
   return (
     <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
-      <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
         <div className="flex items-center gap-2 text-xs">
           <Link href={listHref} className="text-floodlight/50 hover:text-floodlight transition-colors">
             ← {cat ? cat.title : "게시판"}

@@ -59,7 +59,7 @@ export default function BoardEditForm({ post }: { post: Post }) {
 
   return (
     <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
-      <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
         <div className="flex items-center gap-1.5 text-xs text-floodlight/40 mb-3">
           <Link href={`/board/${post.id}`} className="hover:text-floodlight/70 transition-colors truncate max-w-xs">
             {post.title}

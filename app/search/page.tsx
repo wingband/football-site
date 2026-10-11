@@ -113,7 +113,7 @@ export default async function SearchPage({
 
   if (!q) {
     return (
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-6 text-floodlight">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 text-floodlight">
         <p className="text-sm text-floodlight/75">검색어를 입력해주세요.</p>
       </main>
     )
