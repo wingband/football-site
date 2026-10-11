@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation"
 
 // 모바일 하단 고정 탭 (2026-10-11 메인 개편). 데스크톱에선 숨김.
 const TABS = [
+  { href: "/", label: "홈", icon: "🏠" },
   { href: "/korean-players", label: "해외파", icon: "🇰🇷" },
   { href: "/matches", label: "경기", icon: "⚽" },
   { href: "/schedule", label: "일정", icon: "📅" },
@@ -30,9 +31,9 @@ export default function MobileTabBar() {
       aria-label="하단 메뉴"
       className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-pitch-night/95 backdrop-blur border-t border-turf-line/60 pb-[env(safe-area-inset-bottom)]"
     >
-      <ul className="grid grid-cols-5">
+      <ul className="grid grid-cols-6">
         {TABS.map((t) => {
-          const active = pathname.startsWith(t.href)
+          const active = t.href === "/" ? pathname === "/" : pathname.startsWith(t.href)
           return (
             <li key={t.href}>
               <Link
