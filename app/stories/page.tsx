@@ -78,6 +78,15 @@ function oneLiner(a: Article): string {
   return `${home} vs ${away} ${league} 경기 리뷰입니다.`
 }
 
+const DAYS = ["일", "월", "화", "수", "목", "금", "토"]
+function kstDate(iso: string) {
+  return new Date(new Date(iso).getTime() + 9 * 3600_000)
+}
+function dateLabel(iso: string) {
+  const d = kstDate(iso)
+  return `${d.getUTCMonth() + 1}월 ${d.getUTCDate()}일 (${DAYS[d.getUTCDay()]})`
+}
+
 function shortDate(iso: string) {
   const d = new Date(new Date(iso).getTime() + 9 * 3600_000)
   return `${d.getUTCMonth() + 1}월 ${d.getUTCDate()}일`
@@ -86,7 +95,7 @@ function shortDate(iso: string) {
 export default function StoriesPage() {
   const [articles, setArticles] = useState<ArticleWithLogos[]>([])
   const [loading, setLoading] = useState(true)
-  const [shown, setShown] = useState(12)
+  const [shown, setShown] = useState(20)
   const [activeTab, setActiveTab] = useState<string>("전체")
 
   useEffect(() => {
@@ -113,6 +122,17 @@ export default function StoriesPage() {
     return articles.filter((a) => a.leagueName.includes(activeTab) || activeTab.includes(a.leagueName.split(" ")[0]))
   }, [articles, activeTab])
 
+  // 날짜별 묶음 (최신순 유지)
+  const groups = useMemo(() => {
+    const m = new Map<string, ArticleWithLogos[]>()
+    for (const a of displayed.slice(0, shown)) {
+      const key = kstDate(a.createdAt).toISOString().slice(0, 10)
+      if (!m.has(key)) m.set(key, [])
+      m.get(key)!.push(a)
+    }
+    return Array.from(m.entries())
+  }, [displayed, shown])
+
   // 실제 존재하는 리그만 탭에 표시
   const existingLeagues = new Set(articles.map((a) => a.leagueName))
   const visibleTabs = FEATURED_TABS.filter((t) =>
@@ -129,7 +149,7 @@ export default function StoriesPage() {
         <div className="flex gap-1.5 overflow-x-auto pt-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {/* 전체 탭 */}
           <button
-            onClick={() => { setShown(12); setActiveTab("전체") }}
+            onClick={() => { setShown(20); setActiveTab("전체") }}
             className={`shrink-0 px-2.5 py-1 rounded-full border text-xs transition-colors ${
               activeTab === "전체"
                 ? "bg-score-amber text-pitch-night border-score-amber font-bold"
@@ -147,7 +167,7 @@ export default function StoriesPage() {
             return (
               <button
                 key={tab.label}
-                onClick={() => { setShown(12); setActiveTab(tab.label) }}
+                onClick={() => { setShown(20); setActiveTab(tab.label) }}
                 className={`shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs transition-colors ${
                   activeTab === tab.label
                     ? "bg-score-amber text-pitch-night border-score-amber font-bold"
@@ -164,7 +184,7 @@ export default function StoriesPage() {
           {/* 그 외 탭 */}
           {hasOther && (
             <button
-              onClick={() => { setShown(12); setActiveTab("그 외") }}
+              onClick={() => { setShown(20); setActiveTab("그 외") }}
               className={`shrink-0 px-2.5 py-1 rounded-full border text-xs transition-colors ${
                 activeTab === "그 외"
                   ? "bg-score-amber text-pitch-night border-score-amber font-bold"
@@ -182,54 +202,58 @@ export default function StoriesPage() {
       {loading ? (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="bg-turf/30 border border-turf-line/40 animate-pulse h-28 rounded-none" />
+            <div key={i} className="bg-turf/30 border border-turf-line/40 animate-pulse h-20 rounded-none" />
           ))}
         </div>
       ) : displayed.length === 0 ? (
         <p className="text-floodlight/60 text-sm py-8 text-center">해당 리그 리뷰가 없습니다.</p>
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {displayed.slice(0, shown).map((a) => {
-            const leagueLogo = Object.entries(LEAGUE_LOGOS).find(([k]) =>
-              a.leagueName.includes(k) || k.includes(a.leagueName.split(" ")[0])
-            )?.[1]
-            const hasScore = a.homeScore !== null && a.awayScore !== null
-
-            return (
-              <Link
-                key={a.slug}
-                href={`/stories/${a.slug}`}
-                className="group block bg-turf/40 border border-turf-line/60 rounded-none p-4 hover:border-score-amber/60 transition-colors"
-              >
-                {/* 리그 · 날짜 */}
-                <div className="flex items-center gap-1.5 mb-4">
-                  {leagueLogo ? <Logo src={leagueLogo} alt="" className="w-4 h-4" /> : <span className="w-4 h-4 rounded-full bg-turf-line inline-block" />}
-                  <span className="text-xs font-semibold text-floodlight/90">{leagueKo(a.leagueName)}</span>
-                  <span className="text-[11px] text-floodlight/55 ml-auto">{shortDate(a.createdAt)}</span>
-                </div>
-
-                {/* 팀 엠블럼 + 스코어 */}
-                <div className="grid grid-cols-[minmax(0,1fr)_auto_1fr] items-center gap-2">
-                  <div className="flex items-center justify-end gap-1.5 min-w-0">
-                    <span className="text-sm font-semibold text-floodlight text-right leading-snug">{teamKo(a.homeTeam)}</span>
-                    <TeamBadge name={a.homeTeam} logo={a.homeLogo} size="lg" />
-                  </div>
-                  <span className="font-data font-bold text-score-amber text-base px-1">
-                    {hasScore ? `${a.homeScore} : ${a.awayScore}` : "vs"}
-                  </span>
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <TeamBadge name={a.awayTeam} logo={a.awayLogo} size="lg" />
-                    <span className="text-sm font-semibold text-floodlight leading-snug">{teamKo(a.awayTeam)}</span>
-                  </div>
-                </div>
-              </Link>
-            )
-          })}
+        <div className="space-y-6">
+          {groups.map(([key, items]) => (
+            <section key={key} className="bg-turf/40 border border-turf-line/60 rounded-none">
+              <h2 className="flex items-baseline gap-2 px-4 py-3 border-b border-turf-line/60 text-base font-semibold text-floodlight">
+                {dateLabel(items[0].createdAt)}
+                <span className="text-xs font-normal text-floodlight/50">{items.length}경기</span>
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 md:divide-x divide-turf-line/40">
+                {items.map((a) => {
+                  const leagueLogo = Object.entries(LEAGUE_LOGOS).find(([k]) =>
+                    a.leagueName.includes(k) || k.includes(a.leagueName.split(" ")[0])
+                  )?.[1]
+                  const hasScore = a.homeScore !== null && a.awayScore !== null
+                  return (
+                    <Link
+                      key={a.slug}
+                      href={`/stories/${a.slug}`}
+                      title={leagueKo(a.leagueName)}
+                      className="flex items-center gap-3 px-4 py-3 border-b border-turf-line/30 hover:bg-turf-line/20 transition-colors"
+                    >
+                      {leagueLogo ? <Logo src={leagueLogo} alt="" className="w-4 h-4 shrink-0" /> : <span className="w-4 h-4 rounded-full bg-turf-line inline-block shrink-0" />}
+                      <div className="flex-1 min-w-0 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
+                        <div className="flex items-center justify-end gap-1.5 min-w-0">
+                          <span className="text-sm text-floodlight text-right truncate">{teamKo(a.homeTeam)}</span>
+                          <TeamBadge name={a.homeTeam} logo={a.homeLogo} />
+                        </div>
+                        <span className="font-data font-bold text-score-amber text-sm px-1 whitespace-nowrap">
+                          {hasScore ? `${a.homeScore} : ${a.awayScore}` : "vs"}
+                        </span>
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <TeamBadge name={a.awayTeam} logo={a.awayLogo} />
+                          <span className="text-sm text-floodlight truncate">{teamKo(a.awayTeam)}</span>
+                        </div>
+                      </div>
+                      <span className="text-floodlight/40 text-xs shrink-0">→</span>
+                    </Link>
+                  )
+                })}
+              </div>
+            </section>
+          ))}
         </div>
       )}
       {!loading && displayed.length > shown && (
         <button
-          onClick={() => setShown((n) => n + 12)}
+          onClick={() => setShown((n) => n + 20)}
           className="block mx-auto px-5 py-2 border border-turf-line text-sm text-floodlight/80 hover:text-floodlight hover:border-floodlight/40 transition-colors"
         >
           더 보기 ({displayed.length - shown})
