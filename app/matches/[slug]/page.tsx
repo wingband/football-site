@@ -622,7 +622,7 @@ export default async function MatchDetailPage({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(sportsEventJsonLd) }}
         />
       )}
-      <div className="max-w-5xl mx-auto pb-16 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-6 lg:items-start lg:px-4">
+      <div className="max-w-6xl mx-auto pb-16 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-6 lg:items-start lg:px-6">
       <div className="max-w-2xl mx-auto lg:mx-0 lg:max-w-none">
         {/* 상단 바 */}
         <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-turf-line/60">
@@ -743,7 +743,7 @@ export default async function MatchDetailPage({
       {/* 같은 라운드 다른 경기 — roundFixtures는 SidebarDeferredSection에서 가져오므로
           여기선 별도 async component로 fetch (Next.js fetch 중복 제거로 실제 요청 1회) */}
       {match.league.round && (
-        <div className="max-w-2xl mx-auto lg:max-w-6xl px-4 pb-12">
+        <div className="max-w-2xl mx-auto lg:max-w-6xl px-4 sm:px-6 pb-12">
           <Suspense fallback={null}>
             <RoundRelatedMatches
               leagueId={match.league.id}
