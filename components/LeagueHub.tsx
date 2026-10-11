@@ -76,7 +76,7 @@ export default function LeagueHub({ tabs, initial }: { tabs: Tab[]; initial: Lea
       ) : (
         <div className={`grid gap-5 lg:grid-cols-[1fr_300px] transition-opacity ${loading ? "opacity-60" : ""}`}>
           {/* 전체 순위표 */}
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <table className="w-full text-sm min-w-[420px]">
               <thead>
                 <tr className="text-xs text-floodlight/60">
