@@ -8,17 +8,19 @@ import type { HomeResult } from "@/lib/homeFixtures"
 
 // 메인 "최근 경기 결과" (2026-10-12): 리그 탭 + 경기마다 날짜·시각·리그명. 최근 3일(한국 시간) 기준.
 type Tab = { id: number; label: string }
-const PAGE = 6
+const PAGE = 4
 
 export default function HomeResults({ tabs, results }: { tabs: Tab[]; results: HomeResult[] }) {
   const [active, setActive] = useState<number | "all">("all")
+  const [open, setOpen] = useState(false)
 
   const countOf = (id: number) => results.filter((r) => r.leagueId === id).length
   const list = active === "all" ? results : results.filter((r) => r.leagueId === active)
-  const shown = list.slice(0, active === "all" ? PAGE : 8)
+  const shown = open ? list : list.slice(0, PAGE)
 
   function pick(id: number | "all") {
     setActive(id)
+    setOpen(false)
   }
 
   return (
@@ -51,7 +53,7 @@ export default function HomeResults({ tabs, results }: { tabs: Tab[]; results: H
         <p className="text-sm text-floodlight/60 py-8 text-center">최근 3일 동안 끝난 경기가 없어요.</p>
       ) : (
         <>
-          <ul className="divide-y divide-turf-line/40">
+          <ul className={`divide-y divide-turf-line/40 ${open ? "max-h-[420px] overflow-y-auto overscroll-contain pr-1" : ""}`}>
             {shown.map((r) => (
               <li key={r.fixtureId}>
                 <Link href={matchLinkHref(r.slugSource)} className="block py-2 px-1 hover:bg-turf-line/20 rounded">
@@ -82,9 +84,17 @@ export default function HomeResults({ tabs, results }: { tabs: Tab[]; results: H
               </li>
             ))}
           </ul>
+          {list.length > PAGE && (
+            <button
+              onClick={() => setOpen((v) => !v)}
+              className="mt-2 w-full text-sm text-floodlight/80 hover:text-score-amber py-2 border border-turf-line/60 hover:border-score-amber/60"
+            >
+              {open ? "경기 접기 ▴" : `나머지 ${list.length - PAGE}경기 펼치기 ▾`}
+            </button>
+          )}
           <Link
             href="/matches"
-            className="mt-2 block text-center text-sm text-floodlight/70 hover:text-score-amber py-2 border-t border-turf-line/40"
+            className="mt-1 block text-center text-sm text-floodlight/70 hover:text-score-amber py-2"
           >
             전체 경기 보러가기 →
           </Link>
