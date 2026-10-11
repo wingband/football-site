@@ -17,7 +17,7 @@ function line(w: PlayerWeek): string {
     const score = `${koTeam(m.homeName)} ${m.homeScore}:${m.awayScore} ${koTeam(m.awayName)}`
     const res = m.result === "W" ? "승" : m.result === "L" ? "패" : m.result === "D" ? "무" : "결과 미상"
     const perf = m.played
-      ? `${m.minutes}분 출전${m.substitute ? "(교체 투입)" : "(선발)"}, 평점 ${m.rating?.toFixed(1) ?? "없음"}, ${m.goals}골 ${m.assists}도움${m.yellow ? `, 경고 ${m.yellow}` : ""}${m.red ? ", 퇴장" : ""}`
+      ? `${m.minutes}분 출전${m.substitute === true ? "(교체 투입)" : ""}, 평점 ${m.rating?.toFixed(1) ?? "없음"}, ${m.goals}골 ${m.assists}도움${m.yellow ? `, 경고 ${m.yellow}` : ""}${m.red ? ", 퇴장" : ""}`
       : m.statsAvailable
         ? "출전 기록 없음(명단 제외 또는 벤치)"
         : "개인 기록 데이터 미제공(출전 여부 알 수 없음 — 출전/결장을 단정하지 말 것)"
@@ -39,6 +39,7 @@ function buildPrompt(weeks: PlayerWeek[]): string {
 [절대 규칙]
 - 데이터에 없는 사실(부상, 이적설, 감독 발언, 경기 장면 묘사, 득점 시간, 상대 선수 이름 등)은 절대 지어내지 마라.
 - 숫자(스코어, 출전 시간, 평점, 골, 도움)는 데이터 그대로 써라.
+- 데이터에 "(교체 투입)"이라고 적힌 경우에만 교체로 들어왔다고 쓰고, 그 외에는 선발/교체 여부를 언급하지 마라.
 - 평점은 경기 데이터 제공처 기준의 평점이라고만 언급하고 과장하지 마라.
 - 존댓말 대신 칼럼체(~했다, ~이다)로 쓴다.
 - 너의 의견·평가·전망("긍정적인 영향", "기대된다" 등)은 쓰지 마라. 사실만 정리한다. 의견은 운영자가 따로 쓴다.
