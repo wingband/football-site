@@ -7,6 +7,15 @@ import LeagueHub from "@/components/LeagueHub"
 import { BOARD_LEAGUES, getLeagueBoard, type LeagueBoardData } from "@/lib/leagueBoard"
 import { getKoreanPlayersWeek, koTeam, type PlayerWeek } from "@/lib/koreanWeekly"
 import { getPosts, type Post } from "@/lib/board"
+import HomeBoard from "@/components/HomeBoard"
+
+const HOME_BOARD_TABS = [
+  { key: "all", label: "전체" },
+  { key: "free", label: "자유" },
+  { key: "epl", label: "PL" },
+  { key: "kleague", label: "K리그" },
+  { key: "national", label: "국가대표" },
+]
 import { boardCategoryLabel } from "@/lib/boardCategories"
 import { getColumns, type Column } from "@/lib/columns"
 import { OPINION_PLACEHOLDER } from "@/lib/draftKinds"
@@ -76,7 +85,7 @@ const getHomeData = unstable_cache(
   async () => {
     const [weeks, board, allColumns, results, leagueBoard] = await Promise.all([
       safe(getKoreanPlayersWeek(), [] as PlayerWeek[], "해외파"),
-      safe(getPosts(null, 1, 4), { posts: [] as Post[], total: 0 }, "게시판"),
+      safe(Promise.all(HOME_BOARD_TABS.map((t) => getPosts(t.key === "all" ? null : t.key, 1, 4))), [] as { posts: Post[]; total: number }[], "게시판"),
       safe(getColumns({ limit: 80 }), [] as Column[], "칼럼"),
       safe(getHomeResults(60), [] as HomeResult[], "경기 결과"),
       safe(getLeagueBoard(39), null as LeagueBoardData | null, "리그 순위"),
@@ -118,40 +127,19 @@ export default async function Home() {
                 글쓰기
               </Link>
             </div>
-            <div className="flex flex-wrap gap-1.5 mb-3">
-              {[
-                ["free", "자유"],
-                ["epl", "PL"],
-                ["kleague", "K리그"],
-                ["national", "국가대표"],
-              ].map(([key, label]) => (
-                <Link
-                  key={key}
-                  href={`/board?category=${key}`}
-                  className="text-xs px-2.5 py-1 rounded-full border border-turf-line text-floodlight/80 hover:text-floodlight hover:border-floodlight/40"
-                >
-                  {label}
-                </Link>
-              ))}
-            </div>
-            {board.posts.length === 0 ? (
-              <p className="text-sm text-floodlight/65 py-3">아직 글이 없어요. 첫 글을 남겨보세요!</p>
-            ) : (
-              <ul className="divide-y divide-turf-line/40">
-                {board.posts.map((p) => (
-                  <li key={p.id}>
-                    <Link href={`/board/${p.id}`} className="flex items-center gap-2 py-2 text-sm hover:text-score-amber">
-                      <span className="shrink-0 text-xs px-1.5 py-0.5 rounded bg-turf-line/60 text-floodlight/80">
-                        {boardCategoryLabel(p.category)}
-                      </span>
-                      <span className="truncate text-floodlight/90">{p.title}</span>
-                      {p.commentCount > 0 && <span className="shrink-0 text-xs text-score-amber font-data">[{p.commentCount}]</span>}
-                      <span className="ml-auto shrink-0 text-xs text-floodlight/55 font-data">{kstParts(p.createdAt).md}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <HomeBoard
+              tabs={HOME_BOARD_TABS.map((t, i) => ({
+                key: t.key,
+                label: t.label,
+                posts: (board[i]?.posts ?? []).map((p) => ({
+                  id: p.id,
+                  label: boardCategoryLabel(p.category),
+                  title: p.title,
+                  commentCount: p.commentCount,
+                  md: kstParts(p.createdAt).md,
+                })),
+              }))}
+            />
           </section>
 
           <CoupangBanner />
