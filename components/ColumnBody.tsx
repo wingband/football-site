@@ -96,7 +96,8 @@ function withBreaks(text: string, keyBase: string): ReactNode[] {
 }
 
 export default function ColumnBody({ content }: { content: string }) {
-  const blocks = parseBlocks(content)
+  // 초안용 "✍️ 내 의견:" 표시는 화면에 보여주지 않는다 (이미 발행된 예전 글에도 적용)
+  const blocks = parseBlocks(content.replace(/✍️\s*내\s*의견\s*[:：]\s*(?!\(여기에)/g, ""))
   return (
     <div className="text-[15px] leading-[1.85] text-floodlight/85 space-y-5">
       {blocks.map((b, i) => {

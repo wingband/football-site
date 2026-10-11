@@ -50,6 +50,9 @@ export async function POST(req: NextRequest) {
     )
   }
 
+  // 발행된 글에는 초안용 "✍️ 내 의견:" 표시를 남기지 않는다 (의견 문장만 인용 블록으로 남김)
+  const finalContent = published ? content.replace(/✍️\s*내\s*의견\s*[:：]\s*/g, "") : content
+
   // 수정이면 기존 slug 유지, 새 글이면 생성
   let slug: string
   if (typeof body.slug === "string" && body.slug) {
@@ -61,7 +64,7 @@ export async function POST(req: NextRequest) {
     slug = makeColumnSlug(title)
   }
 
-  await saveColumn({ slug, title, summary, content, tags, published })
+  await saveColumn({ slug, title, summary, content: finalContent, tags, published })
   revalidatePath("/columns")
   revalidatePath(`/columns/${slug}`)
   revalidatePath("/sitemap.xml")
