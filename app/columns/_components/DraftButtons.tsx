@@ -42,7 +42,7 @@ export default function DraftButtons() {
   return (
     <details className="text-sm">
       <summary className="cursor-pointer px-4 py-2 border border-score-amber/60 text-score-amber rounded hover:bg-score-amber/10 list-none">
-        AI 초안 지금 만들기 ▾
+        초안 지금 만들기 ▾
       </summary>
       <div className="mt-2 flex flex-col gap-1.5 items-stretch">
         {ORDER.map((k) => (

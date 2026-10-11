@@ -1,6 +1,7 @@
 import Link from "next/link"
 import type { Metadata } from "next"
-import { getColumns, readingMinutes } from "@/lib/columns"
+import { getColumns } from "@/lib/columns"
+import ColumnCard from "@/components/ColumnCard"
 import { isAdmin } from "@/lib/admin"
 import DraftButtons from "./_components/DraftButtons"
 import { getColumnViews } from "@/lib/columnViews"
@@ -14,15 +15,6 @@ export const metadata: Metadata = {
   alternates: { canonical: "/columns" },
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("ko-KR", {
-    timeZone: "Asia/Seoul",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  })
-}
-
 export default async function ColumnsPage() {
   const admin = await isAdmin()
   const columns = await getColumns({ includeDrafts: admin })
@@ -32,84 +24,73 @@ export default async function ColumnsPage() {
   const pendingDrafts = admin ? columns.filter((c) => !c.published && c.content.includes(OPINION_PLACEHOLDER)) : []
 
   return (
-    <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
-      <div className="max-w-3xl mx-auto px-4 pt-8 pb-16">
-        <div className="flex flex-wrap items-end justify-between gap-3 mb-2">
-          <h1 className="font-display uppercase text-2xl text-score-amber">칼럼</h1>
+    <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6 text-floodlight">
+      <section className="bg-turf/40 border border-turf-line/60 rounded-2xl p-4 sm:p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h1 className="font-display text-2xl text-floodlight">GoalLine 칼럼</h1>
+            <p className="text-sm sm:text-base text-floodlight/75 mt-2">
+              데이터만으로는 보이지 않는 이야기. 해외파 활약, 경기 흐름, 리그 판도를 직접 짚어봅니다.
+            </p>
+          </div>
           {admin && (
             <div className="flex items-start gap-2">
-            <DraftButtons />
-            <Link
-              href="/columns/write"
-              className="text-sm px-4 py-2 bg-score-amber text-pitch-night font-bold rounded hover:bg-score-amber/80 transition-colors"
-            >
-              새 칼럼 쓰기
-            </Link>
+              <DraftButtons />
+              <Link
+                href="/columns/write"
+                className="text-sm px-4 py-2 bg-score-amber text-pitch-night font-bold rounded-full hover:bg-floodlight transition-colors"
+              >
+                새 칼럼 쓰기
+              </Link>
             </div>
           )}
         </div>
-        <p className="text-sm text-floodlight/50 mb-8">
-          데이터만으로는 보이지 않는 이야기. 해외파 활약, 경기 흐름, 리그 판도를 직접 짚어봅니다.
-        </p>
+      </section>
 
-        {pendingDrafts.length > 0 && (
-          <section className="mb-6 p-4 border border-score-amber/50 bg-score-amber/10">
-            <p className="text-sm font-semibold text-score-amber mb-3">
-              ✍️ 한 줄 총평을 기다리는 초안 {pendingDrafts.length}개 — 총평만 쓰면 바로 발행돼요
-            </p>
-            <ul className="space-y-2">
-              {pendingDrafts.map((d) => {
-                const kind = draftKindOf(d.slug)
-                return (
-                  <li key={d.slug}>
-                    <Link href={`/columns/write?slug=${d.slug}`} className="flex items-baseline gap-2 group">
-                      <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-score-amber/20 text-score-amber">
-                        {kind ? DRAFT_KINDS[kind].label : "초안"}
-                      </span>
-                      <span className="text-xs text-floodlight/80 group-hover:text-score-amber line-clamp-1">{d.title}</span>
-                    </Link>
-                  </li>
-                )
-              })}
-            </ul>
-            <p className="text-[11px] text-floodlight/40 mt-3">
-              경기 리포트 초안은 7일 안에 발행하지 않으면 자동으로 지워져요. 선수 이름 표기가 틀렸으면{" "}
-              <Link href="/columns/names" className="underline hover:text-floodlight">이름 표기 고치기</Link>
-            </p>
-          </section>
-        )}
-
-        {columns.length === 0 ? (
-          <p className="text-sm text-floodlight/40 py-16 text-center">아직 등록된 칼럼이 없습니다.</p>
-        ) : (
-          <ul className="divide-y divide-turf-line/40 border-y border-turf-line/40">
-            {columns.map((c) => (
-              <li key={c.slug}>
-                <Link href={`/columns/${c.slug}`} className="block py-5 group">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    {!c.published && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-floodlight/10 text-floodlight/60">비공개</span>
-                    )}
-                    {c.tags.slice(0, 3).map((t) => (
-                      <span key={t} className="text-[11px] text-score-amber/80">#{t}</span>
-                    ))}
-                  </div>
-                  <h2 className="text-base font-semibold text-floodlight group-hover:text-score-amber transition-colors">
-                    {c.title}
-                  </h2>
-                  {c.summary && <p className="text-sm text-floodlight/60 mt-1.5 line-clamp-2">{c.summary}</p>}
-                  <p className="text-[11px] text-floodlight/35 mt-2">
-                    {formatDate(c.createdAt)} · {readingMinutes(c.content)}분 읽기
-                    {views && c.published && (
-                      <span className="text-score-amber/70"> · 조회 {views.get(c.slug)?.total ?? 0} (오늘 {views.get(c.slug)?.today ?? 0})</span>
-                    )}
-                  </p>
-                </Link>
-              </li>
-            ))}
+      {pendingDrafts.length > 0 && (
+        <section className="p-4 rounded-2xl border border-score-amber/50 bg-score-amber/10">
+          <p className="text-sm font-semibold text-score-amber mb-3">
+            ✍️ 한 줄 총평을 기다리는 초안 {pendingDrafts.length}개 — 총평만 쓰면 바로 발행돼요
+          </p>
+          <ul className="space-y-2">
+            {pendingDrafts.map((d) => {
+              const kind = draftKindOf(d.slug)
+              return (
+                <li key={d.slug}>
+                  <Link href={`/columns/write?slug=${d.slug}`} className="flex items-baseline gap-2 group">
+                    <span className="shrink-0 text-[11px] px-1.5 py-0.5 rounded bg-score-amber/20 text-score-amber">
+                      {kind ? DRAFT_KINDS[kind].label : "초안"}
+                    </span>
+                    <span className="text-sm text-floodlight/85 group-hover:text-score-amber line-clamp-1">{d.title}</span>
+                  </Link>
+                </li>
+              )
+            })}
           </ul>
-        )}
-      </div>
+          <p className="text-xs text-floodlight/60 mt-3">
+            경기 리포트 초안은 7일 안에 발행하지 않으면 자동으로 지워져요. 선수 이름 표기가 틀렸으면{" "}
+            <Link href="/columns/names" className="underline hover:text-floodlight">이름 표기 고치기</Link>
+          </p>
+        </section>
+      )}
+
+      {columns.length === 0 ? (
+        <p className="text-sm text-floodlight/60 py-16 text-center">아직 등록된 칼럼이 없습니다.</p>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {columns.map((c) => (
+            <ColumnCard
+              key={c.slug}
+              column={c}
+              extra={
+                views && c.published ? (
+                  <span className="text-score-amber"> · 조회 {views.get(c.slug)?.total ?? 0} (오늘 {views.get(c.slug)?.today ?? 0})</span>
+                ) : null
+              }
+            />
+          ))}
+        </div>
+      )}
     </main>
   )
 }

@@ -275,3 +275,14 @@ export const TEAM_NAME_KO: Record<string, string> = {
 export const NATIONAL_TEAM_COACH_OVERRIDE: Record<string, string> = {
   "South Korea": "감독 선임 절차 진행 중 (임시 체제, 확정 시 업데이트 예정)",
 }
+
+// (2026-10-12) 화면 표기용 — 서버·클라이언트 어디서든 쓸 수 있는 순수 함수. 목록에 없으면 원래 이름 그대로.
+export function teamKo(name: string): string {
+  if (TEAM_NAME_KO[name]) return TEAM_NAME_KO[name]
+  const alt = /\s+FC$/.test(name) ? name.replace(/\s+FC$/, "") : `${name} FC`
+  return TEAM_NAME_KO[alt] ?? name
+}
+
+export function leagueKo(name: string): string {
+  return LEAGUE_NAME_KO[name] ?? name
+}

@@ -7,6 +7,7 @@ import { getMatchPhase } from "@/lib/matchStatus"
 import { useFavorites } from "@/lib/useFavorites"
 import { deriveFavoriteLeagues } from "@/lib/leagueFavorites"
 import Logo from "@/components/Logo"
+import { teamKo, leagueKo } from "@/lib/koreanNames"
 
 type Fixture = {
   fixture: {
@@ -121,14 +122,14 @@ function MatchRow({ match }: { match: Fixture }) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
           <Logo src={match.teams.home.logo} alt="" className="w-4 h-4 shrink-0" />
-          <span className="text-sm text-floodlight/90 truncate">{match.teams.home.name}</span>
+          <span className="text-sm text-floodlight/90 truncate">{teamKo(match.teams.home.name)}</span>
           <span className="ml-auto text-sm font-data font-semibold text-floodlight pl-2">
             {phase === "upcoming" ? "" : match.goals.home ?? "-"}
           </span>
         </div>
         <div className="flex items-center gap-2">
           <Logo src={match.teams.away.logo} alt="" className="w-4 h-4 shrink-0" />
-          <span className="text-sm text-floodlight/90 truncate">{match.teams.away.name}</span>
+          <span className="text-sm text-floodlight/90 truncate">{teamKo(match.teams.away.name)}</span>
           <span className="ml-auto text-sm font-data font-semibold text-floodlight pl-2">
             {phase === "upcoming" ? "" : match.goals.away ?? "-"}
           </span>
@@ -395,7 +396,7 @@ export default function MatchesExplorer({ fixtures, userCountry }: { fixtures: F
                     key={league.id}
                     id={league.id}
                     logo={league.logo}
-                    label={league.name}
+                    label={leagueKo(league.name)}
                     isFavoriteLeague={isFavorite(league.id)}
                     onToggleFavorite={() => toggleFavorite(league.id)}
                     noMatchToday={league.noMatchToday}
@@ -445,7 +446,7 @@ export default function MatchesExplorer({ fixtures, userCountry }: { fixtures: F
                       key={league.id}
                       id={league.id}
                       logo={null}
-                      label={league.name}
+                      label={leagueKo(league.name)}
                       isFavoriteLeague={isFavorite(league.id)}
                       onToggleFavorite={() => toggleFavorite(league.id)}
                       size="xs"
@@ -541,7 +542,7 @@ export default function MatchesExplorer({ fixtures, userCountry }: { fixtures: F
                       href={`/leagues/${league.id}`}
                       className="text-sm font-display uppercase tracking-wide text-floodlight/90 hover:text-score-amber"
                     >
-                      {league.name}
+                      {leagueKo(league.name)}
                     </Link>
                     <span className="text-xs text-floodlight/30">{league.country}</span>
                     <span className="ml-auto text-xs text-floodlight/30 font-data">{matches.length}경기</span>

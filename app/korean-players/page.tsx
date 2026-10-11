@@ -5,7 +5,8 @@ import { KOREAN_PLAYERS_ABROAD } from "@/lib/koreanPlayersAbroad"
 import Logo from "@/components/Logo"
 import PlayerAvatar from "@/components/PlayerAvatar"
 import KoreanWeekHub from "@/components/KoreanWeekHub"
-import { getKoreanPlayersWeek } from "@/lib/koreanWeekly"
+import { getKoreanPlayersWeek, koTeam } from "@/lib/koreanWeekly"
+import { leagueKo } from "@/lib/koreanNames"
 
 // 경기 일정/최근 활약 데이터는 DB 캐시(3시간)를 거치므로 페이지는 1시간마다 다시 만든다
 export const revalidate = 3600
@@ -58,112 +59,93 @@ export default async function KoreanPlayersPage() {
     .filter(l => byLeague.has(l))
     .map(l => ({ league: l, players: byLeague.get(l)! }))
 
+  const CARD = "bg-turf/40 border border-turf-line/60 rounded-2xl p-4 sm:p-5"
   return (
-    <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
-      <div className="max-w-3xl mx-auto px-4 pb-16">
-
-        {/* 헤더 */}
-        <div className="pt-8 pb-6 border-b border-turf-line/40">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-2xl">🇰🇷</span>
-            <h1 className="font-display uppercase text-2xl text-score-amber">
-              해외파 경기 일정 · 결과
-            </h1>
-          </div>
-          <p className="text-sm text-floodlight/50 leading-relaxed">
-            해외 무대에서 뛰는 한국 선수들의 다음 경기 일정(한국 시간)과 최근 경기 평점·공격포인트를
-            한 곳에서 확인하세요.
-          </p>
-          <div className="flex flex-wrap gap-2 mt-4">
-            {KOREAN_PLAYERS_ABROAD.map(p => (
-              <Link key={p.id} href={`/players/${p.id}`}
-                className="text-xs bg-turf-line/30 hover:bg-score-amber/20 hover:text-score-amber px-2.5 py-1 rounded-full transition-colors">
-                {PLAYER_INTRO[p.id]?.nameKo ?? p.name}
-              </Link>
-            ))}
-          </div>
+    <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6 text-floodlight">
+      {/* 헤더 */}
+      <section className={CARD}>
+        <h1 className="font-display text-2xl text-floodlight">🇰🇷 해외파 경기 일정 · 결과</h1>
+        <p className="text-sm sm:text-base text-floodlight/75 leading-relaxed mt-2">
+          해외 무대에서 뛰는 한국 선수들의 다음 경기 일정(한국 시간)과 최근 경기 평점·공격포인트를 한 곳에서 확인하세요.
+        </p>
+        <div className="flex flex-wrap gap-2 mt-4">
+          {KOREAN_PLAYERS_ABROAD.map((p) => (
+            <Link
+              key={p.id}
+              href={`/players/${p.id}`}
+              className="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full border border-turf-line text-sm text-floodlight/90 hover:border-score-amber hover:text-score-amber transition-colors"
+            >
+              <PlayerAvatar
+                src={`https://media.api-sports.io/football/players/${p.id}.png`}
+                alt={PLAYER_INTRO[p.id]?.nameKo ?? p.name}
+                className="w-7 h-7 rounded-full"
+              />
+              {PLAYER_INTRO[p.id]?.nameKo ?? p.name}
+            </Link>
+          ))}
         </div>
+      </section>
 
-        {/* 이번 주 해외파: 다음 경기 일정 + 최근 7일 활약 */}
-        <KoreanWeekHub weeks={weeks} />
+      {/* 이번 주 해외파: 다음 경기 일정 + 최근 7일 활약 */}
+      <KoreanWeekHub weeks={weeks} />
 
-        {/* 리그별 선수 목록 */}
-        <h2 className="font-display uppercase text-base text-floodlight/80 tracking-wide mt-12 mb-1">선수별 소속팀</h2>
-        <div className="space-y-8 mt-4">
+      {/* 리그별 선수 목록 */}
+      <section>
+        <h2 className="font-display text-xl text-floodlight mb-3">선수별 소속팀</h2>
+        <div className="space-y-6">
           {sorted.map(({ league, players }) => (
-            <section key={league}>
-              <div className="flex items-center gap-2 mb-4">
-                <Logo src={LEAGUE_LOGO_LOCAL[league] ?? players[0].leagueLogo} alt="" className="w-5 h-5 shrink-0" />
-                <h2 className="font-display uppercase text-base text-floodlight/80 tracking-wide">
-                  {league}
-                </h2>
-                <span className="text-xs text-floodlight/30 ml-1">{players.length}명</span>
+            <div key={league} className={CARD}>
+              <div className="flex items-center gap-2 mb-3">
+                <Logo src={LEAGUE_LOGO_LOCAL[league] ?? players[0].leagueLogo} alt="" className="w-6 h-6 shrink-0" />
+                <h3 className="font-display text-lg text-floodlight">{leagueKo(league)}</h3>
+                <span className="text-sm text-floodlight/65 ml-1">{players.length}명</span>
               </div>
 
-              <div className="space-y-3">
-                {players.map(p => {
+              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                {players.map((p) => {
                   const intro = PLAYER_INTRO[p.id]
                   return (
-                    <Link key={p.id} href={`/players/${p.id}`}
-                      className="flex items-start gap-4 bg-turf/40 border border-turf-line/40 p-4 hover:border-score-amber/50 hover:bg-turf-line/20 transition-colors group">
-
-                      {/* 선수 사진 */}
+                    <Link
+                      key={p.id}
+                      href={`/players/${p.id}`}
+                      className="flex items-start gap-3 bg-pitch-night/50 border border-turf-line/50 rounded-xl p-3 hover:border-score-amber/60 transition-colors group"
+                    >
                       <PlayerAvatar
                         src={`https://media.api-sports.io/football/players/${p.id}.png`}
                         alt={intro?.nameKo ?? p.name}
-                        className="w-14 h-14 rounded-full object-cover bg-turf-line shrink-0"
+                        className="w-14 h-14 rounded-full ring-2 ring-score-amber/60 shrink-0"
                       />
-
-                      {/* 정보 */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="text-base font-bold group-hover:text-score-amber transition-colors">
-                            {intro?.nameKo ?? p.name}
-                          </h3>
-                          {intro?.nameEn && (
-                            <span className="text-xs text-floodlight/40">{intro.nameEn}</span>
-                          )}
-                        </div>
-
-                        {/* 소속팀 */}
-                        <div className="flex items-center gap-2 mt-1.5">
+                        <h4 className="text-base font-bold text-floodlight group-hover:text-score-amber transition-colors">
+                          {intro?.nameKo ?? p.name}
+                        </h4>
+                        <div className="flex items-center gap-1.5 mt-0.5">
                           <Logo src={p.teamLogo} alt="" className="w-4 h-4 shrink-0" />
-                          <span className="text-sm font-semibold text-score-amber">{p.teamName}</span>
-                          <span className="text-floodlight/30 text-xs">·</span>
-                          <Logo src={LEAGUE_LOGO_LOCAL[p.league] ?? p.leagueLogo} alt="" className="w-3.5 h-3.5 shrink-0" />
-                          <span className="text-xs text-floodlight/50">{p.league}</span>
+                          <span className="text-sm font-semibold text-score-amber truncate">{koTeam(p.teamName)}</span>
                         </div>
-
-                        {/* 한줄 소개 */}
-                        {intro?.desc && (
-                          <p className="text-xs text-floodlight/50 mt-1.5 leading-relaxed">
-                            {intro.desc}
-                          </p>
-                        )}
+                        {intro?.desc && <p className="text-xs sm:text-sm text-floodlight/70 mt-1.5 leading-relaxed">{intro.desc}</p>}
                       </div>
-
-                      <span className="text-floodlight/30 text-sm group-hover:text-score-amber transition-colors shrink-0">→</span>
                     </Link>
                   )
                 })}
               </div>
-            </section>
+            </div>
           ))}
         </div>
+      </section>
 
-        {/* SEO 텍스트 블록 */}
-        <section className="mt-12 pt-8 border-t border-turf-line/30">
-          <h2 className="font-semibold text-base text-floodlight/80 mb-3">한국 축구 해외파 현황</h2>
-          <p className="text-sm text-floodlight/50 leading-relaxed">
-            현재 유럽 무대에서 활약 중인 한국 선수는 라리가의 이강인(아틀레티코 마드리드),
-            분데스리가의 김민재(바이에른 뮌헨)·황희찬(샬케04)·이재성·정우영·옌스 카스트로프 등이 있습니다.
-            잉글랜드에서는 김지수(브렌트퍼드)와 챔피언십의 배준호·백승호·엄지성이 뛰고 있고,
-            손흥민은 MLS LAFC에서 새로운 도전을 이어가고 있습니다.
-            GoalLine은 이 선수들의 매 경기 성적, 평점, 출전 시간을 실시간으로 추적합니다.
-          </p>
-        </section>
-        <CoupangBanner className="mt-8" />
-      </div>
+      {/* SEO 텍스트 블록 */}
+      <section className={CARD}>
+        <h2 className="font-display text-lg text-floodlight mb-2">한국 축구 해외파 현황</h2>
+        <p className="text-sm text-floodlight/70 leading-relaxed">
+          현재 유럽 무대에서 활약 중인 한국 선수는 라리가의 이강인(아틀레티코 마드리드),
+          분데스리가의 김민재(바이에른 뮌헨)·황희찬(샬케04)·이재성·정우영·옌스 카스트로프 등이 있습니다.
+          잉글랜드에서는 김지수(브렌트퍼드)와 챔피언십의 배준호·백승호·엄지성이 뛰고 있고,
+          손흥민은 MLS LAFC에서 새로운 도전을 이어가고 있습니다.
+          GoalLine은 이 선수들의 매 경기 성적, 평점, 출전 시간을 실시간으로 추적합니다.
+        </p>
+      </section>
+      <CoupangBanner />
     </main>
   )
 }

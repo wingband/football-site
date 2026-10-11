@@ -54,7 +54,24 @@ function formatBoardDate(dateStr: string) {
   return `${dParts.year.slice(2)}.${dParts.month}.${dParts.day}`
 }
 
-const ROW_GRID_COLS = "md:grid-cols-[56px_minmax(0,1fr)_100px_70px_56px_56px]"
+// 게시판별 아이콘 — 목록에서 한눈에 구분되도록 (2026-10-12 게시판 개편)
+const CATEGORY_ICON: Record<string, string> = {
+  free: "💬",
+  abroad: "🌍",
+  epl: "🇬🇧",
+  laliga: "🇪🇸",
+  bundesliga: "🇩🇪",
+  seriea: "🇮🇹",
+  ligue1: "🇫🇷",
+  ucl: "🏆",
+  kleague: "🏟️",
+  national: "🇰🇷",
+}
+
+// 24시간 안에 올라온 글인지 (서버 렌더 시각 기준)
+function isFresh(iso: string) {
+  return Date.now() - new Date(iso).getTime() < 24 * 3600_000
+}
 
 export default async function BoardPage({
   searchParams,
@@ -69,146 +86,139 @@ export default async function BoardPage({
   const qs = (p: number) => `/board?${category ? `category=${category}&` : ""}page=${p}`
   const { posts, total } = await getPosts(category, page, 20)
   const totalPages = Math.max(Math.ceil(total / 20), 1)
+  const writeHref = category ? `/board/write?category=${category}` : "/board/write"
 
   const pageWindowStart = Math.max(1, page - 4)
   const pageWindowEnd = Math.min(totalPages, pageWindowStart + 9)
-  const pageNumbers = Array.from(
-    { length: pageWindowEnd - pageWindowStart + 1 },
-    (_, i) => pageWindowStart + i
-  )
+  const pageNumbers = Array.from({ length: pageWindowEnd - pageWindowStart + 1 }, (_, i) => pageWindowStart + i)
+
+  const tabs = [{ key: null as string | null, label: "전체", icon: "📋" }, ...BOARD_CATEGORIES.map((c) => ({ key: c.key as string | null, label: c.label, icon: CATEGORY_ICON[c.key] ?? "⚽" }))]
 
   return (
-    <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
-      <div className="max-w-4xl mx-auto px-4 pb-16">
-        <div className="pt-8 pb-4 border-b border-turf-line/40 flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-2xl">💬</span>
-              <h1 className="font-display uppercase text-2xl text-score-amber">{cat ? cat.title : "게시판"}</h1>
-            </div>
-            <p className="text-sm text-floodlight/50">{cat ? cat.desc : "자유, 해외파, 리그별로 축구 이야기를 나눠보세요"}</p>
+    <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6 text-floodlight">
+      {/* 히어로 */}
+      <section className="relative overflow-hidden rounded-2xl border border-score-amber/40 bg-gradient-to-br from-turf via-turf/70 to-pitch-night p-5 sm:p-7">
+        <div className="absolute -right-6 -top-6 text-[120px] sm:text-[160px] leading-none opacity-10 select-none" aria-hidden>⚽</div>
+        <div className="relative flex flex-wrap items-center justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-xs sm:text-sm font-semibold text-score-amber tracking-wide">GOALLINE 축구 팬 놀이터</p>
+            <h1 className="font-display text-3xl sm:text-4xl text-floodlight mt-1">
+              {CATEGORY_ICON[category ?? ""] ?? "💬"} {cat ? cat.title : "게시판"}
+            </h1>
+            <p className="text-sm sm:text-base text-floodlight/80 mt-2">{cat ? cat.desc : "경기 얘기, 이적 루머, 응원하는 팀 자랑까지 — 아무 얘기나 편하게 남겨보세요"}</p>
+            <p className="text-sm text-floodlight/65 mt-2">
+              {cat ? cat.label : "전체"} 게시글 <b className="text-score-amber font-data">{total.toLocaleString("ko-KR")}</b>개
+            </p>
           </div>
           <Link
-            href={category ? `/board/write?category=${category}` : "/board/write"}
-            className="shrink-0 text-xs px-4 py-2 bg-score-amber text-pitch-night font-bold rounded hover:bg-score-amber/80 transition-colors"
+            href={writeHref}
+            className="shrink-0 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-score-amber text-pitch-night text-base font-bold shadow-lg shadow-score-amber/20 hover:bg-floodlight transition-colors"
           >
-            글쓰기
+            ✏️ 글쓰기
           </Link>
         </div>
+      </section>
 
-        {/* 게시판 분류 탭 — 모바일에서는 가로 스크롤 */}
-        <nav className="flex gap-1.5 overflow-x-auto py-3 -mx-4 px-4 border-b border-turf-line/30 [scrollbar-width:none]">
-          {[{ key: null as string | null, label: "전체" }, ...BOARD_CATEGORIES.map((c) => ({ key: c.key as string | null, label: c.label }))].map((t) => {
-            const active = t.key === category
-            return (
-              <Link
-                key={t.key ?? "all"}
-                href={t.key ? `/board?category=${t.key}` : "/board"}
-                className={`shrink-0 text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                  active
-                    ? "bg-score-amber text-pitch-night border-score-amber font-bold"
-                    : "border-turf-line text-floodlight/60 hover:text-floodlight hover:border-floodlight/40"
-                }`}
-              >
-                {t.label}
-              </Link>
-            )
-          })}
+      <div className="grid gap-6 lg:grid-cols-[220px_1fr] items-start">
+        {/* 게시판 목록 — 데스크톱은 왼쪽 세로 메뉴, 모바일은 가로 스크롤 */}
+        <nav aria-label="게시판 분류" className="lg:sticky lg:top-20 rounded-2xl lg:border lg:border-turf-line/60 lg:bg-turf/40 lg:p-2">
+          <ul className="flex lg:flex-col gap-1.5 lg:gap-0.5 overflow-x-auto lg:overflow-visible -mx-4 px-4 lg:mx-0 lg:px-0 pb-1 lg:pb-0 [scrollbar-width:none]">
+            {tabs.map((t) => {
+              const active = t.key === category
+              return (
+                <li key={t.key ?? "all"} className="shrink-0">
+                  <Link
+                    href={t.key ? `/board?category=${t.key}` : "/board"}
+                    className={`flex items-center gap-2 px-3.5 py-2 lg:py-2.5 rounded-full lg:rounded-xl border lg:border-0 text-sm transition-colors ${
+                      active
+                        ? "bg-score-amber text-pitch-night border-score-amber font-bold"
+                        : "border-turf-line text-floodlight/85 hover:text-floodlight hover:border-floodlight/40 lg:hover:bg-turf-line/40"
+                    }`}
+                  >
+                    <span aria-hidden>{t.icon}</span>
+                    {t.label}
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
         </nav>
 
-        {posts.length === 0 ? (
-          <div className="mt-8 text-center text-floodlight/40 text-sm py-12">
-            {cat ? `${cat.title}에 아직 글이 없어요. 첫 글을 남겨보세요!` : "아직 게시글이 없습니다. 첫 글을 남겨보세요!"}
-          </div>
-        ) : (
-          <div className="mt-4">
-            <div
-              className={`hidden md:grid ${ROW_GRID_COLS} gap-2 px-2 pb-2 border-b border-turf-line/40 text-[11px] text-floodlight/40 font-bold`}
-            >
-              <span>분류</span>
-              <span>제목</span>
-              <span>글쓴이</span>
-              <span>날짜</span>
-              <span className="text-right">조회</span>
-              <span className="text-right">추천</span>
+        {/* 글 목록 */}
+        <div className="min-w-0">
+          {posts.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-score-amber/50 bg-turf/30 text-center py-14 px-4">
+              <p className="text-4xl mb-3">📝</p>
+              <p className="text-base sm:text-lg font-semibold text-floodlight">
+                {cat ? `${cat.title}에 아직 글이 없어요` : "아직 게시글이 없어요"}
+              </p>
+              <p className="text-sm text-floodlight/70 mt-1">첫 글의 주인공이 되어보세요!</p>
+              <Link href={writeHref} className="inline-block mt-5 px-6 py-2.5 rounded-full bg-score-amber text-pitch-night font-bold hover:bg-floodlight transition-colors">
+                ✏️ 첫 글 쓰기
+              </Link>
             </div>
-
-            <div className="divide-y divide-turf-line/20">
-              {posts.map((post) => (
-                <Link
-                  key={post.id}
-                  href={`/board/${post.id}`}
-                  className={`flex flex-col md:grid ${ROW_GRID_COLS} gap-1 md:gap-2 md:items-center px-2 py-2.5 odd:bg-transparent even:bg-white/[0.02] hover:bg-turf-line/20 transition-colors`}
-                >
-                  <span className="hidden md:block text-[11px] text-floodlight/40 truncate">
-                    {categoryLabel(post.category)}
-                  </span>
-                  <span className="min-w-0">
-                    <span className="text-sm text-floodlight truncate block">
-                      {post.title}
-                      {post.commentCount > 0 && (
-                        <span className="text-score-amber text-xs font-bold ml-1">
-                          [{post.commentCount}]
+          ) : (
+            <ul className="space-y-3">
+              {posts.map((post) => {
+                const fresh = isFresh(post.createdAt)
+                const hot = post.likeCount >= 3 || post.commentCount >= 5 || post.viewCount >= 100
+                return (
+                  <li key={post.id}>
+                    <Link
+                      href={`/board/${post.id}`}
+                      className="block rounded-2xl border border-turf-line/60 bg-turf/40 p-4 sm:p-5 hover:border-score-amber/60 hover:bg-turf/60 transition-colors"
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs sm:text-sm font-semibold px-2.5 py-0.5 rounded-full bg-turf-line/70 text-floodlight/90">
+                          {CATEGORY_ICON[post.category] ?? "⚽"} {categoryLabel(post.category)}
                         </span>
-                      )}
-                    </span>
-                    <span className="md:hidden text-[11px] text-floodlight/40 mt-0.5 block">
-                      {post.nickname} · {formatBoardDate(post.createdAt)} · 조회 {post.viewCount}
-                    </span>
-                  </span>
-                  <span className="hidden md:block text-[11px] text-floodlight/60 truncate">
-                    {post.nickname}
-                  </span>
-                  <span className="hidden md:block text-[11px] text-floodlight/40">
-                    {formatBoardDate(post.createdAt)}
-                  </span>
-                  <span className="hidden md:block text-[11px] text-floodlight/40 text-right">
-                    {post.viewCount}
-                  </span>
-                  <span className="hidden md:block text-[11px] text-right">
-                    {post.likeCount > 0 ? (
-                      <span className="text-score-amber font-bold">{post.likeCount}</span>
-                    ) : (
-                      <span className="text-floodlight/30">0</span>
-                    )}
-                  </span>
+                        {fresh && <span className="text-[11px] font-bold px-1.5 py-0.5 rounded bg-red-500 text-white">NEW</span>}
+                        {hot && <span className="text-[11px] font-bold px-1.5 py-0.5 rounded bg-score-amber text-pitch-night">HOT</span>}
+                        <span className="ml-auto text-xs sm:text-sm text-floodlight/65 font-data">{formatBoardDate(post.createdAt)}</span>
+                      </div>
+                      <h2 className="text-base sm:text-lg font-semibold leading-snug text-floodlight">
+                        {post.title}
+                        {post.commentCount > 0 && <span className="ml-1.5 text-score-amber text-sm font-bold">[{post.commentCount}]</span>}
+                      </h2>
+                      <p className="mt-2 flex items-center gap-3 text-xs sm:text-sm text-floodlight/70">
+                        <span className="font-semibold text-floodlight/85">{post.nickname}</span>
+                        <span>👁 {post.viewCount}</span>
+                        <span className={post.likeCount > 0 ? "text-score-amber font-semibold" : ""}>👍 {post.likeCount}</span>
+                        <span>💬 {post.commentCount}</span>
+                      </p>
+                    </Link>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-1.5 mt-8 text-sm">
+              {pageWindowStart > 1 && (
+                <Link href={qs(Math.max(1, page - 10))} className="px-3 py-1.5 text-floodlight/70 hover:text-floodlight">
+                  ‹ 이전
+                </Link>
+              )}
+              {pageNumbers.map((p) => (
+                <Link
+                  key={p}
+                  href={qs(p)}
+                  className={`w-9 h-9 flex items-center justify-center rounded-full border ${
+                    p === page ? "bg-score-amber text-pitch-night border-score-amber font-bold" : "border-turf-line text-floodlight/75 hover:border-floodlight/40"
+                  }`}
+                >
+                  {p}
                 </Link>
               ))}
+              {pageWindowEnd < totalPages && (
+                <Link href={qs(Math.min(totalPages, page + 10))} className="px-3 py-1.5 text-floodlight/70 hover:text-floodlight">
+                  다음 ›
+                </Link>
+              )}
             </div>
-          </div>
-        )}
-
-        {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-1 mt-8 text-xs">
-            {pageWindowStart > 1 && (
-              <Link
-                href={qs(Math.max(1, page - 10))}
-                className="px-2 py-1 text-floodlight/50 hover:text-floodlight"
-              >
-                ‹ 이전
-              </Link>
-            )}
-            {pageNumbers.map((p) => (
-              <Link
-                key={p}
-                href={qs(p)}
-                className={`w-8 h-8 flex items-center justify-center rounded ${
-                  p === page ? "bg-score-amber text-pitch-night font-bold" : "text-floodlight/50 hover:bg-turf-line/30"
-                }`}
-              >
-                {p}
-              </Link>
-            ))}
-            {pageWindowEnd < totalPages && (
-              <Link
-                href={qs(Math.min(totalPages, page + 10))}
-                className="px-2 py-1 text-floodlight/50 hover:text-floodlight"
-              >
-                다음 ›
-              </Link>
-            )}
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </main>
   )

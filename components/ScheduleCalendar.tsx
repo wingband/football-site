@@ -93,6 +93,11 @@ export default function ScheduleCalendar({ month, today, prevMonth, nextMonth, i
         ))}
       </nav>
 
+      <p className="mb-2 text-xs sm:text-sm text-floodlight/70">
+        <span className="inline-block px-1.5 rounded bg-score-amber/15 text-score-amber mr-1">노란 칸</span>
+        은 해외파가 뛰는 경기예요. 팀 이름은 엠블럼으로 보여드리고, 날짜를 누르면 아래에 팀 이름과 함께 전부 나와요.
+      </p>
+
       {/* 달력 */}
       <div className="border border-turf-line/60 rounded-2xl overflow-hidden bg-turf/30">
         <div className="grid grid-cols-7 border-b border-turf-line/60 text-xs">
@@ -107,7 +112,7 @@ export default function ScheduleCalendar({ month, today, prevMonth, nextMonth, i
         </div>
         <div className="grid grid-cols-7">
           {cells.map((day, i) => {
-            if (!day) return <div key={`e${i}`} className="min-h-14 sm:min-h-28 border-b border-r border-turf-line/30 bg-pitch-night/40" />
+            if (!day) return <div key={`e${i}`} className="min-h-14 sm:min-h-32 border-b border-r border-turf-line/30 bg-pitch-night/40" />
             const list = byDay.get(day) ?? []
             const dateNum = Number(day.slice(8))
             const weekday = i % 7
@@ -118,7 +123,7 @@ export default function ScheduleCalendar({ month, today, prevMonth, nextMonth, i
               <button
                 key={day}
                 onClick={() => setPicked(day)}
-                className={`min-h-14 sm:min-h-28 p-1 sm:p-1.5 text-left align-top border-b border-r border-turf-line/30 transition-colors flex flex-col ${
+                className={`min-h-14 sm:min-h-32 p-1 sm:p-1.5 text-left align-top border-b border-r border-turf-line/30 transition-colors flex flex-col ${
                   isSelected ? "bg-score-amber/10 ring-1 ring-inset ring-score-amber/70" : "hover:bg-turf-line/20"
                 }`}
               >
@@ -133,20 +138,24 @@ export default function ScheduleCalendar({ month, today, prevMonth, nextMonth, i
                   {hasKorean && <span className="sm:hidden w-1.5 h-1.5 rounded-full bg-score-amber" />}
                 </span>
 
-                {/* 데스크톱: 경기 3개까지 표시 */}
-                <span className="hidden sm:flex flex-col gap-0.5 mt-1 min-w-0 w-full">
-                  {list.slice(0, 3).map((x) => (
+                {/* 데스크톱: 팀 이름은 잘리니까 엠블럼으로, 해외파 경기는 선수 이름을 붙인다 */}
+                <span className="hidden sm:flex flex-col gap-1 mt-1 min-w-0 w-full">
+                  {list.slice(0, 4).map((x) => (
                     <span
                       key={x.id}
-                      className={`truncate text-[11px] leading-4 px-1 rounded ${
-                        x.korean.length > 0 ? "bg-score-amber/15 text-score-amber" : "text-floodlight/70"
+                      title={`${x.home} vs ${x.away}${x.korean.length ? ` (${x.korean.join(", ")})` : ""}`}
+                      className={`flex items-center gap-1 min-w-0 text-[11px] leading-5 px-1 rounded ${
+                        x.korean.length > 0 ? "bg-score-amber/15 text-score-amber" : "text-floodlight/80"
                       }`}
                     >
-                      <span className="font-data text-floodlight/40 mr-1">{x.status === "finished" ? "종료" : x.time}</span>
-                      {x.home}-{x.away}
+                      <span className="font-data text-[11px] text-floodlight/55 shrink-0">{x.status === "finished" ? "종료" : x.time}</span>
+                      <Logo src={x.homeLogo} alt={x.home} className="w-[18px] h-[18px] shrink-0" />
+                      <span className="text-floodlight/40 text-[10px] shrink-0">vs</span>
+                      <Logo src={x.awayLogo} alt={x.away} className="w-[18px] h-[18px] shrink-0" />
+                      {x.korean.length > 0 && <span className="truncate font-semibold">{x.korean.join("·")}</span>}
                     </span>
                   ))}
-                  {list.length > 3 && <span className="text-[10px] text-floodlight/40 px-1">+{list.length - 3}경기</span>}
+                  {list.length > 4 && <span className="text-[11px] text-floodlight/60 px-1">+{list.length - 4}경기 더</span>}
                 </span>
 
                 {/* 모바일: 경기 수만 */}

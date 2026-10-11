@@ -1,13 +1,11 @@
 import MatchesExplorer from "@/components/MatchesExplorer"
 import DateTabs from "@/components/DateTabs"
-import TransferWidget from "@/components/TransferWidget"
 import LiveCommentsWidget from "@/components/LiveCommentsWidget"
 import GlobalChatWidget from "@/components/GlobalChatWidget"
 import { getTodayStr, shiftDate, formatDateLabel } from "@/lib/dateUtils"
 import { MOCK_FIXTURES } from "@/lib/mockData"
 import { saveCachedFixtures, getCachedFixtures } from "@/lib/fixturesCache"
 import AdSlot from "@/components/AdSlot"
-import KoreanAbroadWidget from "@/components/KoreanAbroadWidget"
 import type { Metadata } from "next"
 import { headers } from "next/headers"
 import { revalidateTag } from "next/cache"
@@ -338,9 +336,7 @@ export default async function MatchesPage({
       <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8">
         {/* 사이트 공통 상단 배너는 layout.tsx에서 이미 렌더링됨 */}
 
-        {/* 사이트 차별화 포인트: 한국인 해외파 선수 트래커 */}
-        <KoreanAbroadWidget />
-
+        {/* (2026-10-12) 메인 개편으로 해외파 트래커는 /korean-players로 일원화 — 이 페이지는 경기만 */}
         {/* API 실패로 DB에 저장된 마지막 성공 데이터를 쓰는 중일 때만 노출 */}
         {fromCache && (
           <div className="border border-score-amber/50 bg-score-amber/10 px-4 py-3 flex items-start gap-2.5">
@@ -379,7 +375,6 @@ export default async function MatchesPage({
               <MatchesExplorer fixtures={effectiveFixtures} userCountry={userCountry ?? undefined} />
             </div>
             <aside className="w-72 shrink-0 hidden lg:block sticky top-20 space-y-6">
-              <TransferWidget />
               <GlobalChatWidget />
               <LiveCommentsWidget />
               {/* 사이드바 광고 자리 */}

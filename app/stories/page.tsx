@@ -5,6 +5,8 @@ import Image from "next/image"
 import { useEffect, useState, useMemo } from "react"
 import type { Article } from "@/lib/articles"
 import Logo from "@/components/Logo"
+import { teamKo, leagueKo } from "@/lib/koreanNames"
+import { withJosa } from "@/lib/josa"
 
 type ArticleWithLogos = Article & { homeLogo: string | null; awayLogo: string | null }
 
@@ -62,17 +64,23 @@ function TeamBadge({ name, logo, size = "sm" }: { name: string; logo?: string | 
   )
 }
 
-// 한 줄 요약 생성
+// 한 줄 요약 생성 (팀·리그 이름은 한글로)
 function oneLiner(a: Article): string {
-  const score = a.homeScore !== null && a.awayScore !== null
-    ? `${a.homeScore}-${a.awayScore}`
-    : "vs"
+  const home = teamKo(a.homeTeam)
+  const away = teamKo(a.awayTeam)
+  const league = leagueKo(a.leagueName)
   if (a.homeScore !== null && a.awayScore !== null) {
-    const winner = a.homeScore > a.awayScore ? a.homeTeam : a.awayScore > a.homeScore ? a.awayTeam : null
-    if (winner) return `${winner}이(가) ${score}으로 승리한 ${a.leagueName} 경기입니다.`
-    return `${a.homeTeam} ${score} ${a.awayTeam} — 두 팀이 치열하게 맞붙은 ${a.leagueName} 경기입니다.`
+    const score = `${a.homeScore}-${a.awayScore}`
+    const winner = a.homeScore > a.awayScore ? home : a.awayScore > a.homeScore ? away : null
+    if (winner) return `${withJosa(winner, "이", "가")} ${score}로 승리한 ${league} 경기입니다.`
+    return `${home} ${score} ${away} — 두 팀이 팽팽하게 맞선 ${league} 경기입니다.`
   }
-  return `${a.homeTeam} vs ${a.awayTeam} ${a.leagueName} 경기 리뷰입니다.`
+  return `${home} vs ${away} ${league} 경기 리뷰입니다.`
+}
+
+function shortDate(iso: string) {
+  const d = new Date(new Date(iso).getTime() + 9 * 3600_000)
+  return `${d.getUTCMonth() + 1}월 ${d.getUTCDate()}일`
 }
 
 export default function StoriesPage() {
@@ -111,24 +119,20 @@ export default function StoriesPage() {
   )
 
   return (
-    <main className="min-h-screen bg-pitch-night text-floodlight font-sans">
-      <div className="max-w-3xl mx-auto px-4 pb-16">
-        <div className="pt-8 pb-4">
-          <h1 className="font-display uppercase text-xl text-score-amber">경기 리뷰</h1>
-          <p className="text-xs text-floodlight/40 mt-1">
-            주요 경기 분석 · {articles.length}개
-          </p>
-        </div>
+    <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6 text-floodlight">
+      <section className="bg-turf/40 border border-turf-line/60 rounded-2xl p-4 sm:p-5">
+        <h1 className="font-display text-2xl text-floodlight">경기 리뷰</h1>
+        <p className="text-sm sm:text-base text-floodlight/75 mt-2">주요 경기 분석 · {articles.length}개</p>
 
         {/* 리그 탭 필터 */}
-        <div className="flex gap-2 overflow-x-auto pb-3 mb-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex gap-1.5 overflow-x-auto pt-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {/* 전체 탭 */}
           <button
             onClick={() => setActiveTab("전체")}
-            className={`shrink-0 px-4 py-2 rounded-full text-xs font-medium transition-colors ${
+            className={`shrink-0 px-3 py-1.5 rounded-full border text-xs sm:text-sm transition-colors ${
               activeTab === "전체"
-                ? "bg-score-amber text-pitch-night font-bold"
-                : "bg-turf-line/30 text-floodlight/60 hover:text-floodlight"
+                ? "bg-score-amber text-pitch-night border-score-amber font-bold"
+                : "border-turf-line text-floodlight/75 hover:text-floodlight hover:border-floodlight/40"
             }`}
           >
             전체 ({articles.length})
@@ -143,14 +147,14 @@ export default function StoriesPage() {
               <button
                 key={tab.label}
                 onClick={() => setActiveTab(tab.label)}
-                className={`shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium transition-colors ${
+                className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs sm:text-sm transition-colors ${
                   activeTab === tab.label
-                    ? "bg-score-amber text-pitch-night font-bold"
-                    : "bg-turf-line/30 text-floodlight/60 hover:text-floodlight"
+                    ? "bg-score-amber text-pitch-night border-score-amber font-bold"
+                    : "border-turf-line text-floodlight/75 hover:text-floodlight hover:border-floodlight/40"
                 }`}
               >
                 <Logo src={tab.logo} alt="" className="w-4 h-4" />
-                {tab.label}
+                {leagueKo(tab.label)}
                 <span className="opacity-60">({count})</span>
               </button>
             )
@@ -160,10 +164,10 @@ export default function StoriesPage() {
           {hasOther && (
             <button
               onClick={() => setActiveTab("그 외")}
-              className={`shrink-0 px-4 py-2 rounded-full text-xs font-medium transition-colors ${
+              className={`shrink-0 px-3 py-1.5 rounded-full border text-xs sm:text-sm transition-colors ${
                 activeTab === "그 외"
-                  ? "bg-score-amber text-pitch-night font-bold"
-                  : "bg-turf-line/30 text-floodlight/60 hover:text-floodlight"
+                  ? "bg-score-amber text-pitch-night border-score-amber font-bold"
+                  : "border-turf-line text-floodlight/75 hover:text-floodlight hover:border-floodlight/40"
               }`}
             >
               그 외
@@ -171,66 +175,61 @@ export default function StoriesPage() {
           )}
         </div>
 
-        {/* 기사 목록 */}
-        {loading ? (
-          <div className="space-y-3">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="bg-turf/30 border border-turf-line/30 p-4 animate-pulse h-24 rounded" />
-            ))}
-          </div>
-        ) : displayed.length === 0 ? (
-          <p className="text-floodlight/40 text-sm py-8 text-center">해당 리그 리뷰가 없습니다.</p>
-        ) : (
-          <div className="space-y-3">
-            {displayed.map((a) => {
-              const leagueLogo = Object.entries(LEAGUE_LOGOS).find(([k]) =>
-                a.leagueName.includes(k) || k.includes(a.leagueName.split(" ")[0])
-              )?.[1]
-              const score = a.homeScore !== null && a.awayScore !== null
-                ? `${a.homeScore} - ${a.awayScore}`
-                : "vs"
+      </section>
 
-              return (
-                <Link
-                  key={a.slug}
-                  href={`/stories/${a.slug}`}
-                  className="block bg-turf/40 border border-turf-line/40 p-4 hover:bg-turf-line/20 hover:border-score-amber/40 transition-colors group"
-                >
-                  {/* 리그 정보 */}
-                  <div className="flex items-center gap-1.5 mb-3">
-                    {leagueLogo
-                      ? <Logo src={leagueLogo} alt="" className="w-3.5 h-3.5" />
-                      : <span className="w-3.5 h-3.5 rounded-full bg-turf-line inline-block" />
-                    }
-                    <span className="text-[10px] text-floodlight/50 font-medium uppercase tracking-wide">{a.leagueName}</span>
-                    <span className="text-floodlight/20 text-[10px] ml-auto">
-                      {new Date(a.createdAt).toLocaleDateString("ko-KR")}
-                    </span>
+      {/* 기사 목록 */}
+      {loading ? (
+        <div className="grid gap-4 md:grid-cols-2">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="bg-turf/30 border border-turf-line/40 animate-pulse h-36 rounded-2xl" />
+          ))}
+        </div>
+      ) : displayed.length === 0 ? (
+        <p className="text-floodlight/60 text-sm py-8 text-center">해당 리그 리뷰가 없습니다.</p>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2">
+          {displayed.map((a) => {
+            const leagueLogo = Object.entries(LEAGUE_LOGOS).find(([k]) =>
+              a.leagueName.includes(k) || k.includes(a.leagueName.split(" ")[0])
+            )?.[1]
+            const hasScore = a.homeScore !== null && a.awayScore !== null
+
+            return (
+              <Link
+                key={a.slug}
+                href={`/stories/${a.slug}`}
+                className="group block bg-turf/40 border border-turf-line/60 rounded-2xl p-4 sm:p-5 hover:border-score-amber/60 transition-colors"
+              >
+                {/* 리그 · 날짜 */}
+                <div className="flex items-center gap-2 mb-3">
+                  {leagueLogo ? <Logo src={leagueLogo} alt="" className="w-5 h-5" /> : <span className="w-5 h-5 rounded-full bg-turf-line inline-block" />}
+                  <span className="text-sm font-semibold text-floodlight/90">{leagueKo(a.leagueName)}</span>
+                  <span className="text-xs text-floodlight/65 ml-auto">{shortDate(a.createdAt)}</span>
+                </div>
+
+                {/* 팀 엠블럼 + 스코어 */}
+                <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+                  <div className="flex items-center justify-end gap-2.5 min-w-0">
+                    <span className="text-sm sm:text-base font-semibold text-floodlight text-right leading-snug">{teamKo(a.homeTeam)}</span>
+                    <TeamBadge name={a.homeTeam} logo={a.homeLogo} size="lg" />
                   </div>
-
-                  {/* 팀 엠블럼 + 스코어 */}
-                  <div className="flex items-center gap-3 mb-3">
-                    <TeamBadge name={a.homeTeam} logo={a.homeLogo} />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-floodlight/90 truncate">{a.homeTeam}</span>
-                        <span className="font-data font-bold text-score-amber text-base mx-3 shrink-0">{score}</span>
-                        <span className="text-sm font-medium text-floodlight/90 truncate text-right">{a.awayTeam}</span>
-                      </div>
-                    </div>
-                    <TeamBadge name={a.awayTeam} logo={a.awayLogo} />
+                  <span className="font-data font-bold text-score-amber text-xl px-1">
+                    {hasScore ? `${a.homeScore} : ${a.awayScore}` : "vs"}
+                  </span>
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <TeamBadge name={a.awayTeam} logo={a.awayLogo} size="lg" />
+                    <span className="text-sm sm:text-base font-semibold text-floodlight leading-snug">{teamKo(a.awayTeam)}</span>
                   </div>
+                </div>
 
-                  {/* 한 줄 요약 */}
-                  <p className="text-xs text-floodlight/50 leading-relaxed line-clamp-2 group-hover:text-floodlight/70 transition-colors">
-                    {oneLiner(a)}
-                  </p>
-                </Link>
-              )
-            })}
-          </div>
-        )}
-      </div>
+                {/* 한 줄 요약 */}
+                <p className="mt-3 text-sm text-floodlight/80 leading-relaxed">{oneLiner(a)}</p>
+                <p className="mt-2 text-sm font-semibold text-score-amber">리뷰 보기 →</p>
+              </Link>
+            )
+          })}
+        </div>
+      )}
     </main>
   )
 }
