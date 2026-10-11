@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "인증 실패" }, { status: 401 })
   }
   try {
-    const result = await generateWeeklyKoreanDraft()
+    const result = await generateWeeklyKoreanDraft({ refreshDraft: true })
     return NextResponse.json(result)
   } catch (err) {
     console.error("weekly-korean-column 실패:", err)

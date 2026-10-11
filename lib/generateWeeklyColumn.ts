@@ -97,13 +97,17 @@ export type WeeklyDraftResult =
   | { ok: true; slug: string; created: boolean }
   | { ok: false; error: string }
 
-// force=false면 최근 5일 안에 만든 주간 초안이 이미 있을 때 새로 만들지 않고 그걸 돌려준다
-export async function generateWeeklyKoreanDraft({ force = false } = {}): Promise<WeeklyDraftResult> {
-  if (!force) {
-    const existing = (await getColumns({ includeDrafts: true, limit: 30 })).find(
-      (c) => c.slug.includes(WEEKLY_SLUG_MARK) && Date.now() - new Date(c.createdAt).getTime() < 5 * 86400_000
-    )
-    if (existing) return { ok: true, slug: existing.slug, created: false }
+// 최근 5일 안에 만든 주간 초안이 이미 있으면:
+//  - refreshDraft=false(관리자 버튼): 새로 만들지 않고 그 초안을 돌려준다 (OpenAI 중복 호출 방지)
+//  - refreshDraft=true(월요일 크론): 그 초안이 아직 발행 전이면 같은 주소에 최신 경기까지 넣어 다시 쓴다.
+//    주말 중에 미리 버튼으로 만든 초안 때문에 일요일 밤 경기가 빠진 채로 남는 걸 막기 위함 (2026-10-11).
+//    이미 발행했으면 손대지 않는다.
+export async function generateWeeklyKoreanDraft({ refreshDraft = false } = {}): Promise<WeeklyDraftResult> {
+  const existing = (await getColumns({ includeDrafts: true, limit: 30 })).find(
+    (c) => c.slug.includes(WEEKLY_SLUG_MARK) && Date.now() - new Date(c.createdAt).getTime() < 5 * 86400_000
+  )
+  if (existing && (!refreshDraft || existing.published)) {
+    return { ok: true, slug: existing.slug, created: false }
   }
 
   const weeks = await getKoreanPlayersWeek(7)
@@ -131,7 +135,7 @@ export async function generateWeeklyKoreanDraft({ force = false } = {}): Promise
     content += `\n\n## 한 줄 총평\n> ✍️ 내 의견: ${OPINION_PLACEHOLDER}`
   }
 
-  const slug = makeColumnSlug(WEEKLY_SLUG_MARK)
+  const slug = existing?.slug ?? makeColumnSlug(WEEKLY_SLUG_MARK)
   await saveColumn({
     slug,
     title: title.slice(0, 120),
