@@ -1,3 +1,4 @@
+import { getCachedOrFetch } from "@/lib/apiCache"
 import type { MetadataRoute } from "next"
 import { SITE_URL } from "@/lib/siteConfig"
 import { matchHref } from "@/lib/slug"
@@ -54,8 +55,8 @@ type SitemapFixture = {
 // 자체에서 실패를 잡아 빈 배열로 폴백한다 — 그 날짜만 스킵되고 나머지는 정상 동작.
 async function getFixturesByDate(date: string): Promise<SitemapFixture[]> {
   try {
-    const response = await fetchApiFootball(`/fixtures?date=${date}`, { revalidate: 86400 })
-    return response as SitemapFixture[]
+    const path = `/fixtures?date=${date}`
+    return await getCachedOrFetch<SitemapFixture[]>(path, 1800, async () => (await fetchApiFootball(path, { revalidate: 86400 })) as SitemapFixture[])
   } catch (err) {
     devErrorOrSilent(`사이트맵: ${date} 경기 목록 조회 실패:`, err instanceof Error ? err.message : err)
     return []

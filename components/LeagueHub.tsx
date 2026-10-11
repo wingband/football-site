@@ -162,7 +162,7 @@ function PlayerCard({
   const rows = (tab === "scorers" ? scorers : assists).slice(0, 7)
   const unit = tab === "scorers" ? "골" : "도움"
   return (
-    <div className="bg-pitch-night/50 border border-turf-line/40 rounded-none p-3 flex flex-col lg:self-stretch">
+    <div className="bg-pitch-night/50 border border-turf-line/40 rounded-none p-3 flex flex-col lg:self-start">
       <div className="grid grid-cols-2 gap-1 p-1 mb-3 bg-turf/50">
         {([["scorers", "득점 순위"], ["assists", "도움 순위"]] as const).map(([k, l]) => (
           <button
@@ -177,7 +177,7 @@ function PlayerCard({
       {rows.length === 0 ? (
         <p className="text-sm text-floodlight/60 py-4 text-center">아직 기록이 없어요.</p>
       ) : (
-        <ol className="flex-1 flex flex-col justify-between gap-1.5">
+        <ol className="flex flex-col gap-3">
           {rows.map((p, i) => (
             <li key={p.id}>
               <Link href={`/players/${p.id}`} className="flex items-center gap-2 text-sm hover:text-score-amber">

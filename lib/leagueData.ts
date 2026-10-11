@@ -111,7 +111,8 @@ export async function getLeagueFixturesByMode(
   }
 
   try {
-    return await fetchApiFootball(`/fixtures?league=${leagueId}&season=${season}&${mode}=${count}`, { revalidate }) as LeagueFixture[]
+    const path = `/fixtures?league=${leagueId}&season=${season}&${mode}=${count}`
+    return await getCachedOrFetch<LeagueFixture[]>(path, mode === "last" ? 1800 : 3600, async () => (await fetchApiFootball(path, { revalidate })) as LeagueFixture[])
   } catch (err) {
     console.error("getLeagueFixturesByMode fetch 실패:", err instanceof Error ? err.message : err)
     return []
@@ -122,7 +123,8 @@ export async function getSeasonFixtures(leagueId: string, season: number): Promi
   if (process.env.USE_MOCK_DATA === "true") return MOCK_SEASON_FIXTURES as unknown as LeagueFixture[]
 
   try {
-    return await fetchApiFootball(`/fixtures?league=${leagueId}&season=${season}`, { revalidate: DEFAULT_REVALIDATE }) as LeagueFixture[]
+    const path = `/fixtures?league=${leagueId}&season=${season}`
+    return await getCachedOrFetch<LeagueFixture[]>(path, 3600, async () => (await fetchApiFootball(path, { revalidate: DEFAULT_REVALIDATE })) as LeagueFixture[])
   } catch (err) {
     console.error("getSeasonFixtures fetch 실패:", err instanceof Error ? err.message : err)
     return []
@@ -133,7 +135,8 @@ export async function getLeagueTopScorers(leagueId: string, season: number): Pro
   if (process.env.USE_MOCK_DATA === "true") return MOCK_TOP_SCORERS as unknown as ScorerEntry[]
 
   try {
-    return await fetchApiFootball(`/players/topscorers?league=${leagueId}&season=${season}`, { revalidate: DEFAULT_REVALIDATE }) as ScorerEntry[]
+    const path = `/players/topscorers?league=${leagueId}&season=${season}`
+    return await getCachedOrFetch<ScorerEntry[]>(path, 21600, async () => (await fetchApiFootball(path, { revalidate: DEFAULT_REVALIDATE })) as ScorerEntry[])
   } catch (err) {
     console.error("getLeagueTopScorers fetch 실패:", err instanceof Error ? err.message : err)
     return []
@@ -144,7 +147,8 @@ export async function getLeagueTopAssists(leagueId: string, season: number): Pro
   if (process.env.USE_MOCK_DATA === "true") return MOCK_TOP_SCORERS as unknown as ScorerEntry[]
 
   try {
-    return await fetchApiFootball(`/players/topassists?league=${leagueId}&season=${season}`, { revalidate: DEFAULT_REVALIDATE }) as ScorerEntry[]
+    const path = `/players/topassists?league=${leagueId}&season=${season}`
+    return await getCachedOrFetch<ScorerEntry[]>(path, 21600, async () => (await fetchApiFootball(path, { revalidate: DEFAULT_REVALIDATE })) as ScorerEntry[])
   } catch (err) {
     console.error("getLeagueTopAssists fetch 실패:", err instanceof Error ? err.message : err)
     return []

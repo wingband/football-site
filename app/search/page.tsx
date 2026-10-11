@@ -1,3 +1,4 @@
+import { getCachedOrFetch } from "@/lib/apiCache"
 import Link from "next/link"
 import { MOCK_SEARCH_RESULTS } from "@/lib/mockData"
 import Logo from "@/components/Logo"
@@ -17,8 +18,8 @@ type LeagueResult = { league: { id: number; name: string; logo: string; country:
 async function searchTeams(q: string): Promise<TeamResult[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_SEARCH_RESULTS.teams
   try {
-    const response = await fetchApiFootball(`/teams?search=${encodeURIComponent(q)}`, { revalidate: 3600 })
-    return response as TeamResult[]
+    const path = `/teams?search=${encodeURIComponent(q)}`
+    return await getCachedOrFetch<TeamResult[]>(path, 86400, async () => (await fetchApiFootball(path, { revalidate: 3600 })) as TeamResult[])
   } catch (err) {
     console.error("searchTeams 실패:", err instanceof Error ? err.message : err)
     return []
@@ -28,8 +29,8 @@ async function searchTeams(q: string): Promise<TeamResult[]> {
 async function searchLeagues(q: string): Promise<LeagueResult[]> {
   if (process.env.USE_MOCK_DATA === "true") return MOCK_SEARCH_RESULTS.leagues
   try {
-    const response = await fetchApiFootball(`/leagues?search=${encodeURIComponent(q)}`, { revalidate: 3600 })
-    return response as LeagueResult[]
+    const path = `/leagues?search=${encodeURIComponent(q)}`
+    return await getCachedOrFetch<LeagueResult[]>(path, 86400, async () => (await fetchApiFootball(path, { revalidate: 3600 })) as LeagueResult[])
   } catch (err) {
     console.error("searchLeagues 실패:", err instanceof Error ? err.message : err)
     return []
@@ -40,11 +41,8 @@ async function searchPlayers(q: string, season: number): Promise<PlayerResult[]>
   if (process.env.USE_MOCK_DATA === "true") return MOCK_SEARCH_RESULTS.players
   if (q.length < 4) return []
   try {
-    const response = await fetchApiFootball(
-      `/players?search=${encodeURIComponent(q)}&season=${season}`,
-      { revalidate: 3600 }
-    )
-    return response as PlayerResult[]
+    const path = `/players?search=${encodeURIComponent(q)}&season=${season}`
+    return await getCachedOrFetch<PlayerResult[]>(path, 21600, async () => (await fetchApiFootball(path, { revalidate: 3600 })) as PlayerResult[])
   } catch (err) {
     console.error("searchPlayers 실패:", err instanceof Error ? err.message : err)
     return []
