@@ -198,7 +198,7 @@ export default async function StandingsPage({
                     )}
                     <div className="overflow-hidden rounded-none border border-turf-line/40">
                       {/* 컬럼 헤더 */}
-                      <div className="grid grid-cols-[24px_1fr_32px_32px_32px_32px_40px_48px_80px] gap-1 px-3 py-2 text-xs text-floodlight/60 border-b border-turf-line/20">
+                      <div className="grid grid-cols-[28px_minmax(0,1fr)_32px_44px_48px] sm:grid-cols-[28px_minmax(0,1fr)_36px_36px_36px_36px_48px_52px_96px] gap-1 px-3 py-2 text-xs text-floodlight/60 border-b border-turf-line/20">
                         <span>#</span>
                         <span>팀</span>
                         <span className="text-center">경기</span>
@@ -217,7 +217,7 @@ export default async function StandingsPage({
 
                         return (
                           <Link key={row.team.id} href={teamHref(row.team.id)} prefetch={false}
-                            className={`grid grid-cols-[24px_1fr_32px_32px_32px_32px_40px_48px_80px] gap-1 px-3 py-2.5 items-center text-sm border-b border-turf-line/20 last:border-b-0 hover:bg-turf-line/20 transition-colors ${idx < 3 ? "bg-turf/20" : ""}`}>
+                            className={`grid grid-cols-[28px_minmax(0,1fr)_32px_44px_48px] sm:grid-cols-[28px_minmax(0,1fr)_36px_36px_36px_36px_48px_52px_96px] gap-1 px-3 py-2.5 items-center text-sm border-b border-turf-line/20 last:border-b-0 hover:bg-turf-line/20 transition-colors ${idx < 3 ? "bg-turf/20" : ""}`}>
 
                             {/* 순위 */}
                             <span className="flex items-center gap-1">
