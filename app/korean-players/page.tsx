@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import CoupangBanner from "@/components/CoupangBanner"
 import Link from "next/link"
 import { KOREAN_PLAYERS_ABROAD } from "@/lib/koreanPlayersAbroad"
 import Logo from "@/components/Logo"
@@ -161,6 +162,7 @@ export default async function KoreanPlayersPage() {
             GoalLine은 이 선수들의 매 경기 성적, 평점, 출전 시간을 실시간으로 추적합니다.
           </p>
         </section>
+        <CoupangBanner className="mt-8" />
       </div>
     </main>
   )

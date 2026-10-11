@@ -7,6 +7,7 @@ import { SITE_URL } from "@/lib/siteConfig"
 import ColumnBody from "@/components/ColumnBody"
 import ShareButtons from "@/components/ShareButtons"
 import ColumnViewBeacon from "@/components/ColumnViewBeacon"
+import CoupangBanner from "@/components/CoupangBanner"
 import { getColumnViews } from "@/lib/columnViews"
 
 export const dynamic = "force-dynamic"
@@ -114,6 +115,8 @@ export default async function ColumnPage({ params }: { params: Promise<{ slug: s
         <div className="py-8">
           <ColumnBody content={column.content} />
         </div>
+
+        {column.published && <CoupangBanner className="pb-8" />}
 
         {column.published && (
           <div className="pb-8">
