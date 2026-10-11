@@ -60,12 +60,29 @@ async function fixturesByDate(date: string, ttl: number): Promise<RawFixture[]> 
   }
 }
 
+// 캐시에 "진행 중" 상태로 박제된 지난 경기를 바로잡는다 (2026-10-12, 어제·그저께 경기가 며칠째 "진행 중"으로 뜨던 문제).
+// 킥오프 2시간 반이 지났는데 아직 진행 중으로 저장돼 있으면 그 날짜를 한 번 새로 받아 DB 캐시를 갱신한다.
+// 서버 인스턴스마다 날짜당 15분에 한 번만 시도해서, API가 계속 "진행 중"이라고 주는 경우에도 호출이 불어나지 않는다.
+const STALE_LIVE_MS = 2.5 * 3600_000
+const lastForced = new Map<string, number>()
+
+async function fixturesForDay(date: string, ttl: number): Promise<RawFixture[]> {
+  const list = await fixturesByDate(date, ttl)
+  const now = Date.now()
+  const stale = list.some((f) => LIVE.has(f.fixture.status.short) && now - new Date(f.fixture.date).getTime() > STALE_LIVE_MS)
+  if (stale && now - (lastForced.get(date) ?? 0) > 15 * 60_000) {
+    lastForced.set(date, now)
+    return await fixturesByDate(date, 0) // ttl 0 → 캐시를 건너뛰고 새로 받아 저장
+  }
+  return list
+}
+
 // 최근 3일(한국 시간) 안에 끝났거나 진행 중인 주요 리그 경기. 진행 중 → 최신순.
 // 오늘·어제는 /matches와 같은 캐시 키를 쓰고, 그저께 하루만 추가로 DB 캐시에 쌓인다.
 export async function getHomeResults(limit = 60): Promise<HomeResult[]> {
   const today = getTodayStr()
   const days = [today, shiftDate(today, -1), shiftDate(today, -2)]
-  const lists = await Promise.all(days.map((d, i) => fixturesByDate(d, i === 0 ? 1800 : i === 1 ? 3600 : 86400)))
+  const lists = await Promise.all(days.map((d, i) => fixturesForDay(d, i === 0 ? 1800 : i === 1 ? 3600 : 86400)))
 
   const labelOf = (day: string) => {
     const i = days.indexOf(day)
@@ -103,7 +120,8 @@ export async function getHomeResults(limit = 60): Promise<HomeResult[]> {
       away: { name: koTeam(f.teams.away.name), logo: f.teams.away.logo },
       homeScore: f.goals.home,
       awayScore: f.goals.away,
-      live: LIVE.has(f.fixture.status.short),
+      // 새로 받아도 킥오프 후 3시간 반이 넘었는데 진행 중이라면 데이터 지연으로 보고 종료로 표시
+      live: LIVE.has(f.fixture.status.short) && Date.now() - new Date(f.fixture.date).getTime() < 3.5 * 3600_000,
       day,
       time: `${String(k.getUTCHours()).padStart(2, "0")}:${String(k.getUTCMinutes()).padStart(2, "0")}`,
       whenLabel: labelOf(day),
