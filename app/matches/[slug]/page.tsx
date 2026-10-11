@@ -285,11 +285,18 @@ export default async function MatchDetailPage({
   const matchDataRevalidate = isFinished ? 604800 : isLive ? 60 : 3600
 
   // ── 빠른 경로: 즉시 렌더링에 필요한 4개 병렬 호출 ──────────────────
+  // 하나가 실패해도(API 한도 소진·일시 오류) 500 에러 페이지 대신 있는 정보만으로 렌더링한다.
+  // 실패는 apiFetch가 DB 캐시에 저장하지 않으므로 여기서 빈 배열로 대체해도 안전하다.
+  const safe = <T,>(path: string): Promise<T[]> =>
+    (apiFetch(path, matchDataRevalidate) as Promise<T[]>).catch((err) => {
+      console.error(`경기 상세 조회 실패 (${path}):`, err instanceof Error ? err.message : err)
+      return [] as T[]
+    })
   const [stats, events, playerStats, lineups] = await Promise.all([
-    apiFetch(`/fixtures/statistics?fixture=${fixtureId}`, matchDataRevalidate) as Promise<Statistic[]>,
-    apiFetch(`/fixtures/events?fixture=${fixtureId}`, matchDataRevalidate) as Promise<MatchEvent[]>,
-    apiFetch(`/fixtures/players?fixture=${fixtureId}`, matchDataRevalidate) as Promise<PlayerStat[]>,
-    apiFetch(`/fixtures/lineups?fixture=${fixtureId}`, matchDataRevalidate) as Promise<Lineup[]>,
+    safe<Statistic>(`/fixtures/statistics?fixture=${fixtureId}`),
+    safe<MatchEvent>(`/fixtures/events?fixture=${fixtureId}`),
+    safe<PlayerStat>(`/fixtures/players?fixture=${fixtureId}`),
+    safe<Lineup>(`/fixtures/lineups?fixture=${fixtureId}`),
   ])
 
   // statsSummary/eventsSummary/goalsSummary는 크론(generate-articles)과 동일한

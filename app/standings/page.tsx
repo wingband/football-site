@@ -6,6 +6,7 @@ import { getLeagueStandings } from "@/lib/leagueData"
 import SeasonSelect from "@/components/SeasonSelect"
 import { getCachedOrFetch } from "@/lib/apiCache"
 import type { StandingRow } from "@/lib/matchApi"
+import StandingsTabs from "@/components/StandingsTabs"
 import Logo from "@/components/Logo"
 import { teamKo } from "@/lib/koreanNames"
 
@@ -148,17 +149,9 @@ export default async function StandingsPage({
           </p>
         </div>
 
-        {/* 시즌 선택 + 리그 탭 */}
-        <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
+        {/* 시즌 선택 */}
+        <div className="flex">
           <SeasonSelect seasons={seasonOptions} current={season} />
-          <span className="shrink-0 w-px bg-turf-line/40 my-1" />
-          {LEAGUES.map(l => (
-            <a key={l.id} href={`#league-${l.id}`}
-              className="shrink-0 flex items-center gap-1.5 px-3.5 py-2 border border-turf-line hover:border-score-amber/60 rounded-full text-sm text-floodlight/85 hover:text-score-amber transition-colors">
-              <Logo src={l.logo} alt="" className="w-4 h-4" />
-              {l.name}
-            </a>
-          ))}
         </div>
 
         {/* 해당 시즌 데이터가 아예 없을 때 (예: API 플랜이 커버하지 않는 과거 시즌) */}
@@ -172,14 +165,14 @@ export default async function StandingsPage({
         )}
 
         {/* 각 리그 순위표 */}
-        <div className="space-y-6">
-          {allData.map(({ id, name, nameEn, logo, data }) => {
-            if (!data) return null
+        <StandingsTabs
+          items={allData.flatMap(({ id, name, nameEn, logo, data }) => {
+            if (!data) return []
             const standings = data.league.standings
-            if (!standings?.length) return null
+            if (!standings?.length) return []
 
-            return (
-              <section key={id} id={`league-${id}`} className="border-t border-turf-line/50 pt-4 scroll-mt-20">
+            return [{ id, name, logo, node: (
+              <section>
                 {/* 리그 헤더 */}
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2.5">
@@ -275,9 +268,9 @@ export default async function StandingsPage({
                   </div>
                 ))}
               </section>
-            )
+            ) }]
           })}
-        </div>
+        />
 
         {/* SEO 텍스트 */}
         <section className="border-t border-turf-line/50 pt-4">
