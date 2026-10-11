@@ -77,17 +77,17 @@ export default function LeagueHub({ tabs, initial }: { tabs: Tab[]; initial: Lea
       ) : (
         <>
           {/* 전체 순위표 */}
-          <div className="overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <table className="w-full text-sm min-w-[420px]">
+          <div className="overflow-hidden">
+            <table className="w-full table-fixed text-sm">
               <thead>
                 <tr className="text-xs text-floodlight/60">
-                  <th className="text-left font-normal pb-2 w-8">#</th>
+                  <th className="text-left font-normal pb-2 w-10">#</th>
                   <th className="text-left font-normal pb-2">팀</th>
                   <th className="text-right font-normal pb-2 w-8">경기</th>
                   <th className="text-right font-normal pb-2 w-7">승</th>
                   <th className="text-right font-normal pb-2 w-7">무</th>
                   <th className="text-right font-normal pb-2 w-7">패</th>
-                  <th className="text-right font-normal pb-2 w-9">득실</th>
+                  <th className="hidden sm:table-cell text-right font-normal pb-2 w-9">득실</th>
                   <th className="text-right font-normal pb-2 w-10">승점</th>
                 </tr>
               </thead>
@@ -110,7 +110,7 @@ export default function LeagueHub({ tabs, initial }: { tabs: Tab[]; initial: Lea
                     <td className="py-1.5 text-right font-data text-floodlight/75">{r.win}</td>
                     <td className="py-1.5 text-right font-data text-floodlight/75">{r.draw}</td>
                     <td className="py-1.5 text-right font-data text-floodlight/75">{r.lose}</td>
-                    <td className="py-1.5 text-right font-data text-floodlight/75">{r.gd > 0 ? `+${r.gd}` : r.gd}</td>
+                    <td className="hidden sm:table-cell py-1.5 text-right font-data text-floodlight/75">{r.gd > 0 ? `+${r.gd}` : r.gd}</td>
                     <td className="py-1.5 text-right font-data font-semibold text-score-amber">{r.points}</td>
                   </tr>
                 ))}
