@@ -99,7 +99,7 @@ export default function ColumnBody({ content }: { content: string }) {
   // 초안용 "✍️ 내 의견:" 표시는 화면에 보여주지 않는다 (이미 발행된 예전 글에도 적용)
   const blocks = parseBlocks(content.replace(/✍️\s*내\s*의견\s*[:：]\s*(?!\(여기에)/g, ""))
   return (
-    <div className="text-sm leading-[1.8] text-floodlight/85 space-y-4 max-w-4xl">
+    <div className="flow-root text-sm leading-[1.8] text-floodlight/85 space-y-4 max-w-4xl">
       {blocks.map((b, i) => {
         const k = `b${i}`
         switch (b.type) {
@@ -126,11 +126,11 @@ export default function ColumnBody({ content }: { content: string }) {
             return <hr key={k} className="border-turf-line/50" />
           case "img":
             return (
-              <figure key={k} className={/— GoalLine/.test(b.alt) ? "my-2 max-w-md" : "my-2"}>
+              <figure key={k} className={/— GoalLine/.test(b.alt) ? "my-2 w-full max-w-sm md:float-right md:w-[22rem] md:ml-6 md:mt-1 md:mb-3" : "my-2"}>
                 {/* 칼럼 이미지는 업로드 시점에 이미 줄여서 저장하므로 next/image 최적화 없이 그대로 쓴다 */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={b.src} alt={b.alt} loading="lazy" className="w-full h-auto rounded border border-turf-line/30" />
-                {b.alt && <figcaption className="text-xs text-floodlight/45 mt-2 text-center">{b.alt}</figcaption>}
+                {b.alt && <figcaption className="text-xs text-floodlight/45 mt-2">{b.alt}</figcaption>}
               </figure>
             )
           default:
