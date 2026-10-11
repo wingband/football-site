@@ -47,7 +47,8 @@ export default function LeagueHub({ tabs, initial }: { tabs: Tab[]; initial: Lea
   const label = tabs.find((t) => t.id === active)?.label ?? ""
 
   return (
-    <section className="bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5">
+    <section className={`bg-turf/40 border border-turf-line/60 rounded-none p-4 sm:p-5 grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_300px] transition-opacity ${loading ? "opacity-60" : ""}`}>
+      <div className="min-w-0">
       <div className="flex items-center justify-between gap-3 mb-3">
  <h2 className="text-base font-semibold text-floodlight shrink-0">리그 순위</h2>
         <Link href={`/leagues/${active}`} className="text-xs text-floodlight/50 hover:text-score-amber shrink-0">
@@ -74,7 +75,7 @@ export default function LeagueHub({ tabs, initial }: { tabs: Tab[]; initial: Lea
       {!data ? (
         <p className="text-sm text-floodlight/60 py-10 text-center min-h-[280px]">{loading ? "불러오는 중…" : "순위 정보를 불러오지 못했어요."}</p>
       ) : (
-        <div className={`grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_300px] transition-opacity ${loading ? "opacity-60" : ""}`}>
+        <>
           {/* 전체 순위표 */}
           <div className="overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <table className="w-full text-sm min-w-[420px]">
@@ -130,15 +131,18 @@ export default function LeagueHub({ tabs, initial }: { tabs: Tab[]; initial: Lea
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500" />강등</span>
             </p>
           </div>
+        </>
+      )}
+      </div>
 
-          {/* 득점·도움 순위 — 탭 하나로 합쳐서 높이를 줄인다 */}
-          <PlayerCard
-            tab={playerTab}
-            onTab={setPlayerTab}
-            scorers={data.scorers}
-            assists={data.assists}
-          />
-        </div>
+      {/* 득점·도움 순위 — 카드 맨 위부터 시작해 왼쪽과 같은 높이로 */}
+      {data && (
+        <PlayerCard
+          tab={playerTab}
+          onTab={setPlayerTab}
+          scorers={data.scorers}
+          assists={data.assists}
+        />
       )}
     </section>
   )
