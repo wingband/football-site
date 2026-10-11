@@ -62,8 +62,9 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 bg-pitch-night/95 backdrop-blur border-b border-turf-line/60">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-6 lg:gap-8">
-        <Link href="/" className="font-display uppercase tracking-wide text-lg text-score-amber shrink-0 hover:text-floodlight transition-colors cursor-pointer">
-          GoalLine
+        <Link href="/" className="group font-display uppercase tracking-wider text-2xl sm:text-[1.7rem] leading-none text-score-amber shrink-0 flex items-center gap-2 md:pr-4 md:mr-1 md:border-r md:border-turf-line/60 cursor-pointer" aria-label="GoalLine 홈">
+          <span className="inline-block w-1.5 h-6 bg-score-amber group-hover:bg-floodlight transition-colors" aria-hidden="true" />
+          <span>Goal<span className="text-floodlight group-hover:text-score-amber transition-colors">Line</span></span>
         </Link>
 
         {/* 데스크톱 메뉴 */}
