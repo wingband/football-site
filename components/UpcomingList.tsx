@@ -28,8 +28,12 @@ const ORDER = ["프리미어리그", "라리가", "분데스리가", "세리에A
 
 export default function UpcomingList({ rows }: { rows: UpcomingRow[] }) {
   const [active, setActive] = useState("all")
+  const [open, setOpen] = useState(false)
+  const FOLD = 4
   const present = ORDER.filter((g) => rows.some((r) => r.group === g))
-  const list = active === "all" ? rows : rows.filter((r) => r.group === active)
+  const filtered = active === "all" ? rows : rows.filter((r) => r.group === active)
+  const foldable = active === "all" && filtered.length > FOLD
+  const list = foldable && !open ? filtered.slice(0, FOLD) : filtered
   const tabs = [{ key: "all", label: "전체", n: rows.length }, ...present.map((g) => ({ key: g, label: g, n: rows.filter((r) => r.group === g).length }))]
 
   return (
@@ -38,7 +42,10 @@ export default function UpcomingList({ rows }: { rows: UpcomingRow[] }) {
         {tabs.map((t) => (
           <button
             key={t.key}
-            onClick={() => setActive(t.key)}
+            onClick={() => {
+              setActive(t.key)
+              setOpen(false)
+            }}
             className={`shrink-0 text-sm px-3 py-1 rounded-full border transition-colors ${
               active === t.key
                 ? "bg-score-amber text-pitch-night border-score-amber font-bold"
@@ -50,7 +57,7 @@ export default function UpcomingList({ rows }: { rows: UpcomingRow[] }) {
           </button>
         ))}
       </nav>
-      <ul className="divide-y divide-turf-line/40">
+      <ul className={`divide-y divide-turf-line/40 ${foldable && open ? "max-h-[420px] overflow-y-auto overscroll-contain pr-1" : ""}`}>
         {list.map((r) => (
           <li key={r.calId} className="flex items-center gap-3 py-2.5">
             <Link href={`/players/${r.id}`} className="shrink-0">
@@ -77,6 +84,14 @@ export default function UpcomingList({ rows }: { rows: UpcomingRow[] }) {
           </li>
         ))}
       </ul>
+      {foldable && (
+        <button
+          onClick={() => setOpen((v) => !v)}
+          className="mt-2 w-full text-sm text-floodlight/80 hover:text-score-amber py-2 border border-turf-line/60 hover:border-score-amber/60"
+        >
+          {open ? "일정 접기 ▴" : `전체 ${filtered.length}경기 펼치기 ▾`}
+        </button>
+      )}
     </>
   )
 }
