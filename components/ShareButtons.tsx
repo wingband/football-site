@@ -93,9 +93,21 @@ export default function ShareButtons({ url, title }: { url: string; title: strin
     copyLink("링크를 복사했어요. 카카오톡 대화창에 붙여넣어 주세요")
   }
 
-  const xHref = `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`
+  const enc = encodeURIComponent
+  const xHref = `https://twitter.com/intent/tweet?text=${enc(title)}&url=${enc(url)}`
+  const fbHref = `https://www.facebook.com/sharer/sharer.php?u=${enc(url)}`
+  const bandHref = `https://band.us/plugin/share?body=${enc(title + "\n" + url)}&route=${enc(url)}`
+
+  // 인스타그램은 웹 링크 공유 주소가 없다. 링크를 복사하고 인스타그램을 열어 붙여넣게 안내한다.
+  async function shareInstagram() {
+    window.open("https://www.instagram.com/", "_blank", "noopener,noreferrer")
+    await copyLink("링크를 복사했어요. 인스타그램 스토리·DM에 붙여넣어 주세요")
+  }
+
   const btn =
     "inline-flex items-center gap-1.5 text-xs px-3 py-2 rounded-full border transition-colors"
+  const plain = `${btn} border-turf-line text-floodlight/70 hover:text-floodlight hover:border-floodlight/40`
+  const ico = "w-3.5 h-3.5"
 
   return (
     <div className="relative">
@@ -106,24 +118,36 @@ export default function ShareButtons({ url, title }: { url: string; title: strin
           onClick={shareKakao}
           className={`${btn} border-[#FEE500]/60 bg-[#FEE500] text-[#191919] font-bold hover:bg-[#FEE500]/90`}
         >
-          <svg aria-hidden="true" viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="currentColor">
+          <svg aria-hidden="true" viewBox="0 0 24 24" className={ico} fill="currentColor">
             <path d="M12 3C6.5 3 2 6.6 2 11c0 2.8 1.8 5.3 4.6 6.7l-1 3.6c-.1.3.3.6.6.4l4.3-2.8c.5.1 1 .1 1.5.1 5.5 0 10-3.6 10-8S17.5 3 12 3z" />
           </svg>
           카카오톡
         </button>
-        <a
-          href={xHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={`${btn} border-turf-line text-floodlight/70 hover:text-floodlight hover:border-floodlight/40`}
-        >
-          X
+        <a href={xHref} target="_blank" rel="noopener noreferrer" className={plain}>
+          <svg aria-hidden="true" viewBox="0 0 24 24" className={ico} fill="currentColor">
+            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+          </svg>
+          X(트위터)
         </a>
-        <button
-          type="button"
-          onClick={() => copyLink()}
-          className={`${btn} border-turf-line text-floodlight/70 hover:text-floodlight hover:border-floodlight/40`}
-        >
+        <a href={fbHref} target="_blank" rel="noopener noreferrer" className={plain}>
+          <svg aria-hidden="true" viewBox="0 0 24 24" className={ico} fill="currentColor">
+            <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.413c0-3.026 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.971h-1.513c-1.491 0-1.956.93-1.956 1.886v2.264h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z" />
+          </svg>
+          페이스북
+        </a>
+        <button type="button" onClick={shareInstagram} className={plain}>
+          <svg aria-hidden="true" viewBox="0 0 24 24" className={ico} fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="3" y="3" width="18" height="18" rx="5" />
+            <circle cx="12" cy="12" r="4" />
+            <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+          </svg>
+          인스타그램
+        </button>
+        <a href={bandHref} target="_blank" rel="noopener noreferrer" className={plain}>
+          <span aria-hidden="true" className="w-3.5 h-3.5 rounded-[4px] bg-[#06C755] text-white text-[9px] font-bold leading-[14px] text-center">B</span>
+          밴드
+        </a>
+        <button type="button" onClick={() => copyLink()} className={plain}>
           🔗 링크 복사
         </button>
       </div>
