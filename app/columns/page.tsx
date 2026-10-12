@@ -18,11 +18,11 @@ export const metadata: Metadata = {
 
 // 칼럼 종류 — 말머리([경기 리포트] 등)로 나눈다. 순서가 곧 탭·섹션 순서.
 const GROUPS = [
-  { key: "report", label: "경기 리포트", desc: "해외파 선수 경기별 평점과 활약", test: (b: string) => b === "경기 리포트" },
-  { key: "club", label: "유럽 빅클럽", desc: "맨유·맨시티·레알·바르사 등 빅클럽 경기 정리", test: (b: string) => b === "빅클럽" },
-  { key: "kleague", label: "K리그1", desc: "라운드 결과와 순위 정리", test: (b: string) => b === "K리그1" },
-  { key: "abroad", label: "해외파 소식", desc: "주간 활약 정리와 주말 경기 일정", test: (b: string) => b.includes("해외파") },
-  { key: "column", label: "칼럼", desc: "GoalLine이 직접 쓰는 이야기", test: () => true },
+  { key: "report", bd: "border-score-amber/50", bg: "bg-score-amber/10", bar: "bg-score-amber", label: "경기 리포트", desc: "해외파 선수 경기별 평점과 활약", test: (b: string) => b === "경기 리포트" },
+  { key: "club", bd: "border-violet-400/40", bg: "bg-violet-400/10", bar: "bg-violet-400", label: "유럽 빅클럽", desc: "맨유·맨시티·레알·바르사 등 빅클럽 경기 정리", test: (b: string) => b === "빅클럽" },
+  { key: "kleague", bd: "border-sky-400/40", bg: "bg-sky-400/10", bar: "bg-sky-400", label: "K리그1", desc: "라운드 결과와 순위 정리", test: (b: string) => b === "K리그1" },
+  { key: "abroad", bd: "border-emerald-400/40", bg: "bg-emerald-400/10", bar: "bg-emerald-400", label: "해외파 소식", desc: "주간 활약 정리와 주말 경기 일정", test: (b: string) => b.includes("해외파") },
+  { key: "column", bd: "border-turf-line", bg: "bg-turf/40", bar: "bg-floodlight/50", label: "칼럼", desc: "GoalLine이 직접 쓰는 이야기", test: () => true },
 ] as const
 
 export default async function ColumnsPage({ searchParams }: { searchParams: Promise<{ type?: string; page?: string }> }) {
@@ -175,17 +175,20 @@ function ColumnList({ columns, type, page, views }: { columns: ColumnItem[]; typ
         GROUPS.filter((g) => counts.has(g.key)).map((g) => {
           const list = columns.filter((c) => groupOf(c).key === g.key)
           return (
-            <section key={g.key}>
-              <div className="flex items-baseline gap-2 mb-3">
-                <h2 className="text-base font-semibold text-floodlight">{g.label}</h2>
-                <span className="text-sm text-floodlight/65">{g.desc}</span>
+            <section key={g.key} className={`border ${g.bd} bg-turf/20`}>
+              <div className={`flex items-center gap-3 px-4 py-3 border-b ${g.bd} ${g.bg}`}>
+                <span aria-hidden className={`w-1.5 h-6 ${g.bar}`} />
+                <h2 className="text-lg font-bold text-floodlight shrink-0">{g.label}</h2>
+                <span className="text-sm text-floodlight/65 truncate hidden sm:inline">{g.desc}</span>
                 {list.length > PER_SECTION && (
                   <Link href={`/columns?type=${g.key}`} className="ml-auto text-sm text-score-amber hover:underline shrink-0">
                     더 보기 ({list.length}) →
                   </Link>
                 )}
               </div>
-              <div className={grid}>{list.slice(0, PER_SECTION).map(card)}</div>
+              <div className="p-4">
+                <div className={grid}>{list.slice(0, PER_SECTION).map(card)}</div>
+              </div>
             </section>
           )
         })
