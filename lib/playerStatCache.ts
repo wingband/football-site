@@ -39,7 +39,7 @@ function ensureTable() {
       )
     `
   }
-  return tableReady
+  return tableReady.catch((e: unknown) => { tableReady = null; throw e })
 }
 
 export async function saveCachedPlayerStat(playerId: number, data: CachedPlayerStat) {

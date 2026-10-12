@@ -62,7 +62,7 @@ function ensureTable() {
       `
     })
   }
-  return tableReady
+  return tableReady.catch((e: unknown) => { tableReady = null; throw e })
 }
 
 function rowToPrediction(row: Record<string, unknown>): Prediction {

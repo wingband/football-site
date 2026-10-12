@@ -44,7 +44,7 @@ function ensureTable() {
       throw err
     })
   }
-  return tableReady
+  return tableReady.catch((e: unknown) => { tableReady = null; throw e })
 }
 
 function rowToColumn(row: Record<string, unknown>): Column {

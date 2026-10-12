@@ -28,7 +28,7 @@ function ensureTable() {
       if (err?.code !== "23505") throw err
     })
   }
-  return tableReady
+  return tableReady.catch((e: unknown) => { tableReady = null; throw e })
 }
 
 let usageTableReady: Promise<unknown> | null = null
@@ -45,7 +45,7 @@ export function ensureUsageTable() {
       if (err?.code !== "23505") throw err
     })
   }
-  return usageTableReady
+  return usageTableReady.catch((e: unknown) => { usageTableReady = null; throw e })
 }
 
 // 실제로 API-Football에 라이브 호출이 나간 순간(캐시 미스로 fetcher()가 실행된 순간)마다

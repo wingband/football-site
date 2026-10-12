@@ -27,7 +27,7 @@ function ensureTable() {
       )
     `
   }
-  return tableReady
+  return tableReady.catch((e: unknown) => { tableReady = null; throw e })
 }
 
 export async function getCachedStory(matchId: number): Promise<string | null> {

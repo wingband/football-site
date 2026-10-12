@@ -65,7 +65,7 @@ function ensureTable() {
       `
     })
   }
-  return tableReady
+  return tableReady.catch((e: unknown) => { tableReady = null; throw e })
 }
 
 function rowToPost(row: Record<string, unknown>): Post {

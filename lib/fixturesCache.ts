@@ -21,7 +21,7 @@ function ensureTable() {
       )
     `
   }
-  return tableReady
+  return tableReady.catch((e: unknown) => { tableReady = null; throw e })
 }
 
 export type CachedFixtures<T> = {

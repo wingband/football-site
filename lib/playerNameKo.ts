@@ -25,7 +25,7 @@ function ensureTable() {
       throw err
     })
   }
-  return tableReady
+  return tableReady.catch((e: unknown) => { tableReady = null; throw e })
 }
 
 export type NameHint = { name: string | null | undefined; team?: string }

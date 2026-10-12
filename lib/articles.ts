@@ -58,7 +58,7 @@ function ensureTable() {
       `
     })
   }
-  return tableReady
+  return tableReady.catch((e: unknown) => { tableReady = null; throw e })
 }
 
 // DB에서 온 snake_case 행을 우리 코드에서 쓰는 camelCase Article 타입으로 변환
@@ -310,7 +310,7 @@ function ensurePreviewTable() {
       )
     `
   }
-  return previewTableReady
+  return previewTableReady.catch((e: unknown) => { previewTableReady = null; throw e })
 }
 
 function rowToPreview(row: Record<string, unknown>): Preview {

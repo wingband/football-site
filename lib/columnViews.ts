@@ -24,7 +24,7 @@ function ensureTable() {
       throw err
     })
   }
-  return tableReady
+  return tableReady.catch((e: unknown) => { tableReady = null; throw e })
 }
 
 export async function incrementColumnView(slug: string): Promise<void> {

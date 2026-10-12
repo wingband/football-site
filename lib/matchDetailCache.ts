@@ -22,7 +22,7 @@ function ensureTable() {
       )
     `
   }
-  return tableReady
+  return tableReady.catch((e: unknown) => { tableReady = null; throw e })
 }
 
 // 종료된 경기만 저장한다 — 진행 중/예정 경기를 저장하면 스코어가 바뀌었을 때

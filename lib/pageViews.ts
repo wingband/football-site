@@ -19,7 +19,7 @@ function ensureTable() {
       )
     `
   }
-  return tableReady
+  return tableReady.catch((e: unknown) => { tableReady = null; throw e })
 }
 
 let utmTableReady: Promise<unknown> | null = null
@@ -36,7 +36,7 @@ function ensureUtmTable() {
       )
     `
   }
-  return utmTableReady
+  return utmTableReady.catch((e: unknown) => { utmTableReady = null; throw e })
 }
 
 // 오늘 카운트를 1 올리고 올린 뒤의 값을 돌려준다.
