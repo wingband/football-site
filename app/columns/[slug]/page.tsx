@@ -6,6 +6,7 @@ import { isAdmin } from "@/lib/admin"
 import { SITE_URL } from "@/lib/siteConfig"
 import ColumnBody from "@/components/ColumnBody"
 import ShareButtons from "@/components/ShareButtons"
+import ColumnComments from "@/components/ColumnComments"
 import ColumnViewBeacon from "@/components/ColumnViewBeacon"
 import { getColumnViews } from "@/lib/columnViews"
 
@@ -123,6 +124,8 @@ export default async function ColumnPage({ params }: { params: Promise<{ slug: s
             <ShareButtons url={`${SITE_URL}/columns/${column.slug}`} title={column.title} />
           </div>
         )}
+
+        {column.published && <ColumnComments slug={column.slug} admin={admin} />}
 
         <footer className="pt-6 border-t border-turf-line/40 flex items-center justify-between">
           <Link href="/columns" className="text-sm text-floodlight/60 hover:text-floodlight transition-colors">
