@@ -5,6 +5,7 @@ import { getMatchPhase } from "@/lib/matchStatus"
 import { goalTimeline, nameHintsOf } from "@/lib/goalTimeline"
 import { koPlayerNames } from "@/lib/playerNameKo"
 import { BIG_CLUBS, BIG_CLUB_IDS } from "@/lib/bigClubs"
+import { keyMoments, KEY_MOMENT_RULES } from "@/lib/keyMoments"
 import { COMMON_RULES, DRAFT_KINDS, callOpenAI, shapeDraftText, cleanTags } from "@/lib/draftEngine"
 
 // 유럽 빅클럽 경기 리포트 초안 (2026-10-12). 한국 선수 리포트(matchReports.ts)와 같은 원칙:
@@ -107,6 +108,8 @@ async function makeClubReport(fx: RawFixture, mainId: number): Promise<string | 
   const ko = await koPlayerNames(nameHintsOf(events))
   const goalFlow = goalTimeline(events, fx.teams.home, fx.teams.away, fx.goals, ko).join(" / ")
 
+  const moments = keyMoments(events, fx.teams.home, fx.teams.away, ko).join(" / ")
+
   const statOf = (teamId: number, type: string) => teamStats.find((t) => t.team.id === teamId)?.statistics?.find((x) => x.type === type)?.value ?? null
   const items: [string, string][] = [
     ["점유율", "Ball Possession"], ["슈팅", "Total Shots"], ["유효슈팅", "Shots on Goal"],
@@ -150,6 +153,7 @@ async function makeClubReport(fx: RawFixture, mainId: number): Promise<string | 
   const data = [
     `- 경기: ${formatKickoffKst(fx.fixture.date)} ${leagueKo}${roundKo(fx.league.round)} | ${homeKo} ${fx.goals.home}:${fx.goals.away} ${awayKo}`,
     `- 중심 팀: ${mainKo} (${mainHome ? "홈" : "원정"} ${resultMain})`,
+    moments ? `- 핵심 장면: ${moments}` : "",
     goalFlow ? `- 득점 순서: ${goalFlow}` : "- 득점 순서: (데이터 없음 또는 무득점)",
     teamLine ? `- 팀 기록 비교: ${teamLine}` : "",
     top ? `- 팀별 평점 상위 선수: ${top}` : "",
@@ -164,6 +168,7 @@ ${COMMON_RULES}
 - 팀 이름은 데이터에 적힌 한글 표기 그대로 써라. 선수 이름은 데이터의 득점 순서에 적힌 한글 표기를 쓰고, "팀별 평점 상위 선수"의 영문 이름은 영문 그대로 써라.
 - 득점 순서의 "→ 스코어"가 그 골 직후 스코어다. 선제골·동점골·역전골은 이 스코어로 판단해라. "골 A, 도움 B"에서 득점자는 A다.
 - 데이터에 득점 순서가 스코어보다 적게(골이 빠져) 있으면, 확인되는 골만 쓰고 빠진 골을 지어내지 마라.
+${KEY_MOMENT_RULES}
 - 영어 표현(Regular Season, Round 등)은 쓰지 마라. 라운드는 데이터에 적힌 "N라운드" 한글 표기만 쓴다.
 - 평가·감상 표현("아쉬운", "인상적인", "압도적인", "시즌 초반 상승세", "굴욕", "대승의 의미" 등)과 데이터에 없는 맥락(연승·연패, 순위 변동, "역전승" 등 득점 순서로 확인되지 않는 것)은 쓰지 마라.
 - 퇴장(레드카드)이 데이터에 있으면 반드시 "경기 흐름"에 언급해라. "오픈플레이" 같은 데이터에 없는 용어도 쓰지 마라.

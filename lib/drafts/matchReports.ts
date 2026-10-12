@@ -5,6 +5,7 @@ import { detailText, seasonLineFor } from "@/lib/weeklyContext"
 import { getColumnBySlug, saveColumn } from "@/lib/columns"
 import { getMatchPhase } from "@/lib/matchStatus"
 import { renderPlayerCard } from "@/lib/weeklyCard"
+import { keyMoments, KEY_MOMENT_RULES } from "@/lib/keyMoments"
 import { goalTimeline, nameHintsOf } from "@/lib/goalTimeline"
 import { koPlayerNames } from "@/lib/playerNameKo"
 import { withJosa } from "@/lib/josa"
@@ -155,6 +156,7 @@ async function makeReport(
 
   const ko = await koPlayerNames(nameHintsOf(events))
   const goalFlow = goalTimeline(events, fx.teams.home, fx.teams.away, fx.goals, ko).join(" / ")
+  const moments = keyMoments(events, fx.teams.home, fx.teams.away, ko).join(" / ")
   const mine: string[] = []
   for (const e of events) {
     if (e.type === "Goal" && e.detail !== "Missed Penalty" && e.detail !== "Own Goal" && e.player.id === p.id) mine.push(`${minute(e.time)} 골`)
@@ -189,6 +191,7 @@ async function makeReport(
   const data = [
     `- 선수: ${p.name} (${teamKo}, ${leagueKo})`,
     `- 경기: ${formatKickoffKst(fx.fixture.date)} ${leagueKo}${fx.league.round ? ` ${fx.league.round}` : ""} | ${koTeam(fx.teams.home.name)} ${fx.goals.home}:${fx.goals.away} ${koTeam(fx.teams.away.name)} (${teamKo} ${isHome ? "홈" : "원정"} ${result})`,
+    moments ? `- 핵심 장면: ${moments}` : "",
     goalFlow ? `- 득점 순서: ${goalFlow}` : "- 득점 순서: (데이터 없음 또는 무득점)",
     `- ${p.name} 기록: ${minutes}분 출전${stat.games?.substitute === true ? "(교체 투입)" : ""}, 평점 ${rating?.toFixed(1) ?? "없음"}, ${goals}골 ${assists}도움`,
     mine.length ? `- ${p.name}의 경기 중 기록: ${mine.join(", ")}` : "",
@@ -207,6 +210,8 @@ async function makeReport(
 ${COMMON_RULES}
 - 선수 이름은 데이터에 적힌 한글 표기 그대로 써라.
 - 득점 순서의 "→ 스코어"가 그 골 직후 스코어다. 선제골·동점골·역전골은 이 스코어로 판단해라. "골 A, 도움 B"에서 득점자는 A다.
+${KEY_MOMENT_RULES}
+- 단, 이 글의 주인공은 ${p.name}이다. 핵심 장면이 선수 본인과 무관해도 경기 개요·흐름에서 먼저 짚되, 선수 기록 서술은 반드시 포함해라.
 
 [본문 구성] — 전체 분량은 공백 포함 1,400~2,000자 정도로 충실하게 쓴다. 데이터에 없는 사실은 절대 만들어내지 말고, 데이터가 있는 항목만 풀어 써라.
 - 도입 3문장: 경기 결과, ${p.name}의 핵심 기록(출전 시간, 평점, 공격포인트), 이 경기가 팀과 선수에게 갖는 의미(데이터로 확인되는 범위에서)
