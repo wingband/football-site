@@ -72,12 +72,38 @@ async function recordApiUsage() {
 // API는 아예 안 부른다. 없거나 오래됐으면 fetcher()로 실제 API를 불러서 DB에
 // 저장한 뒤 반환한다. fetcher가 실패하면(레이트리밋 등) 오래된 DB 값이라도
 // 있으면 그거라도 반환해서 화면이 완전히 비는 걸 막는다.
+//
+// (2026-10-12) 서버 인스턴스 메모리 캐시 추가. Neon 무료 플랜의 월 네트워크 전송량(5GB)을 다 써서
+// DB가 막혔다 — 방문 때마다 큰 JSON(시즌 전체 경기 등)을 DB에서 통째로 읽어오던 게 주원인으로 보인다.
+// 같은 서버 인스턴스에서는 최대 10분까지 메모리 값을 재사용해서 DB 읽기(=전송량)를 크게 줄인다.
+const MEM_MAX_SECONDS = 600
+const MEM_MAX_ENTRIES = 150
+const memCache = new Map<string, { data: unknown; at: number }>()
+
+function memSet(key: string, data: unknown) {
+  if (memCache.size >= MEM_MAX_ENTRIES && !memCache.has(key)) {
+    const oldest = memCache.keys().next().value
+    if (oldest !== undefined) memCache.delete(oldest)
+  }
+  memCache.delete(key)
+  memCache.set(key, { data, at: Date.now() })
+}
+
 export async function getCachedOrFetch<T>(
   cacheKey: string,
   ttlSeconds: number,
   fetcher: () => Promise<T>
 ): Promise<T> {
-  await ensureTable()
+  const mem = memCache.get(cacheKey)
+  if (mem && Date.now() - mem.at < Math.min(ttlSeconds, MEM_MAX_SECONDS) * 1000) return mem.data as T
+
+  try {
+    await ensureTable()
+  } catch (err) {
+    // DB에 아예 접속이 안 될 때: 메모리에 (오래됐더라도) 값이 있으면 그걸로 버틴다
+    if (mem) return mem.data as T
+    throw err
+  }
   const sql = getSql()
 
   try {
@@ -87,14 +113,18 @@ export async function getCachedOrFetch<T>(
         AND updated_at > now() - interval '1 second' * ${ttlSeconds}
     `
     if (fresh.length > 0) {
+      memSet(cacheKey, fresh[0].data)
       return fresh[0].data as T
     }
   } catch (err) {
     console.error("api_cache 조회 실패:", err)
+    // DB 읽기가 실패한 경우 API를 새로 부르기 전에 메모리에 남은 값부터 쓴다 (한도 소진 방지)
+    if (mem) return mem.data as T
   }
 
   try {
     const result = await fetcher()
+    memSet(cacheKey, result)
     await recordApiUsage()
     try {
       await sql`

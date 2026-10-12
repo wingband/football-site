@@ -61,15 +61,32 @@ function rowToColumn(row: Record<string, unknown>): Column {
 }
 
 // 목록용. includeDrafts는 관리자 화면에서만 true
+//
+// (2026-10-12) Neon 월 전송량 한도를 다 써서 DB가 막혔다. 칼럼은 본문까지 통째로 읽는데 메인·목록·검색·사이트맵이
+// 방문 때마다 전부 읽어 전송량이 컸다. 같은 서버 인스턴스에서는 90초간 메모리 값을 재사용하고,
+// 칼럼을 저장·삭제하면 그 인스턴스 캐시는 바로 비운다. (DB 읽기가 실패하면 오래된 메모리 값으로 버틴다)
+const COLUMNS_MEM_MS = 90_000
+const columnsMem = new Map<string, { at: number; rows: Column[] }>()
+
 export async function getColumns(opts: { includeDrafts?: boolean; limit?: number } = {}): Promise<Column[]> {
   if (!process.env.DATABASE_URL) return []
-  await ensureTable()
-  const sql = getSql()
   const limit = opts.limit ?? 200
-  const rows = opts.includeDrafts
-    ? await sql`SELECT * FROM columns ORDER BY created_at DESC LIMIT ${limit}`
-    : await sql`SELECT * FROM columns WHERE published = true ORDER BY created_at DESC LIMIT ${limit}`
-  return rows.map(rowToColumn)
+  const memKey = `${opts.includeDrafts ? "d" : "p"}:${limit}`
+  const hit = columnsMem.get(memKey)
+  if (hit && Date.now() - hit.at < COLUMNS_MEM_MS) return hit.rows
+  try {
+    await ensureTable()
+    const sql = getSql()
+    const rows = opts.includeDrafts
+      ? await sql`SELECT * FROM columns ORDER BY created_at DESC LIMIT ${limit}`
+      : await sql`SELECT * FROM columns WHERE published = true ORDER BY created_at DESC LIMIT ${limit}`
+    const out = rows.map(rowToColumn)
+    columnsMem.set(memKey, { at: Date.now(), rows: out })
+    return out
+  } catch (err) {
+    if (hit) return hit.rows
+    throw err
+  }
 }
 
 // 관리자 헤더 배지용: 한 줄 총평을 기다리는 비공개 AI 초안 수
@@ -99,6 +116,7 @@ export async function saveColumn(input: {
 }): Promise<void> {
   await ensureTable()
   const sql = getSql()
+  columnsMem.clear()
   await sql`
     INSERT INTO columns (slug, title, summary, content, tags, published)
     VALUES (${input.slug}, ${input.title}, ${input.summary}, ${input.content}, ${input.tags}, ${input.published})
@@ -115,6 +133,7 @@ export async function saveColumn(input: {
 export async function deleteColumn(slug: string): Promise<void> {
   await ensureTable()
   const sql = getSql()
+  columnsMem.clear()
   await sql`DELETE FROM columns WHERE slug = ${slug}`
 }
 
