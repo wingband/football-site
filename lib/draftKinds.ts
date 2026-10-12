@@ -7,6 +7,7 @@ export const DRAFT_KINDS = {
   weekend: { mark: "weekend-korean-schedule", label: "주말 해외파 일정" },
   report: { mark: "match-report", label: "경기 직후 리포트" },
   kleague: { mark: "kleague-round", label: "K리그 라운드 정리" },
+  club: { mark: "club-match", label: "유럽 빅클럽 경기 리포트" },
 } as const
 export type DraftKind = keyof typeof DRAFT_KINDS
 

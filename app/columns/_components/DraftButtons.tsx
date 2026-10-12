@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { DRAFT_KINDS, type DraftKind } from "@/lib/draftKinds"
 
 // 관리자 전용: 초안 종류별로 "지금 만들기" (보통은 크론이 알아서 만든다)
-const ORDER: DraftKind[] = ["weekly", "weekend", "kleague", "report"]
+const ORDER: DraftKind[] = ["weekly", "weekend", "kleague", "report", "club"]
 
 export default function DraftButtons() {
   const router = useRouter()
@@ -26,7 +26,7 @@ export default function DraftButtons() {
         setMsg(data.error ?? "초안 생성에 실패했습니다")
         return
       }
-      if (kind === "report" && data.slugs?.length > 1) {
+      if ((kind === "report" || kind === "club") && data.slugs?.length > 1) {
         setMsg(`경기 리포트 초안 ${data.slugs.length}개를 만들었어요`)
         router.refresh()
         return

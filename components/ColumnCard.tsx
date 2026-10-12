@@ -18,6 +18,7 @@ function ratingTone(r: number) {
 const BADGE_TONE: Record<string, string> = {
   "경기 리포트": "bg-score-amber/20 text-score-amber",
   "K리그1": "bg-sky-400/20 text-sky-300",
+  "빅클럽": "bg-violet-400/20 text-violet-300",
   "주간 해외파": "bg-emerald-400/20 text-emerald-300",
   "주말 해외파 일정": "bg-emerald-400/20 text-emerald-300",
 }
@@ -27,6 +28,10 @@ function visual(slug: string): { img: string | null; contain: boolean } {
   if (kind === "report") {
     const pid = slug.match(/match-report-(\d+)-\d+/)?.[1]
     return { img: pid ? `${CDN}/players/${pid}.png` : null, contain: false }
+  }
+  if (kind === "club") {
+    const tid = slug.match(/club-match-(\d+)-\d+/)?.[1]
+    return { img: tid ? `${CDN}/teams/${tid}.png` : null, contain: true }
   }
   if (kind === "kleague") return { img: `${CDN}/leagues/292.png`, contain: true }
   return { img: null, contain: false }
@@ -63,7 +68,7 @@ export default function ColumnCard({ column: c, extra }: { column: Column; extra
         <div className="shrink-0 w-[72px] h-[72px] rounded-full ring-2 ring-score-amber/70 overflow-hidden bg-pitch-night flex items-center justify-center">
           {v.img ? (
             v.contain ? (
-              <Logo src={v.img} alt="K리그1" className="w-3/5 h-3/5" />
+              <Logo src={v.img} alt={info.badge} className="w-3/5 h-3/5" />
             ) : (
               <PlayerAvatar src={v.img} alt={info.title} className="w-full h-full" />
             )

@@ -19,6 +19,7 @@ export const metadata: Metadata = {
 // 칼럼 종류 — 말머리([경기 리포트] 등)로 나눈다. 순서가 곧 탭·섹션 순서.
 const GROUPS = [
   { key: "report", label: "경기 리포트", desc: "해외파 선수 경기별 평점과 활약", test: (b: string) => b === "경기 리포트" },
+  { key: "club", label: "유럽 빅클럽", desc: "맨유·맨시티·레알·바르사 등 빅클럽 경기 정리", test: (b: string) => b === "빅클럽" },
   { key: "kleague", label: "K리그1", desc: "라운드 결과와 순위 정리", test: (b: string) => b === "K리그1" },
   { key: "abroad", label: "해외파 소식", desc: "주간 활약 정리와 주말 경기 일정", test: (b: string) => b.includes("해외파") },
   { key: "column", label: "칼럼", desc: "GoalLine이 직접 쓰는 이야기", test: () => true },

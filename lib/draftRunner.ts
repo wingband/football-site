@@ -2,6 +2,7 @@ import { generateWeeklyKoreanDraft } from "@/lib/generateWeeklyColumn"
 import { generateWeekendScheduleDraft } from "@/lib/drafts/weekend"
 import { generateMatchReportDrafts } from "@/lib/drafts/matchReports"
 import { generateKLeagueRoundDraft } from "@/lib/drafts/kleague"
+import { generateClubReportDrafts } from "@/lib/drafts/clubReports"
 import { DRAFT_KINDS, type DraftKind } from "@/lib/draftEngine"
 import { deleteColumn, getColumns } from "@/lib/columns"
 
@@ -16,6 +17,12 @@ export async function runDraft(kind: DraftKind, refreshDraft = false): Promise<R
       return await generateWeekendScheduleDraft({ refreshDraft })
     case "kleague":
       return await generateKLeagueRoundDraft({ refreshDraft })
+    case "club": {
+      const r = await generateClubReportDrafts()
+      return r.created.length
+        ? { ok: true, slugs: r.created, slug: r.created[0], created: true, skipped: r.skipped }
+        : { ok: false, error: "최근 48시간 안에 끝난 빅클럽 경기 중 새로 만들 리포트가 없어요", skipped: r.skipped }
+    }
     case "report": {
       const r = await generateMatchReportDrafts()
       return r.created.length
@@ -29,7 +36,7 @@ export async function runDraft(kind: DraftKind, refreshDraft = false): Promise<R
 export async function cleanupStaleReportDrafts(): Promise<number> {
   const cols = await getColumns({ includeDrafts: true, limit: 200 })
   const stale = cols.filter(
-    (c) => !c.published && c.slug.includes(DRAFT_KINDS.report.mark) && Date.now() - new Date(c.createdAt).getTime() > 7 * 86400_000
+    (c) => !c.published && (c.slug.includes(DRAFT_KINDS.report.mark) || c.slug.includes(DRAFT_KINDS.club.mark)) && Date.now() - new Date(c.createdAt).getTime() > 7 * 86400_000
   )
   for (const c of stale) await deleteColumn(c.slug)
   return stale.length

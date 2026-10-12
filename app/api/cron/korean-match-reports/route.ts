@@ -12,8 +12,10 @@ export async function GET(req: NextRequest) {
   }
   try {
     const result = await runDraft("report")
+    // 유럽 빅클럽 경기 리포트 초안도 같은 주기로 (한 쪽이 실패해도 다른 쪽은 진행)
+    const club = await runDraft("club").catch((e) => ({ ok: false, error: String(e) }))
     const cleaned = await cleanupStaleReportDrafts()
-    return NextResponse.json({ ...result, cleaned })
+    return NextResponse.json({ ...result, club, cleaned })
   } catch (err) {
     console.error("korean-match-reports 실패:", err)
     return NextResponse.json({ ok: false, error: "리포트 생성 실패" }, { status: 500 })
