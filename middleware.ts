@@ -1,7 +1,7 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server"
 import { NextResponse } from "next/server"
 import { isInternalReferer } from "@/lib/scope"
-import { isKnownCrawler } from "@/lib/crawlerDetect"
+import { isKnownCrawler, isBlockedBot } from "@/lib/crawlerDetect"
 import { KOREAN_PLAYERS_ABROAD } from "@/lib/koreanPlayersAbroad"
 
 const KOREAN_PLAYER_IDS = new Set(KOREAN_PLAYERS_ABROAD.map((p) => String(p.id)))
@@ -74,6 +74,11 @@ const RATE_LIMIT_RULES: { pattern: RegExp; max: number }[] = [
   { pattern: /^\/matches/, max: 40 },
   { pattern: /^\/search/, max: 20 },
   { pattern: /^\/api\/players\//, max: 40 },
+  // (2026-10-12) DB를 읽는 목록·상세 페이지도 한도를 둔다 (사람은 분당 60번 넘게 열 일이 없다)
+  { pattern: /^\/board/, max: 60 },
+  { pattern: /^\/columns/, max: 60 },
+  { pattern: /^\/stories/, max: 60 },
+  { pattern: /^\/standings/, max: 60 },
 ]
 const RATE_LIMIT_WINDOW_MS = 60_000
 
@@ -105,6 +110,10 @@ function isRateLimited(ip: string, pathname: string, userAgent: string | null): 
 export default clerkMiddleware(async (auth, req) => {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown"
   const userAgent = req.headers.get("user-agent")
+  // 수집용 봇은 페이지(DB·API)에 닿기 전에 바로 막는다. robots/ads/sitemap은 열어둔다.
+  if (isBlockedBot(userAgent) && !/^\/(robots\.txt|ads\.txt|sitemap\.xml)$/.test(req.nextUrl.pathname)) {
+    return new NextResponse("Forbidden", { status: 403 })
+  }
   if (isRateLimited(ip, req.nextUrl.pathname, userAgent)) {
     return new NextResponse("Too Many Requests", { status: 429 })
   }

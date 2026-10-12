@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next"
 import { SITE_URL } from "@/lib/siteConfig"
+import { BLOCKED_BOT_NAMES } from "@/lib/crawlerDetect"
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -14,6 +15,8 @@ export default function robots(): MetadataRoute.Robots {
         // /columns/write, /board/write 같은 작성 화면도 막는다.
         disallow: ["/api/", "/search", "/sign-in", "/sign-up", "/compare?", "/columns/write", "/columns/names", "/board/write"],
       },
+      // 수집용 봇은 전체 차단 (middleware에서도 403으로 막는다)
+      { userAgent: BLOCKED_BOT_NAMES.filter((n) => !["HeadlessChrome", "Scrapy"].includes(n)), disallow: "/" },
     ],
     sitemap: `${SITE_URL}/sitemap.xml`,
   }

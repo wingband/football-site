@@ -16,3 +16,21 @@ export function isKnownCrawler(userAgent: string | null): boolean {
   if (!userAgent) return false
   return CRAWLER_USER_AGENT_PATTERN.test(userAgent)
 }
+
+// (2026-10-12) 사이트에 도움이 안 되면서 DB·API만 소모하는 수집용 봇 — 크롤러 사고로 DB/API 한도가 반복해서 찼다.
+// 검색엔진(Googlebot·Bing·Yeti·Daum)과 애드센스 심사 봇(Mediapartners/AdsBot), 링크 미리보기(facebookexternalhit·카카오 등)는 여기에 넣지 않는다.
+export const BLOCKED_BOT_NAMES = [
+  "GPTBot", "CCBot", "ClaudeBot", "anthropic-ai", "Claude-Web", "Bytespider", "PerplexityBot", "Amazonbot",
+  "Applebot-Extended", "meta-externalagent", "FacebookBot", "AhrefsBot", "SemrushBot", "MJ12bot", "DotBot",
+  "PetalBot", "DataForSeoBot", "BLEXBot", "SeznamBot", "Barkrowler", "ImagesiftBot", "Diffbot", "omgili",
+  "Timpibot", "SerpstatBot", "ZoominfoBot", "Scrapy", "HeadlessChrome",
+]
+const BLOCKED_BOT_PATTERN = new RegExp(
+  `${BLOCKED_BOT_NAMES.join("|")}|^python-requests|^curl/|^Wget/|^Go-http-client|^node-fetch|^axios/|^okhttp`,
+  "i"
+)
+
+export function isBlockedBot(userAgent: string | null): boolean {
+  if (!userAgent) return false
+  return BLOCKED_BOT_PATTERN.test(userAgent)
+}
