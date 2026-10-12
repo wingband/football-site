@@ -79,7 +79,7 @@ export default function ColumnCard({ column: c, extra }: { column: Column; extra
  <h3 className="text-base font-semibold leading-snug break-keep text-floodlight group-hover:text-score-amber transition-colors">{info.title}</h3>
       </div>
 
-      {info.lead && <p className="text-sm leading-relaxed text-floodlight/80 line-clamp-2 break-keep">{info.lead}</p>}
+      {info.lead && <p className="text-sm leading-relaxed text-floodlight/80 line-clamp-3 break-keep">{info.lead}</p>}
 
       <p className="mt-auto text-xs text-floodlight/55">
         {mdKst(c.createdAt)}

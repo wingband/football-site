@@ -51,12 +51,12 @@ export function columnCardInfo(c: { title: string; summary: string; content: str
     break
   }
   if (!lead) lead = summary
-  // 카드에는 한 문장만, 잘림표(…) 없이 끝까지 보이게 짧게
-  let one = lead.split(/(?<=[다요]\.)\s+/)[0].trim()
-  if (one.length > 60) {
-    const part = one.slice(0, 60)
-    const i = Math.max(part.lastIndexOf(", "), part.lastIndexOf("고 "), part.lastIndexOf("며 "))
-    one = i > 25 ? part.slice(0, i + 1).replace(/,$/, "") + "." : part.replace(/\s+\S*$/, "") + "."
-  }
+  // 카드에는 "완결된 한 문장"만. 문장을 중간에서 자르면 "본머스를."처럼 깨지므로 절대 자르지 않는다.
+  // 본문 첫 문장이 길면(90자 초과) 짧은 요약문을 쓰고, 둘 다 길면 더 짧은 쪽을 그대로 쓴다(카드가 2줄까지 보여 줌).
+  const first = (t: string) => t.split(/(?<=[다요]\.)\s+/)[0].trim()
+  const complete = (t: string) => /[다요]\.?$/.test(t)
+  const cands = [first(lead), first(summary)].filter((t) => t && complete(t))
+  const short = cands.find((t) => t.length <= 90)
+  const one = short ?? (cands.sort((x, y) => x.length - y.length)[0] ?? first(lead))
   return { badge, title, rating, lead: one }
 }
