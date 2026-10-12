@@ -175,8 +175,8 @@ function ColumnList({ columns, type, page, views }: { columns: ColumnItem[]; typ
         GROUPS.filter((g) => counts.has(g.key)).map((g) => {
           const list = columns.filter((c) => groupOf(c).key === g.key)
           return (
-            <section key={g.key} className={`border ${g.bd} bg-turf/20`}>
-              <div className={`flex items-center gap-3 px-4 py-3 border-b ${g.bd} ${g.bg}`}>
+            <section key={g.key} className="pt-4 first:pt-0">
+              <div className="flex items-center gap-3 mb-4">
                 <span aria-hidden className={`w-1.5 h-6 ${g.bar}`} />
                 <h2 className="text-lg font-bold text-floodlight shrink-0">{g.label}</h2>
                 <span className="text-sm text-floodlight/65 truncate hidden sm:inline">{g.desc}</span>
@@ -186,9 +186,7 @@ function ColumnList({ columns, type, page, views }: { columns: ColumnItem[]; typ
                   </Link>
                 )}
               </div>
-              <div className="p-4">
-                <div className={grid}>{list.slice(0, PER_SECTION).map(card)}</div>
-              </div>
+              <div className={grid}>{list.slice(0, PER_SECTION).map(card)}</div>
             </section>
           )
         })
