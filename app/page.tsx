@@ -85,7 +85,7 @@ const getHomeData = unstable_cache(
   async () => {
     const [weeks, board, allColumns, results, leagueBoard] = await Promise.all([
       safe(getKoreanPlayersWeek(), [] as PlayerWeek[], "해외파"),
-      safe(Promise.all(HOME_BOARD_TABS.map((t) => getPosts(t.key === "all" ? null : t.key, 1, 5))), [] as { posts: Post[]; total: number }[], "게시판"),
+      safe(Promise.all(HOME_BOARD_TABS.map((t) => getPosts(t.key === "all" ? null : t.key, 1, 7))), [] as { posts: Post[]; total: number }[], "게시판"),
       safe(getColumns({ limit: 80 }), [] as Column[], "칼럼"),
       safe(getHomeResults(60), [] as HomeResult[], "경기 결과"),
       safe(getLeagueBoard(39), null as LeagueBoardData | null, "리그 순위"),
@@ -118,6 +118,7 @@ export default async function Home() {
 
         {/* 오른쪽: 게시판 + 광고 */}
         <aside className="space-y-4">
+          <CoupangBanner />
           <section className="border-t border-turf-line/50 pt-4">
             <div className="flex items-center justify-between mb-3">
               <Link href="/board" className="text-base font-semibold text-floodlight hover:text-score-amber">
@@ -142,7 +143,6 @@ export default async function Home() {
             />
           </section>
 
-          <CoupangBanner />
         </aside>
       </div>
 
