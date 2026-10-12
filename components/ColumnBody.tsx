@@ -117,7 +117,7 @@ export default function ColumnBody({ content }: { content: string }) {
             inVerdict = b.text.trim() === "한 줄 총평"
             if (inVerdict) {
               // 한 줄 총평: 작은 노란 라벨 + 아래 큰 글씨 (박스 없이 강조)
-              return <p key={k} className="pt-2 -mb-2 text-xs font-bold tracking-widest text-score-amber">한 줄 총평</p>
+              return <p key={k} className="pt-2 -mb-1 text-xs leading-none font-bold tracking-widest text-score-amber">한 줄 총평</p>
             }
             return <h2 key={k} className="text-base font-semibold text-floodlight pt-3">{renderInline(b.text, k)}</h2>
           case "h3":
@@ -126,7 +126,7 @@ export default function ColumnBody({ content }: { content: string }) {
             if (inVerdict) {
               inVerdict = false
               return (
-                <blockquote key={k} className="border-l-4 border-score-amber pl-4 py-1 text-xl sm:text-2xl font-bold leading-snug text-floodlight not-italic">
+                <blockquote key={k} className="border-l-4 border-score-amber pl-4 py-1 mt-1 text-xl sm:text-2xl font-bold leading-snug text-floodlight not-italic">
                   {withBreaks(b.text, k)}
                 </blockquote>
               )
