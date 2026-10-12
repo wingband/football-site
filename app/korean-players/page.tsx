@@ -46,7 +46,13 @@ const PLAYER_INTRO: Record<number, { nameKo: string; nameEn: string; desc: strin
 const LEAGUE_ORDER = ["Premier League", "La Liga", "Bundesliga", "Championship", "2. Bundesliga", "Belgian Pro League", "MLS"]
 
 export default async function KoreanPlayersPage() {
-  const weeks = await getKoreanPlayersWeek()
+  // 외부 API·DB가 막혀도 배포(빌드)가 실패하지 않도록, 실패하면 빈 일정으로 그린다 (1시간 뒤 다시 만들어진다)
+  let weeks: Awaited<ReturnType<typeof getKoreanPlayersWeek>> = []
+  try {
+    weeks = await getKoreanPlayersWeek()
+  } catch (err) {
+    console.error("korean-players: 주간 일정 조회 실패", err instanceof Error ? err.message : err)
+  }
 
   const byLeague = new Map<string, typeof KOREAN_PLAYERS_ABROAD>()
   for (const p of KOREAN_PLAYERS_ABROAD) {

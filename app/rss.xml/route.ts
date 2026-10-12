@@ -22,7 +22,13 @@ function plain(md: string, max = 300) {
 }
 
 export async function GET() {
-  const columns = (await getColumns({ limit: 50 })).filter((c) => c.published)
+  // DB가 막혔을 때 배포(빌드) 자체가 실패하지 않도록, 읽기에 실패하면 빈 피드로 대신한다 (10분 뒤 다시 만들어진다)
+  let columns: Awaited<ReturnType<typeof getColumns>> = []
+  try {
+    columns = (await getColumns({ limit: 50 })).filter((c) => c.published)
+  } catch (err) {
+    console.error("rss: 칼럼 조회 실패", err instanceof Error ? err.message : err)
+  }
   const base = SITE_URL.replace(/\/$/, "")
   const lastBuild = columns[0]?.updatedAt ?? new Date().toISOString()
 
