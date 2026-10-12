@@ -31,8 +31,8 @@ export default function HomeBoard({ tabs }: { tabs: HomeBoardTab[] }) {
           </button>
         ))}
       </div>
-      {/* 글이 7개보다 적어도(빈 게시판 포함) 아래 배너 위치가 움직이지 않도록 목록 높이(7줄)를 고정 */}
-      <div className="min-h-[16.25rem]">
+      {/* 글이 5개보다 적어도(빈 게시판 포함) 아래 배너 위치가 움직이지 않도록 목록 높이(5줄)를 고정 */}
+      <div className="min-h-[11.75rem]">
       {cur.posts.length === 0 ? (
         <p className="text-sm text-floodlight/65 py-3">아직 글이 없어요. 첫 글을 남겨보세요!</p>
       ) : (
