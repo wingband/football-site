@@ -48,6 +48,12 @@ async function safe<T>(path: string, ttl: number): Promise<T | null> {
 const minute = (t: RawEvent["time"]) => (t.elapsed == null ? "" : t.extra ? `${t.elapsed}+${t.extra}분` : `${t.elapsed}분`)
 
 // slug에 대표 클럽 ID를 넣어 두면 카드 로고를 따로 조회하지 않아도 된다
+// "Regular Season - 6" 같은 영문 라운드 표기를 "6라운드"로. 숫자가 없으면(결승·조별 등) 표기하지 않는다.
+function roundKo(r?: string | null): string {
+  const n = r?.match(/(\d+)\s*$/)?.[1]
+  return n ? ` ${n}라운드` : ""
+}
+
 export function clubReportSlug(fx: RawFixture, teamId: number) {
   const day = new Date(fx.fixture.date).toISOString().slice(0, 10)
   return `${day}-${MARK}-${teamId}-${fx.fixture.id}`
@@ -142,7 +148,7 @@ async function makeClubReport(fx: RawFixture, mainId: number): Promise<string | 
 
   const resultMain = main.winner === true ? "승" : other.winner === true ? "패" : "무"
   const data = [
-    `- 경기: ${formatKickoffKst(fx.fixture.date)} ${leagueKo}${fx.league.round ? ` ${fx.league.round}` : ""} | ${homeKo} ${fx.goals.home}:${fx.goals.away} ${awayKo}`,
+    `- 경기: ${formatKickoffKst(fx.fixture.date)} ${leagueKo}${roundKo(fx.league.round)} | ${homeKo} ${fx.goals.home}:${fx.goals.away} ${awayKo}`,
     `- 중심 팀: ${mainKo} (${mainHome ? "홈" : "원정"} ${resultMain})`,
     goalFlow ? `- 득점 순서: ${goalFlow}` : "- 득점 순서: (데이터 없음 또는 무득점)",
     teamLine ? `- 팀 기록 비교: ${teamLine}` : "",
@@ -158,6 +164,10 @@ ${COMMON_RULES}
 - 팀 이름은 데이터에 적힌 한글 표기 그대로 써라. 선수 이름은 데이터의 득점 순서에 적힌 한글 표기를 쓰고, "팀별 평점 상위 선수"의 영문 이름은 영문 그대로 써라.
 - 득점 순서의 "→ 스코어"가 그 골 직후 스코어다. 선제골·동점골·역전골은 이 스코어로 판단해라. "골 A, 도움 B"에서 득점자는 A다.
 - 데이터에 득점 순서가 스코어보다 적게(골이 빠져) 있으면, 확인되는 골만 쓰고 빠진 골을 지어내지 마라.
+- 영어 표현(Regular Season, Round 등)은 쓰지 마라. 라운드는 데이터에 적힌 "N라운드" 한글 표기만 쓴다.
+- 평가·감상 표현("아쉬운", "인상적인", "압도적인", "시즌 초반 상승세", "굴욕", "대승의 의미" 등)과 데이터에 없는 맥락(연승·연패, 순위 변동, "역전승" 등 득점 순서로 확인되지 않는 것)은 쓰지 마라.
+- 퇴장(레드카드)이 데이터에 있으면 반드시 "경기 흐름"에 언급해라. "오픈플레이" 같은 데이터에 없는 용어도 쓰지 마라.
+- 도입 첫 문장은 80자 이내의 완결된 문장 하나로, "[날짜] [팀A]는 [팀B]를 상대로 [스코어]로 [승리/패배/무승부]했다." 형태로 써라. 중간에 끊기는 문장이나 "~를."로 끝나는 문장을 쓰지 마라.
 
 [본문 구성] — 전체 분량은 공백 포함 1,400~2,000자 정도로 충실하게 쓴다. 데이터가 있는 항목만 풀어 써라.
 - 도입 3문장: 경기 결과, 눈에 띄는 기록(스코어·득점 순서·팀 기록 중 데이터로 확인되는 것), 두 팀에 갖는 의미(데이터 범위에서)
