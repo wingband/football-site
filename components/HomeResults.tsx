@@ -66,7 +66,7 @@ export default function HomeResults({ tabs, results }: { tabs: Tab[]; results: H
         <p className="text-sm text-floodlight/60 py-8 text-center">최근 3일 동안 끝난 경기가 없어요.</p>
       ) : (
         <>
-          <ul className={`divide-y divide-turf-line/40 ${open ? "max-h-[420px] overflow-y-auto overscroll-contain pr-2 scroll-dark" : ""}`}>
+          <ul className={`divide-y divide-turf-line/40 overscroll-contain pr-2 scroll-dark [scrollbar-gutter:stable] overflow-y-auto ${open ? "max-h-[420px]" : ""}`}>
             {shown.map((r) => (
               <li key={r.fixtureId}>
                 <Link href={matchLinkHref(r.slugSource)} className="flex flex-col gap-1 py-2.5 px-1 hover:bg-turf-line/20 rounded sm:flex-row sm:items-center sm:gap-4">

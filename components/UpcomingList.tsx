@@ -57,7 +57,7 @@ export default function UpcomingList({ rows }: { rows: UpcomingRow[] }) {
           </button>
         ))}
       </nav>
-      <ul className={`divide-y divide-turf-line/40 ${foldable && open ? "max-h-[420px] overflow-y-auto overscroll-contain pr-2 scroll-dark" : ""}`}>
+      <ul className={`divide-y divide-turf-line/40 ${foldable ? "overscroll-contain pr-2 scroll-dark [scrollbar-gutter:stable] overflow-y-auto" : ""} ${foldable && open ? "max-h-[420px]" : ""}`}>
         {list.map((r) => (
           <li key={r.calId} className="flex items-center gap-3 py-2.5">
             <Link href={`/players/${r.id}`} className="shrink-0">
