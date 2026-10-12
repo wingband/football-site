@@ -122,7 +122,7 @@ function ColumnList({ columns: all, type, page, views, view, q }: { columns: Col
         return words.every((w) => hay.includes(w))
       })
     : all
-  const dateMode = view === "date" || words.length > 0
+  const dateMode = view !== "group" || words.length > 0 // 기본은 날짜순, ?view=group 이면 종류별 카드
   const mk = (o: { type?: string | null; view?: string | null; page?: number; q?: string }) => {
     const sp = new URLSearchParams()
     const t = o.type === undefined ? active : o.type
@@ -225,7 +225,7 @@ function ColumnList({ columns: all, type, page, views, view, q }: { columns: Col
             </section>
           ))}
         </div>
-        {pageNav(cur, pages, (n) => mk({ view: "date", page: n }))}
+        {pageNav(cur, pages, (n) => mk({ view: null, page: n }))}
       </>
     )
   }
@@ -234,7 +234,6 @@ function ColumnList({ columns: all, type, page, views, view, q }: { columns: Col
     <>
       <div className="flex flex-wrap items-center gap-3 justify-between">
         <form action="/columns" method="get" className="flex-1 min-w-[14rem] max-w-md flex items-center gap-2" role="search">
-          <input type="hidden" name="view" value="date" />
           {active && <input type="hidden" name="type" value={active} />}
           <input
             type="search"
@@ -246,8 +245,8 @@ function ColumnList({ columns: all, type, page, views, view, q }: { columns: Col
           <button type="submit" className="shrink-0 text-sm px-3 py-2 bg-score-amber text-pitch-night font-bold hover:bg-floodlight transition-colors">검색</button>
         </form>
         <div className="flex">
-          <Link href={mk({ view: null, q: "" })} className={viewBtn(!dateMode)}>종류별</Link>
-          <Link href={mk({ view: "date" })} className={viewBtn(dateMode)}>날짜순</Link>
+          <Link href={mk({ view: "group", q: "" })} className={viewBtn(!dateMode)}>종류별</Link>
+          <Link href={mk({ view: null })} className={viewBtn(dateMode)}>날짜순</Link>
         </div>
       </div>
 
@@ -255,7 +254,7 @@ function ColumnList({ columns: all, type, page, views, view, q }: { columns: Col
         {tabs.map((t) => (
           <Link
             key={t.key ?? "all"}
-            href={mk({ type: t.key, view: dateMode ? "date" : null })}
+            href={mk({ type: t.key, view: dateMode ? null : "group" })}
             className={`shrink-0 text-sm px-3.5 py-1.5 rounded-full border transition-colors ${
               t.key === active
                 ? "bg-score-amber text-pitch-night border-score-amber font-bold"
@@ -278,7 +277,7 @@ function ColumnList({ columns: all, type, page, views, view, q }: { columns: Col
           return (
             <>
               <div className={grid}>{list.slice((cur - 1) * PER_PAGE, cur * PER_PAGE).map(card)}</div>
-              {pageNav(cur, pages, (n) => mk({ page: n }))}
+              {pageNav(cur, pages, (n) => mk({ view: "group", page: n }))}
             </>
           )
         })()
@@ -292,7 +291,7 @@ function ColumnList({ columns: all, type, page, views, view, q }: { columns: Col
                 <h2 className="text-lg font-bold text-floodlight shrink-0">{g.label}</h2>
                 <span className="text-sm text-floodlight/65 truncate hidden sm:inline">{g.desc}</span>
                 {list.length > PER_SECTION && (
-                  <Link href={`/columns?type=${g.key}`} className="ml-auto text-sm text-score-amber hover:underline shrink-0">
+                  <Link href={`/columns?type=${g.key}&view=group`} className="ml-auto text-sm text-score-amber hover:underline shrink-0">
                     더 보기 ({list.length}) →
                   </Link>
                 )}
