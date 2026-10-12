@@ -42,6 +42,15 @@ type Block =
   | { type: "hr" }
   | { type: "img"; alt: string; src: string }
 
+// "한 줄 총평" 소제목과 그 아래 인용문을 본문 맨 앞으로 올린다 (독자가 결론부터 보도록).
+function moveVerdictFirst(blocks: Block[]): Block[] {
+  const start = blocks.findIndex((b) => b.type === "h2" && b.text.trim() === "한 줄 총평")
+  if (start <= 0) return blocks
+  let end = start + 1
+  while (end < blocks.length && blocks[end].type !== "h2") end++
+  return [...blocks.slice(start, end), ...blocks.slice(0, start), ...blocks.slice(end)]
+}
+
 function parseBlocks(src: string): Block[] {
   const lines = src.replace(/\r\n/g, "\n").split("\n")
   const blocks: Block[] = []
@@ -97,7 +106,7 @@ function withBreaks(text: string, keyBase: string): ReactNode[] {
 
 export default function ColumnBody({ content }: { content: string }) {
   // 초안용 "✍️ 내 의견:" 표시는 화면에 보여주지 않는다 (이미 발행된 예전 글에도 적용)
-  const blocks = parseBlocks(content.replace(/✍️\s*내\s*의견\s*[:：]\s*(?!\(여기에)/g, ""))
+  const blocks = moveVerdictFirst(parseBlocks(content.replace(/✍️\s*내\s*의견\s*[:：]\s*(?!\(여기에)/g, "")))
   return (
     <div className="flow-root text-sm leading-[1.8] text-floodlight/85 space-y-4 break-keep">
       {blocks.map((b, i) => {
