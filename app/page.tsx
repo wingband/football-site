@@ -85,7 +85,7 @@ const getHomeData = unstable_cache(
   async () => {
     const [weeks, board, allColumns, results, leagueBoard] = await Promise.all([
       safe(getKoreanPlayersWeek(), [] as PlayerWeek[], "해외파"),
-      safe(Promise.all(HOME_BOARD_TABS.map((t) => getPosts(t.key === "all" ? null : t.key, 1, 4))), [] as { posts: Post[]; total: number }[], "게시판"),
+      safe(Promise.all(HOME_BOARD_TABS.map((t) => getPosts(t.key === "all" ? null : t.key, 1, 7))), [] as { posts: Post[]; total: number }[], "게시판"),
       safe(getColumns({ limit: 80 }), [] as Column[], "칼럼"),
       safe(getHomeResults(60), [] as HomeResult[], "경기 결과"),
       safe(getLeagueBoard(39), null as LeagueBoardData | null, "리그 순위"),
@@ -112,7 +112,7 @@ export default async function Home() {
 
   return (
     <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,34rem)]">
         {/* 최근 경기 결과 — 리그 탭 · 날짜/시각 */}
         <HomeResults tabs={HOME_LEAGUE_TABS.map((t) => ({ id: t.id, label: t.label }))} results={results} />
 
