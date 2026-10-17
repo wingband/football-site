@@ -196,15 +196,16 @@ function ColumnList({ columns: all, type, page, views, view, q }: { columns: Col
                   const v = views && c.published ? views.get(c.slug) : null
                   return (
                     <li key={c.slug}>
-                      <Link href={`/columns/${c.slug}`} className="group flex items-baseline gap-3 py-3">
-                        <span className="shrink-0 inline-flex items-center gap-1.5 text-xs text-floodlight/70 w-24">
+                      <Link href={`/columns/${c.slug}`} className="group flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3 py-3">
+                        {/* 모바일에서는 종류를 제목 위 작은 줄로, PC에서는 왼쪽 열로 */}
+                        <span className="shrink-0 inline-flex items-center gap-1.5 text-xs text-floodlight/70 sm:w-24">
                           <span aria-hidden className={`w-1.5 h-3.5 ${g.bar}`} />
                           {g.key === "column" ? "칼럼" : g.label}
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="block font-semibold text-floodlight group-hover:text-score-amber transition-colors break-keep">
                             {info.title}
-                            {info.rating != null && <span className="ml-2 text-xs font-data text-score-amber">평점 {info.rating}</span>}
+                            {info.rating != null && <span className="ml-2 text-xs font-data text-score-amber">평점 {Number(info.rating).toFixed(1)}</span>}
                           </span>
                           {info.lead && <span className="hidden sm:block text-sm text-floodlight/55 line-clamp-1 mt-0.5">{info.lead}</span>}
                         </span>
