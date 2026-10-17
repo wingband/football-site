@@ -63,9 +63,18 @@ export default function KoreanWeekHub({ weeks }: { weeks: PlayerWeek[] }) {
   const all = weeks
     .flatMap((w) => w.recent.map((m) => ({ w, m })))
     .sort((a, b) => new Date(b.m.date).getTime() - new Date(a.m.date).getTime())
-  // 뛴 경기만 목록에, 못 뛴 선수는 아래 한 줄로 묶는다
+  // 뛴 경기만 목록에. (2026-10-17) 날짜별로 묶고, "출전 없음"은 7일 동안 한 경기도 못 뛴 선수만 적는다
+  // (예전엔 한 경기라도 결장이 있으면 적어서, 위 목록에 있는 선수가 아래 "출전 기록 없음"에도 같이 나왔다)
   const played = all.filter(({ m }) => m.played)
-  const benched = [...new Set(all.filter(({ m }) => !m.played).map(({ w }) => w.player.name))]
+  const playedIds = new Set(played.map(({ w }) => w.player.id))
+  const benched = [...new Set(all.filter(({ w }) => !playedIds.has(w.player.id)).map(({ w }) => w.player.name))]
+  const days: { key: string; label: string; items: typeof played }[] = []
+  for (const it of played) {
+    const key = new Date(it.m.date).toLocaleDateString("sv-SE", { timeZone: "Asia/Seoul" })
+    const last = days[days.length - 1]
+    if (last && last.key === key) last.items.push(it)
+    else days.push({ key, label: shortKst(it.m.date).date, items: [it] })
+  }
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 items-stretch">
@@ -76,34 +85,49 @@ export default function KoreanWeekHub({ weeks }: { weeks: PlayerWeek[] }) {
         {played.length === 0 ? (
           <p className="text-sm text-floodlight/60 py-6">최근 7일 동안 출전한 경기가 없습니다.</p>
         ) : (
-          <ul className="divide-y divide-turf-line/40">
-            {played.map(({ w, m }) => (
-              <li key={`${w.player.id}-${m.fixtureId}`}>
-                <Link href={matchLinkHref(m.slugSource)} className="flex items-center gap-3 py-2.5 group">
-                  <PlayerAvatar src={photo(w.player.id)} alt={w.player.name} className="w-10 h-10 rounded-full ring-2 ring-score-amber/60 shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-floodlight group-hover:text-score-amber transition-colors truncate">
-                      <span className="font-semibold">{w.player.name}</span>
-                      {m.goals > 0 && <span className="ml-1.5 text-emerald-300">⚽{m.goals}</span>}
-                      {m.assists > 0 && <span className="ml-1.5 text-sky-300">🅰️{m.assists}</span>}
-                      {m.red > 0 && <span className="ml-1.5">🟥</span>}
-                    </p>
-                    <p className="text-sm text-floodlight/75 truncate">
-                      {m.result && <span className={`mr-1.5 px-1.5 rounded text-xs font-bold ${RESULT_STYLE[m.result]}`}>{RESULT_LABEL[m.result]}</span>}
-                      {koTeam(m.homeName)} {m.homeScore}:{m.awayScore} {koTeam(m.awayName)}
-                    </p>
-                  </div>
-                  <div className="text-right shrink-0 leading-tight">
-                    <p className={`font-data text-base font-bold ${ratingColor(m.rating)}`}>{m.rating !== null ? m.rating.toFixed(1) : "-"}</p>
-                    <p className="text-xs text-floodlight/65">{m.minutes}분{m.substitute ? " (교체)" : ""}</p>
-                  </div>
-                </Link>
-              </li>
+          <div className="space-y-4">
+            {days.map((d) => (
+              <div key={d.key}>
+                <p className="text-xs font-bold text-score-amber mb-1">{d.label}</p>
+                <ul className="divide-y divide-turf-line/40 border-t border-turf-line/40">
+                  {d.items.map(({ w, m }) => {
+                    const mine = w.teamNameKo
+                    const opp = koTeam(m.opponentName)
+                    const myScore = m.isHome ? m.homeScore : m.awayScore
+                    const oppScore = m.isHome ? m.awayScore : m.homeScore
+                    return (
+                      <li key={`${w.player.id}-${m.fixtureId}`}>
+                        <Link href={matchLinkHref(m.slugSource)} className="flex items-center gap-3 py-2.5 group">
+                          <PlayerAvatar src={photo(w.player.id)} alt={w.player.name} className="w-10 h-10 rounded-full ring-2 ring-score-amber/60 shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-floodlight group-hover:text-score-amber transition-colors truncate">
+                              <span className="font-semibold">{w.player.name}</span>
+                              <span className="ml-1.5 text-floodlight/50">{mine}</span>
+                              {m.goals > 0 && <span className="ml-1.5 text-emerald-300">⚽{m.goals}</span>}
+                              {m.assists > 0 && <span className="ml-1.5 text-sky-300">🅰️{m.assists}</span>}
+                              {m.red > 0 && <span className="ml-1.5">🟥</span>}
+                            </p>
+                            <p className="text-sm text-floodlight/75 truncate">
+                              {m.result && <span className={`mr-1.5 px-1.5 rounded text-xs font-bold ${RESULT_STYLE[m.result]}`}>{RESULT_LABEL[m.result]}</span>}
+                              <span className="font-data">{myScore}:{oppScore}</span> {opp}
+                              <span className="text-floodlight/45"> ({m.isHome ? "홈" : "원정"}) · {koLeague(m.leagueName)}</span>
+                            </p>
+                          </div>
+                          <div className="text-right shrink-0 leading-tight">
+                            <p className={`font-data text-base font-bold ${ratingColor(m.rating)}`}>{m.rating !== null ? m.rating.toFixed(1) : "-"}</p>
+                            <p className="text-xs text-floodlight/65">{m.substitute ? "교체 " : "선발 "}{m.minutes}분</p>
+                          </div>
+                        </Link>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
         {benched.length > 0 && (
-          <p className="text-sm text-floodlight/65 mt-auto pt-3 border-t border-turf-line/40">출전 기록 없음: {benched.join(", ")}</p>
+          <p className="text-sm text-floodlight/65 mt-auto pt-3 border-t border-turf-line/40">최근 7일 출전 없음: {benched.join(", ")}</p>
         )}
       </section>
 
