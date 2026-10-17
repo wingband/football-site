@@ -4,6 +4,7 @@ import { getColumns } from "@/lib/columns"
 import ColumnCard from "@/components/ColumnCard"
 import { isAdmin } from "@/lib/admin"
 import DraftButtons from "./_components/DraftButtons"
+import PendingDraftList from "./_components/PendingDraftList"
 import { columnCardInfo } from "@/lib/columnCard"
 import { getColumnViews } from "@/lib/columnViews"
 import { DRAFT_KINDS, OPINION_PLACEHOLDER, draftKindOf } from "@/lib/draftKinds"
@@ -63,21 +64,12 @@ export default async function ColumnsPage({ searchParams }: { searchParams: Prom
           <p className="text-sm font-semibold text-score-amber mb-3">
             ✍️ 한 줄 총평을 기다리는 초안 {pendingDrafts.length}개 — 총평만 쓰면 바로 발행돼요
           </p>
-          <ul className="space-y-2">
-            {pendingDrafts.map((d) => {
+          <PendingDraftList
+            items={pendingDrafts.map((d) => {
               const kind = draftKindOf(d.slug)
-              return (
-                <li key={d.slug}>
-                  <Link href={`/columns/write?slug=${d.slug}`} className="flex items-baseline gap-2 group">
-                    <span className="shrink-0 text-xs px-1.5 py-0.5 rounded bg-score-amber/20 text-score-amber">
-                      {kind ? DRAFT_KINDS[kind].label : "초안"}
-                    </span>
-                    <span className="text-sm text-floodlight/85 group-hover:text-score-amber line-clamp-1">{d.title}</span>
-                  </Link>
-                </li>
-              )
+              return { slug: d.slug, title: d.title, kindLabel: kind ? DRAFT_KINDS[kind].label : "초안" }
             })}
-          </ul>
+          />
           <p className="text-xs text-floodlight/60 mt-3">
             경기 리포트 초안은 7일 안에 발행하지 않으면 자동으로 지워져요. 선수 이름 표기가 틀렸으면{" "}
             <Link href="/columns/names" className="underline hover:text-floodlight">이름 표기 고치기</Link>
