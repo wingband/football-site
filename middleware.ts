@@ -114,7 +114,14 @@ export default clerkMiddleware(async (auth, req) => {
   if (isBlockedBot(userAgent) && !/^\/(robots\.txt|ads\.txt|sitemap\.xml)$/.test(req.nextUrl.pathname)) {
     return new NextResponse("Forbidden", { status: 403 })
   }
-  if (isRateLimited(ip, req.nextUrl.pathname, userAgent)) {
+  // (2026-10-17) 링크 미리 불러오기(prefetch)는 한도에 세지 않는다. 해외파·경기 목록처럼 선수/경기 링크가
+  // 한 화면에 여러 개 있는 페이지를 열기만 해도 prefetch가 한꺼번에 나가서, 평범한 방문자가 "Too Many Requests"를 봤다.
+  const isPrefetch =
+    req.headers.has("next-router-prefetch") ||
+    req.headers.has("next-router-segment-prefetch") ||
+    /prefetch/i.test(req.headers.get("purpose") ?? "") ||
+    /prefetch/i.test(req.headers.get("sec-purpose") ?? "")
+  if (!isPrefetch && isRateLimited(ip, req.nextUrl.pathname, userAgent)) {
     return new NextResponse("Too Many Requests", { status: 429 })
   }
 
