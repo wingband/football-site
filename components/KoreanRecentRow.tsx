@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import PlayerAvatar from "@/components/PlayerAvatar"
 import type { MatchDetail } from "@/lib/koreanWeekly"
 
@@ -112,65 +112,117 @@ export default function KoreanRecentRow({ r }: { r: RecentRowData }) {
   const head = headline(r)
   const pos = r.detail?.position ? POS_KO[r.detail.position] ?? r.detail.position : null
 
+  // (2026-10-17) 선수(사진·이름·평점)를 누르면 그 경기의 선수 상세가 팝업으로, 경기(스코어 줄)를 누르면 경기 상세 페이지로.
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false)
+    document.addEventListener("keydown", onKey)
+    document.body.style.overflow = "hidden"
+    return () => {
+      document.removeEventListener("keydown", onKey)
+      document.body.style.overflow = ""
+    }
+  }, [open])
+
+  const scoreLine = (
+    <>
+      {r.result && <span className={`mr-1.5 px-1.5 rounded text-xs font-bold ${RESULT_STYLE[r.result]}`}>{RESULT_LABEL[r.result]}</span>}
+      <span className="font-data">{r.myScore}:{r.oppScore}</span> {r.oppKo}
+      <span className="text-floodlight/45"> ({r.isHome ? "홈" : "원정"}) · {r.leagueKo}</span>
+    </>
+  )
+
   return (
-    <li>
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        className="w-full text-left flex items-center gap-3 py-2.5 group"
-      >
-        <PlayerAvatar src={r.photo} alt={r.name} className="w-10 h-10 rounded-full ring-2 ring-score-amber/60 shrink-0" />
-        <div className="flex-1 min-w-0">
-          <p className="text-sm text-floodlight group-hover:text-score-amber transition-colors truncate">
-            <span className="font-semibold">{r.name}</span>
-            <span className="ml-1.5 text-floodlight/50">{r.teamKo}</span>
-            {r.goals > 0 && <span className="ml-1.5 text-emerald-300">⚽{r.goals}</span>}
-            {r.assists > 0 && <span className="ml-1.5 text-sky-300">🅰️{r.assists}</span>}
-            {r.red > 0 && <span className="ml-1.5">🟥</span>}
-          </p>
-          <p className="text-sm text-floodlight/75 truncate">
-            {r.result && <span className={`mr-1.5 px-1.5 rounded text-xs font-bold ${RESULT_STYLE[r.result]}`}>{RESULT_LABEL[r.result]}</span>}
-            <span className="font-data">{r.myScore}:{r.oppScore}</span> {r.oppKo}
-            <span className="text-floodlight/45"> ({r.isHome ? "홈" : "원정"}) · {r.leagueKo}</span>
-          </p>
-        </div>
-        <div className="text-right shrink-0 leading-tight">
-          <p className={`font-data text-base font-bold ${ratingColor(r.rating)}`}>{r.rating !== null ? r.rating.toFixed(1) : "-"}</p>
-          <p className="text-xs text-floodlight/65">{r.substitute ? "교체 " : "선발 "}{r.minutes}분</p>
-        </div>
-        <span aria-hidden className={`shrink-0 text-floodlight/40 text-xs transition-transform ${open ? "rotate-180" : ""}`}>▾</span>
+    <li className="flex items-center gap-3 py-2.5">
+      <button type="button" onClick={() => setOpen(true)} className="shrink-0 rounded-full" aria-label={`${r.name} 이 경기 상세`}>
+        <PlayerAvatar src={r.photo} alt={r.name} className="w-10 h-10 rounded-full ring-2 ring-score-amber/60 hover:ring-score-amber transition" />
+      </button>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm text-floodlight truncate">
+          <button type="button" onClick={() => setOpen(true)} className="font-semibold hover:text-score-amber transition-colors">
+            {r.name}
+          </button>
+          <span className="ml-1.5 text-floodlight/50">{r.teamKo}</span>
+          {r.goals > 0 && <span className="ml-1.5 text-emerald-300">⚽{r.goals}</span>}
+          {r.assists > 0 && <span className="ml-1.5 text-sky-300">🅰️{r.assists}</span>}
+          {r.red > 0 && <span className="ml-1.5">🟥</span>}
+        </p>
+        <Link href={r.matchHref} className="block text-sm text-floodlight/75 truncate hover:text-score-amber transition-colors" title="경기 상세 보기">
+          {scoreLine}
+        </Link>
+      </div>
+      <button type="button" onClick={() => setOpen(true)} className="text-right shrink-0 leading-tight group" aria-label={`${r.name} 이 경기 상세`}>
+        <p className={`font-data text-base font-bold ${ratingColor(r.rating)} group-hover:underline`}>{r.rating !== null ? r.rating.toFixed(1) : "-"}</p>
+        <p className="text-xs text-floodlight/65">{r.substitute ? "교체 " : "선발 "}{r.minutes}분</p>
       </button>
 
       {open && (
-        <div className="mb-4 ml-0 sm:ml-[3.25rem] pl-3 border-l-2 border-score-amber/50">
-          {head && <p className="text-base font-bold text-floodlight mb-1 break-keep">{head}</p>}
-          {pos && <p className="text-xs text-floodlight/55 mb-3">{pos}{r.detail?.captain ? " · 주장" : ""}{r.substitute ? " · 교체 투입" : " · 선발"}</p>}
-          {groups.length > 0 ? (
-            <div className="space-y-3">
-              {groups.map((g) => (
-                <div key={g.title}>
-                  <p className="text-[11px] font-bold tracking-wider text-floodlight/45 mb-1.5">{g.title}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {g.tiles.map((t) => (
-                      <div
-                        key={t.label}
-                        className={`min-w-[4.5rem] px-3 py-1.5 border ${t.strong ? "border-score-amber/60 bg-score-amber/10" : "border-turf-line/60 bg-turf/30"}`}
-                      >
-                        <p className={`font-data text-lg leading-tight ${t.strong ? "text-score-amber font-bold" : "text-floodlight"}`}>{t.value}</p>
-                        <p className="text-[11px] text-floodlight/60 whitespace-nowrap">{t.label}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 p-0 sm:p-4"
+          onClick={() => setOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${r.name} 경기 상세`}
+        >
+          <div
+            className="w-full sm:max-w-lg max-h-[90vh] overflow-y-auto bg-pitch-night border border-turf-line/60 p-5 sm:p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-3">
+              <PlayerAvatar src={r.photo} alt={r.name} className="w-14 h-14 rounded-full ring-2 ring-score-amber/60 shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="text-lg font-bold text-floodlight leading-tight">
+                  {r.name} <span className="text-sm font-normal text-floodlight/55">{r.teamKo}</span>
+                </p>
+                <p className="text-sm text-floodlight/75 mt-1">{scoreLine}</p>
+                <p className="text-xs text-floodlight/55 mt-1">
+                  {pos ?? ""}{r.detail?.captain ? " · 주장" : ""}{pos ? " · " : ""}{r.substitute ? "교체 투입" : "선발"} {r.minutes}분
+                </p>
+              </div>
+              <div className="text-right shrink-0">
+                <p className={`font-data text-2xl font-bold leading-none ${ratingColor(r.rating)}`}>{r.rating !== null ? r.rating.toFixed(1) : "-"}</p>
+                <p className="text-[11px] text-floodlight/55 mt-1">평점</p>
+              </div>
+              <button type="button" onClick={() => setOpen(false)} className="shrink-0 -mr-1 -mt-1 text-floodlight/50 hover:text-floodlight text-xl leading-none" aria-label="닫기">
+                ×
+              </button>
             </div>
-          ) : (
-            <p className="text-sm text-floodlight/55">이 경기는 선수별 세부 기록이 제공되지 않아요.</p>
-          )}
-          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs">
-            <Link href={r.matchHref} className="text-score-amber hover:underline">경기 상세 보기 →</Link>
-            <Link href={`/players/${r.playerId}`} className="text-floodlight/60 hover:text-floodlight">선수 페이지 →</Link>
+
+            {head && <p className="mt-4 text-base font-bold text-score-amber break-keep">{head}</p>}
+
+            <div className="mt-4">
+              {groups.length > 0 ? (
+                <div className="space-y-4">
+                  {groups.map((g) => (
+                    <div key={g.title}>
+                      <p className="text-[11px] font-bold tracking-wider text-floodlight/45 mb-1.5">{g.title}</p>
+                      <div className="flex flex-wrap gap-2">
+                        {g.tiles.map((t) => (
+                          <div
+                            key={t.label}
+                            className={`min-w-[4.5rem] px-3 py-1.5 border ${t.strong ? "border-score-amber/60 bg-score-amber/10" : "border-turf-line/60 bg-turf/30"}`}
+                          >
+                            <p className={`font-data text-lg leading-tight ${t.strong ? "text-score-amber font-bold" : "text-floodlight"}`}>{t.value}</p>
+                            <p className="text-[11px] text-floodlight/60 whitespace-nowrap">{t.label}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-floodlight/55">이 경기는 선수별 세부 기록이 제공되지 않아요.</p>
+              )}
+            </div>
+
+            <div className="mt-6 flex flex-wrap gap-2">
+              <Link href={r.matchHref} className="text-sm px-4 py-2 bg-score-amber text-pitch-night font-bold rounded-full hover:bg-floodlight transition-colors">
+                경기 상세 보기 →
+              </Link>
+              <Link href={`/players/${r.playerId}`} className="text-sm px-4 py-2 border border-turf-line text-floodlight/80 rounded-full hover:text-floodlight hover:border-floodlight/40 transition-colors">
+                {r.name} 선수 페이지
+              </Link>
+            </div>
           </div>
         </div>
       )}
