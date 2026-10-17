@@ -24,21 +24,21 @@ function FixtureRow({ fx, focusTeam }: { fx: LeagueFixture; focusTeam?: string }
   return (
     <Link
       href={matchLinkHref(fx)} prefetch={false}
-      className="flex items-center justify-center gap-3 px-4 py-3.5 text-sm hover:bg-turf-line/20 border-b border-turf-line/20 last:border-b-0"
+      className={`flex items-center justify-center gap-3 px-4 ${res ? "pt-3 pb-5" : "py-3.5"} text-sm hover:bg-turf-line/20 border-b border-turf-line/20 last:border-b-0`}
     >
-      <span className="w-7 shrink-0 text-center">
-        {res && <span className={`inline-block px-1.5 rounded text-[11px] font-bold ${RES[res][1]}`}>{RES[res][0]}</span>}
-      </span>
       <span className={`flex-1 text-right truncate ${focusTeam && fx.teams.home.name === focusTeam ? "font-semibold text-floodlight" : ""}`}>{fx.teams.home.name}</span>
       <Logo src={fx.teams.home.logo} alt="" className="w-5 h-5 shrink-0" />
       {finished ? (
-        <span className="font-data text-score-amber w-16 text-center shrink-0">{`${fx.goals.home} - ${fx.goals.away}`}</span>
+        <span className="relative font-data text-score-amber w-16 text-center shrink-0">
+          {`${fx.goals.home} - ${fx.goals.away}`}
+          {/* 팀별 보기: 고른 팀 기준 승무패를 스코어 바로 아래에 */}
+          {res && <span className={`absolute left-1/2 -translate-x-1/2 top-full mt-0.5 px-1.5 rounded text-[10px] font-bold font-sans leading-4 ${RES[res][1]}`}>{RES[res][0]}</span>}
+        </span>
       ) : (
         <span className="font-data text-sky-300 w-16 text-center shrink-0 text-xs border border-sky-400/40 rounded-full py-0.5">{timeText}</span>
       )}
       <Logo src={fx.teams.away.logo} alt="" className="w-5 h-5 shrink-0" />
       <span className={`flex-1 truncate ${focusTeam && fx.teams.away.name === focusTeam ? "font-semibold text-floodlight" : ""}`}>{fx.teams.away.name}</span>
-      <span className="w-7 shrink-0" />
     </Link>
   )
 }
