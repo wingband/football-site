@@ -96,9 +96,9 @@ export default function PlayerMatchTable({
                 onKeyDown={(e) => played && (e.key === "Enter" || e.key === " ") && setOpenId(m.fixture.id)}
                 className={`flex items-center gap-3 py-2.5 ${played ? "cursor-pointer active:bg-turf-line/20" : "opacity-60"}`}
               >
-                <div className="w-12 shrink-0 leading-tight">
-                  <p className="font-data text-xs text-floodlight/70">
-                    {new Date(m.fixture.date).toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul", month: "numeric", day: "numeric" })}
+                <div className="w-11 shrink-0 leading-tight">
+                  <p className="font-data text-xs text-floodlight/70 whitespace-nowrap">
+                    {new Date(m.fixture.date).toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul", month: "numeric", day: "numeric" }).replace(/\s/g, "").replace(/\.$/, "")}
                   </p>
                   <p className="text-[10px] text-floodlight/40 truncate">{r.leagueKo}</p>
                 </div>
