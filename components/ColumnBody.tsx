@@ -107,15 +107,22 @@ function withBreaks(text: string, keyBase: string): ReactNode[] {
 export default function ColumnBody({ content }: { content: string }) {
   // 초안용 "✍️ 내 의견:" 표시는 화면에 보여주지 않는다 (이미 발행된 예전 글에도 적용)
   const blocks = moveVerdictFirst(parseBlocks(content.replace(/✍️\s*내\s*의견\s*[:：]\s*(?!\(여기에)/g, "")))
-  let inVerdict = false
+  // "한 줄 총평" 소제목 바로 뒤의 인용문 인덱스 — 렌더 중 변수를 바꾸지 않고 미리 계산
+  const verdictHeadings = new Set<number>()
+  const verdictQuotes = new Set<number>()
+  blocks.forEach((b, i) => {
+    if (b.type === "h2" && b.text.trim() === "한 줄 총평") {
+      verdictHeadings.add(i)
+      if (blocks[i + 1]?.type === "quote") verdictQuotes.add(i + 1)
+    }
+  })
   return (
     <div className="flow-root text-sm leading-[1.8] text-floodlight/85 space-y-4 break-keep">
       {blocks.map((b, i) => {
         const k = `b${i}`
         switch (b.type) {
           case "h2":
-            inVerdict = b.text.trim() === "한 줄 총평"
-            if (inVerdict) {
+            if (verdictHeadings.has(i)) {
               // 한 줄 총평: 작은 노란 라벨 + 아래 큰 글씨 (박스 없이 강조)
               return <p key={k} className="pt-2 text-xs leading-none font-bold tracking-widest text-score-amber">한 줄 총평</p>
             }
@@ -123,8 +130,7 @@ export default function ColumnBody({ content }: { content: string }) {
           case "h3":
             return <h3 key={k} className="text-sm font-semibold text-floodlight pt-1">{renderInline(b.text, k)}</h3>
           case "quote":
-            if (inVerdict) {
-              inVerdict = false
+            if (verdictQuotes.has(i)) {
               return (
                 <blockquote key={k} className="border-l-4 border-score-amber pl-4 py-1 !mt-3 mb-5 text-xl sm:text-2xl font-bold leading-snug text-floodlight not-italic">
                   {withBreaks(b.text, k)}

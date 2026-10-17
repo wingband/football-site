@@ -72,29 +72,57 @@ function pickUpcoming(weeks: PlayerWeek[]) {
     .slice(0, 4)
 }
 
-async function safe<T>(p: Promise<T>, fallback: T, label: string): Promise<T> {
-  try {
-    return await p
-  } catch (err) {
-    console.error(`메인: ${label} 실패:`, err instanceof Error ? err.message : err)
-    return fallback
+// (2026-10-17) 어느 한 항목이라도 실패하면 degraded=true. 실패한 결과(빈 목록)를 60초 캐시에 넣으면
+// DB가 복구된 뒤에도 1~3분간 "경기가 없어요"가 남아 있었다 → 실패한 결과는 캐시하지 않는다.
+type HomeData = { weeks: PlayerWeek[]; board: { posts: Post[]; total: number }[]; allColumns: Column[]; results: HomeResult[]; leagueBoard: LeagueBoardData | null; degraded: boolean }
+
+async function loadHomeData(): Promise<HomeData> {
+  let degraded = false
+  async function safe<T>(p: Promise<T>, fallback: T, label: string): Promise<T> {
+    try {
+      return await p
+    } catch (err) {
+      degraded = true
+      console.error(`메인: ${label} 실패:`, err instanceof Error ? err.message : err)
+      return fallback
+    }
+  }
+  const [weeks, board, allColumns, results, leagueBoard] = await Promise.all([
+    safe(getKoreanPlayersWeek(), [] as PlayerWeek[], "해외파"),
+    safe(Promise.all(HOME_BOARD_TABS.map((t) => getPosts(t.key === "all" ? null : t.key, 1, 5))), [] as { posts: Post[]; total: number }[], "게시판"),
+    safe(getColumns({ limit: 80 }), [] as Column[], "칼럼"),
+    safe(getHomeResults(60), [] as HomeResult[], "경기 결과"),
+    safe(getLeagueBoard(39), null as LeagueBoardData | null, "리그 순위"),
+  ])
+  return { weeks, board, allColumns, results, leagueBoard, degraded }
+}
+
+class DegradedHome extends Error {
+  constructor(public data: HomeData) {
+    super("degraded")
   }
 }
 
-const getHomeData = unstable_cache(
+// unstable_cache는 throw된 결과를 캐시하지 않는다 → 실패한 로드는 던져서 캐시를 건너뛴다
+const getHomeDataCached = unstable_cache(
   async () => {
-    const [weeks, board, allColumns, results, leagueBoard] = await Promise.all([
-      safe(getKoreanPlayersWeek(), [] as PlayerWeek[], "해외파"),
-      safe(Promise.all(HOME_BOARD_TABS.map((t) => getPosts(t.key === "all" ? null : t.key, 1, 5))), [] as { posts: Post[]; total: number }[], "게시판"),
-      safe(getColumns({ limit: 80 }), [] as Column[], "칼럼"),
-      safe(getHomeResults(60), [] as HomeResult[], "경기 결과"),
-      safe(getLeagueBoard(39), null as LeagueBoardData | null, "리그 순위"),
-    ])
-    return { weeks, board, allColumns, results, leagueBoard }
+    const d = await loadHomeData()
+    if (d.degraded) throw new DegradedHome(d)
+    return d
   },
-  ["home-data-v1"],
+  ["home-data-v2"],
   { revalidate: 60 }
 )
+
+async function getHomeData(): Promise<HomeData> {
+  try {
+    return await getHomeDataCached()
+  } catch (err) {
+    if (err instanceof DegradedHome) return err.data
+    // 캐시 계층 자체가 실패한 드문 경우: 캐시 없이 직접 로드
+    return loadHomeData()
+  }
+}
 
 export default async function Home() {
   const { weeks, board, allColumns, results, leagueBoard } = await getHomeData()

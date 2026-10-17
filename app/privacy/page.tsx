@@ -25,7 +25,7 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-base font-semibold text-floodlight mb-3">1. 개요</h2>
             <p>
-              GoalLine(이하 "서비스")은 사용자의 개인정보를 소중히 여기며, 「개인정보 보호법」 및 관련 법령을 준수합니다.
+              GoalLine(이하 &ldquo;서비스&rdquo;)은 사용자의 개인정보를 소중히 여기며, 「개인정보 보호법」 및 관련 법령을 준수합니다.
               본 방침은 서비스가 수집하는 정보의 종류, 사용 방법, 보호 방법을 설명합니다.
             </p>
           </section>

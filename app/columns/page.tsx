@@ -184,7 +184,7 @@ function ColumnList({ columns: all, type, page, views, view, q }: { columns: Col
     }
     return (
       <>
-        {words.length > 0 && <p className="text-sm text-floodlight/65">"{q}" 검색 결과 {list.length}개</p>}
+        {words.length > 0 && <p className="text-sm text-floodlight/65">&ldquo;{q}&rdquo; 검색 결과 {list.length}개</p>}
         <div className="space-y-6">
           {days.map((d) => (
             <section key={d.key}>
