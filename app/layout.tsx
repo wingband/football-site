@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import MobileTabBar from "@/components/MobileTabBar";
 import KakaoAdBanner from "@/components/KakaoAdBanner";
 import PageCoupang from "@/components/PageCoupang";
+import { ADS_ENABLED } from "@/lib/siteConfig";
 import Script from "next/script";
 import { GoogleTagManager, GoogleAnalytics } from '@next/third-parties/google';
 import { ClerkProvider } from "@clerk/nextjs";
@@ -115,7 +116,7 @@ export default function RootLayout({
       {/* 카카오 애드핏 스크립트. 광고 자리(KakaoAdBanner)가 여러 개 생겨도
           이 스크립트는 페이지당 한 번만 있으면 된다 (2026-09-21, 애드핏
           매체 등록 및 상단 배너 광고단위 생성 후 적용) */}
-      <Script src="//t1.kakaocdn.net/kas/static/ba.min.js" strategy="afterInteractive" async />
+      {ADS_ENABLED && <Script src="//t1.kakaocdn.net/kas/static/ba.min.js" strategy="afterInteractive" async />}
       <body className="min-h-full flex flex-col bg-pitch-night pb-16 md:pb-0">
         <Header />
         {/* 전 페이지 공통 상단 배너 광고 자리 — 카카오 애드핏.
@@ -125,6 +126,7 @@ export default function RootLayout({
             폭에 안 맞는 728x90을 모바일에 그대로 우겨넣으면 잘려 보이는
             문제가 있었다 (2026-09-21, 모바일 화면 배너 잘림 확인 → 320x50
             전용 광고단위(DAN-BIe8FUOzKHZPUiH5) 신규 생성 후 분기 처리). */}
+        {ADS_ENABLED && (
         <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 pt-3">
           <div className="hidden md:block">
             <KakaoAdBanner
@@ -143,6 +145,7 @@ export default function RootLayout({
             />
           </div>
         </div>
+        )}
         <div className="flex-1">{children}</div>
         <PageCoupang />
         <Footer />

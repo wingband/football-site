@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { ADS_ENABLED } from "@/lib/siteConfig"
 
 // 쿠팡 파트너스 다이나믹 배너 (2026-10-11, "GoalLine" 배너 · 고객 관심 기반 추천 · 캐러셀).
 // 쿠팡이 준 iframe 태그 방식 그대로 쓴다 — referrerpolicy="unsafe-url"이 있어야 어느 페이지에서 왔는지가 쿠팡에 전달된다.
@@ -12,6 +13,11 @@ const TRACKING_CODE = process.env.NEXT_PUBLIC_COUPANG_TRACKING_CODE || "AF787243
 const HEIGHT = 140
 
 export default function CoupangBanner({ className = "" }: { className?: string }) {
+  if (!ADS_ENABLED) return null
+  return <CoupangBannerInner className={className} />
+}
+
+function CoupangBannerInner({ className = "" }: { className?: string }) {
   const boxRef = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(0)
 
