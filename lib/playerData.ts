@@ -111,15 +111,23 @@ export type TransferEntry = {
 
 export type PlayerRecentMatch = {
   fixture: { id: number; date: string }
+  league: { name: string }
   teams: {
-    home: { name: string; logo: string }
-    away: { name: string; logo: string }
+    home: { id: number; name: string; logo: string }
+    away: { id: number; name: string; logo: string }
   }
   goals: { home: number | null; away: number | null }
   stat: {
-    games: { minutes: number | null; rating: string | null }
-    goals: { total: number | null; assists: number | null }
+    games: { minutes: number | null; rating: string | null; position: string | null; substitute: boolean | null; captain: boolean }
+    goals: { total: number | null; assists: number | null; saves: number | null; conceded: number | null }
     cards: { yellow: number | null; red: number | null }
+    // (2026-10-17) 경기별 세부 기록 — 선수 페이지 "경기별 기록" 표에서 줄을 누르면 팝업으로 보여준다
+    shots: { total: number | null; on: number | null }
+    passes: { total: number | null; key: number | null }
+    dribbles: { attempts: number | null; success: number | null }
+    tackles: { total: number | null; blocks: number | null; interceptions: number | null }
+    duels: { total: number | null; won: number | null }
+    fouls: { drawn: number | null; committed: number | null }
   }
 }
 
@@ -286,7 +294,8 @@ export const getPlayerRecentMatches = cache(async function getPlayerRecentMatche
 
   type FixtureEntry = {
     fixture: { id: number; date: string }
-    teams: { home: { name: string; logo: string }; away: { name: string; logo: string } }
+    league: { name: string }
+    teams: { home: { id: number; name: string; logo: string }; away: { id: number; name: string; logo: string } }
     goals: { home: number | null; away: number | null }
   }
 
@@ -322,14 +331,22 @@ export const getPlayerRecentMatches = cache(async function getPlayerRecentMatche
         const found = (Array.isArray(team.players) ? team.players : []).find((p) => p.player.id === Number(playerId))
         if (found) {
           const s = found.statistics[0]
+          const g = s?.games as (PlayerSeasonStat["games"] & { substitute?: boolean | null }) | undefined
           return {
             fixture: fx.fixture,
+            league: { name: fx.league?.name ?? "" },
             teams: fx.teams,
             goals: fx.goals,
             stat: {
-              games: { minutes: s?.games?.minutes ?? null, rating: s?.games?.rating ?? null },
-              goals: { total: s?.goals?.total ?? null, assists: s?.goals?.assists ?? null },
+              games: { minutes: g?.minutes ?? null, rating: g?.rating ?? null, position: g?.position ?? null, substitute: g?.substitute ?? null, captain: g?.captain ?? false },
+              goals: { total: s?.goals?.total ?? null, assists: s?.goals?.assists ?? null, saves: s?.goals?.saves ?? null, conceded: s?.goals?.conceded ?? null },
               cards: { yellow: s?.cards?.yellow ?? null, red: s?.cards?.red ?? null },
+              shots: { total: s?.shots?.total ?? null, on: s?.shots?.on ?? null },
+              passes: { total: s?.passes?.total ?? null, key: s?.passes?.key ?? null },
+              dribbles: { attempts: s?.dribbles?.attempts ?? null, success: s?.dribbles?.success ?? null },
+              tackles: { total: s?.tackles?.total ?? null, blocks: s?.tackles?.blocks ?? null, interceptions: s?.tackles?.interceptions ?? null },
+              duels: { total: s?.duels?.total ?? null, won: s?.duels?.won ?? null },
+              fouls: { drawn: s?.fouls?.drawn ?? null, committed: s?.fouls?.committed ?? null },
             },
           }
         }

@@ -6,6 +6,7 @@ import FollowButton from "@/components/FollowButton"
 import PlayerAvatar from "@/components/PlayerAvatar"
 import Logo from "@/components/Logo"
 import PlayerCareerRecent from "@/components/PlayerCareerRecent"
+import SeasonDetailStats from "@/components/SeasonDetailStats"
 import { KOREAN_PLAYERS_ABROAD } from "@/lib/koreanPlayersAbroad"
 import { TEAM_NAME_KO } from "@/lib/koreanNames"
 import {
@@ -63,15 +64,6 @@ export async function generateMetadata({
       teamNameKo ? ` 현재 소속팀: ${teamNameKo}.` : ""
     }`,
   }
-}
-
-function StatRow({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="flex items-center justify-between py-2 border-b border-turf-line/20 last:border-b-0 text-sm">
-      <span className="text-floodlight/75">{label}</span>
-      <span className="font-data font-medium">{value}</span>
-    </div>
-  )
 }
 
 export default async function PlayerPage({
@@ -379,42 +371,8 @@ export default async function PlayerPage({
           </div>
         )}
 
-        {/* ── 시즌 상세 통계 ── */}
-        {stat && (
-          <div className="border-t border-turf-line/50 pt-4">
-            <p className="text-base font-semibold mb-4">
-              시즌 상세 통계
-              <span className="text-xs text-floodlight/65 ml-2">{stat.league.name} {season}/{season + 1}</span>
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8">
-              <div>
-                <p className="text-xs text-floodlight/65 mb-1">슈팅</p>
-                <StatRow label="슈팅" value={stat.shots.total ?? "-"} />
-                <StatRow label="유효 슈팅" value={stat.shots.on ?? "-"} />
-              </div>
-              <div>
-                <p className="text-xs text-floodlight/65 mb-1 mt-4 sm:mt-0">패스</p>
-                <StatRow label="패스" value={stat.passes.total ?? "-"} />
-                <StatRow label="키패스" value={stat.passes.key ?? "-"} />
-                <StatRow label="패스 성공률" value={stat.passes.accuracy ? `${stat.passes.accuracy}%` : "-"} />
-              </div>
-              <div>
-                <p className="text-xs text-floodlight/65 mb-1 mt-4">점유</p>
-                <StatRow label="듀얼 시도" value={stat.duels.total ?? "-"} />
-                <StatRow label="듀얼 승리" value={stat.duels.won ?? "-"} />
-                <StatRow label="드리블 시도" value={stat.dribbles.attempts ?? "-"} />
-                <StatRow label="드리블 성공" value={stat.dribbles.success ?? "-"} />
-              </div>
-              <div>
-                <p className="text-xs text-floodlight/65 mb-1 mt-4">수비/반칙</p>
-                <StatRow label="태클" value={stat.tackles.total ?? "-"} />
-                <StatRow label="인터셉트" value={stat.tackles.interceptions ?? "-"} />
-                <StatRow label="파울 유도" value={stat.fouls.drawn ?? "-"} />
-                <StatRow label="파울" value={stat.fouls.committed ?? "-"} />
-              </div>
-            </div>
-          </div>
-        )}
+        {/* ── 시즌 상세 통계 (합계 / 90분당) ── */}
+        {stat && <SeasonDetailStats stat={stat} season={season} />}
 
         {/* ── 최근 경기 + 경력 (마운트 후 지연 로딩) ── */}
         <PlayerCareerRecent
@@ -422,6 +380,8 @@ export default async function PlayerPage({
           season={season}
           teamId={stat?.team.id ?? null}
           nationality={player.nationality}
+          name={player.name}
+          photo={player.photo}
         />
 
         {/* ── 트로피 ── */}

@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import Logo from "@/components/Logo"
-import { matchLinkHref, teamHref } from "@/lib/slug"
+import PlayerMatchTable from "@/components/PlayerMatchTable"
+import { teamHref } from "@/lib/slug"
 import type { PlayerRecentMatch } from "@/lib/playerData"
 
 type CareerEntry = {
@@ -25,11 +26,15 @@ export default function PlayerCareerRecent({
   season,
   teamId,
   nationality,
+  name,
+  photo,
 }: {
   playerId: string
   season: number
   teamId: number | null
   nationality: string
+  name: string
+  photo: string
 }) {
   const [career, setCareer] = useState<CareerEntry[] | null>(null)
   const [recentMatches, setRecentMatches] = useState<PlayerRecentMatch[] | null>(null)
@@ -66,40 +71,13 @@ export default function PlayerCareerRecent({
       {/* ── 최근 경기 ── */}
       {recentMatches === null ? (
         <div className="border-t border-turf-line/50 pt-4">
-          <p className="text-base font-semibold mb-3">최근 경기</p>
+          <p className="text-base font-semibold mb-3">경기별 기록</p>
           <div className="h-24 animate-pulse bg-turf-line/10 rounded" />
         </div>
       ) : recentMatches.length > 0 ? (
         <div className="border-t border-turf-line/50 pt-4">
-          <p className="text-base font-semibold mb-3">최근 경기</p>
-          <div className="divide-y divide-turf-line/20">
-            {recentMatches.map((m) => (
-              <Link
-                key={m.fixture.id}
-                href={matchLinkHref(m)} prefetch={false}
-                className="flex items-center gap-3 py-2.5 hover:bg-turf-line/20 transition-colors -mx-1 px-1"
-              >
-                <span className="text-xs text-floodlight/65 w-14 shrink-0">
-                  {new Date(m.fixture.date).toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul", month: "numeric", day: "numeric" })}
-                </span>
-                <Logo src={m.teams.home.logo} alt="" className="w-4 h-4 shrink-0" />
-                <span className="text-xs flex-1 truncate">
-                  {m.teams.home.name} {m.goals.home}-{m.goals.away} {m.teams.away.name}
-                </span>
-                <Logo src={m.teams.away.logo} alt="" className="w-4 h-4 shrink-0" />
-                <span className="text-xs text-floodlight/65 w-8 text-right shrink-0">
-                  {m.stat.games.minutes ?? "-"}&apos;
-                </span>
-                {(m.stat.goals.total ?? 0) > 0 && <span className="shrink-0 text-xs">⚽{m.stat.goals.total}</span>}
-                {(m.stat.goals.assists ?? 0) > 0 && <span className="shrink-0 text-xs">🅰️{m.stat.goals.assists}</span>}
-                {m.stat.games.rating && (
-                  <span className="text-xs font-data font-bold bg-green-600/20 text-green-400 px-1.5 py-0.5 rounded shrink-0">
-                    {m.stat.games.rating}
-                  </span>
-                )}
-              </Link>
-            ))}
-          </div>
+          <p className="text-base font-semibold mb-3">경기별 기록</p>
+          <PlayerMatchTable matches={recentMatches} playerId={Number(playerId)} name={name} photo={photo} teamId={teamId} />
         </div>
       ) : null}
 
