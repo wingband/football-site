@@ -24,8 +24,8 @@ function ensureTable() {
         data JSONB NOT NULL,
         updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
       )
-    `.catch((err: any) => {
-      if (err?.code !== "23505") throw err
+    `.catch((err: unknown) => {
+      if ((err as { code?: string } | null)?.code !== "23505") throw err
     })
   }
   return tableReady.catch((e: unknown) => { tableReady = null; throw e })
@@ -41,8 +41,8 @@ export function ensureUsageTable() {
         usage_date DATE PRIMARY KEY,
         call_count INTEGER NOT NULL DEFAULT 0
       )
-    `.catch((err: any) => {
-      if (err?.code !== "23505") throw err
+    `.catch((err: unknown) => {
+      if ((err as { code?: string } | null)?.code !== "23505") throw err
     })
   }
   return usageTableReady.catch((e: unknown) => { usageTableReady = null; throw e })

@@ -7,13 +7,12 @@ export default function LikeButton({ postId, initialCount }: { postId: number; i
   const { isSignedIn } = useUser()
   const [liked, setLiked] = useState(false)
   const [count, setCount] = useState(initialCount)
-  const [loaded, setLoaded] = useState(false)
+  // 비로그인 상태면 서버에 물어볼 게 없으니 처음부터 로드 완료로 취급한다
+  // (effect 안에서 동기적으로 setLoaded(true)를 호출하던 것을 초기값으로 옮김)
+  const [loaded, setLoaded] = useState(!isSignedIn)
 
   useEffect(() => {
-    if (!isSignedIn) {
-      setLoaded(true)
-      return
-    }
+    if (!isSignedIn) return
     fetch(`/api/board/${postId}/like`)
       .then((r) => r.json())
       .then((data) => {

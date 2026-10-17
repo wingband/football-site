@@ -23,9 +23,14 @@ export async function GET(req: NextRequest) {
   // 레이트리밋 시 "내일 경기 없음"으로 오인해 프리뷰를 하나도 못 만들면서도
   // 조용히 200을 반환하는 문제가 있었다. fetchApiFootball()로 통합하되, 이 최상위
   // 조회가 실패하면 크론 전체가 죽는 대신 안전하게 0건 생성으로 종료한다
-  let fixtures: any[] = []
+  type CronFixture = {
+    fixture: { id: number; date: string; status: { short: string } }
+    league: { id: number; name: string }
+    teams: { home: { id: number; name: string }; away: { id: number; name: string } }
+  }
+  let fixtures: CronFixture[] = []
   try {
-    fixtures = await fetchApiFootball(`/fixtures?date=${tomorrowStr}`, { revalidate: 3600 })
+    fixtures = (await fetchApiFootball(`/fixtures?date=${tomorrowStr}`, { revalidate: 3600 })) as CronFixture[]
   } catch (err) {
     console.error("generate-previews: 경기 목록 조회 실패:", err instanceof Error ? err.message : err)
     return NextResponse.json({ ok: false, createdCount: 0, slugs: [], error: "경기 목록 조회 실패" })

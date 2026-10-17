@@ -129,7 +129,7 @@ export default function OpinionQuickPublish({ slug, title, summary, content, tag
         </div>
 
         <div className="border border-score-amber/40 bg-score-amber/5 p-4 mb-6">
-          <p className="text-sm font-semibold text-score-amber">✍️ AI가 이번 주 초안을 써 뒀어요</p>
+          <p className="text-sm font-semibold text-score-amber">✍️ 이번 주 자동 초안이 준비됐어요</p>
           <p className="text-xs text-floodlight/60 mt-1 leading-relaxed">
             아래 칸에 이번 주 총평을 한두 줄 적고 발행을 누르면 끝이에요. 태그는 발행할 때 자동으로 붙어요. 반말·짧은 말투도 괜찮아요.
             발행 전에 아래 미리보기에서 틀린 내용이 없는지 한 번만 훑어봐 주세요.

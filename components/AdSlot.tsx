@@ -5,8 +5,8 @@
 // 화면에 그대로 노출하지 않도록 수정. 심사관이 사이트를 훑어볼 때 이런 표시가 보이면
 // "미완성 사이트"로 비칠 수 있어서다. 레이아웃 자리(className으로 지정된 높이/너비)는
 // 그대로 유지해서, 실제 광고 코드를 넣을 때 페이지 흐름이 안 틀어지게 한다.
+// label은 호출부 호환을 위해 타입에만 남겨둔다 (placeholder 텍스트를 더 이상 그리지 않음)
 export default function AdSlot({
-    label = "광고 영역",
     className = "",
   }: {
     label?: string

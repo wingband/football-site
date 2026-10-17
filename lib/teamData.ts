@@ -286,9 +286,10 @@ export const getHistoricalRank = cache(async function getHistoricalRank(
 
   const path = `/standings?league=${leagueId}&season=${season}`
   try {
-    const groups = await getCachedOrFetch<any[]>(path, 2592000, async () => {
+    type StandingRow = { rank: number; team: { id: number } }
+    const groups = await getCachedOrFetch<StandingRow[][]>(path, 2592000, async () => {
       const response = await fetchApiFootball(path, { revalidate: 86400 })
-      return (response[0] as { league?: { standings?: any[] } } | undefined)?.league?.standings ?? []
+      return (response[0] as { league?: { standings?: StandingRow[][] } } | undefined)?.league?.standings ?? []
     })
     for (const group of groups) {
       const row = group.find((r: { team: { id: number } }) => r.team.id === teamId)

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useSyncExternalStore } from "react"
 
 type Votes = { great: number; boring: number; surprising: number }
 
@@ -10,16 +10,39 @@ const REACTIONS = [
   { key: "surprising", emoji: "😱", label: "반전" },
 ] as const
 
+// "이미 투표했는지"는 localStorage에만 있는 값이라 서버 렌더 시점엔 알 수 없다.
+// useState+useEffect로 마운트 후 읽어오는 대신 useSyncExternalStore로 구독해서
+// 서버 스냅샷(null) → 클라이언트 스냅샷 순서로 안전하게 하이드레이션되게 한다.
+const voteListeners = new Set<() => void>()
+function subscribeVote(cb: () => void) {
+  voteListeners.add(cb)
+  return () => { voteListeners.delete(cb) }
+}
+function readStoredVote(matchId: number) {
+  try {
+    return localStorage.getItem(`vote_${matchId}`)
+  } catch {
+    return null // 시크릿 모드 등 저장소 접근이 막힌 브라우저
+  }
+}
+function writeStoredVote(matchId: number, reaction: string) {
+  try {
+    localStorage.setItem(`vote_${matchId}`, reaction)
+  } catch {}
+  voteListeners.forEach((cb) => cb())
+}
+
 export default function MatchVote({ matchId }: { matchId: number }) {
   const [votes, setVotes] = useState<Votes>({ great: 0, boring: 0, surprising: 0 })
-  const [voted, setVoted] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  // 이미 투표했는지 확인 (서버에선 항상 null)
+  const voted = useSyncExternalStore(
+    subscribeVote,
+    () => readStoredVote(matchId),
+    () => null
+  )
 
   useEffect(() => {
-    // 이미 투표했는지 확인
-    const stored = localStorage.getItem(`vote_${matchId}`)
-    if (stored) setVoted(stored)
-
     // 현재 투표 현황 로드
     fetch(`/api/vote?matchId=${matchId}`)
       .then(r => r.json())
@@ -40,8 +63,7 @@ export default function MatchVote({ matchId }: { matchId: number }) {
       const data = await res.json()
       if (data.votes) {
         setVotes(data.votes)
-        setVoted(reaction)
-        localStorage.setItem(`vote_${matchId}`, reaction)
+        writeStoredVote(matchId, reaction)
       }
     } finally {
       setLoading(false)

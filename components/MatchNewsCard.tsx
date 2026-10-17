@@ -31,7 +31,9 @@ export default function MatchNewsCard({
           rel="noopener noreferrer"
           className="flex gap-3 items-start hover:bg-turf-line/20 transition-colors p-1 -m-1"
         >
+          {/* 외부 뉴스 썸네일(출처 도메인이 제각각)이라 next/image 최적화 비용을 피해 <img>를 그대로 쓴다 */}
           {a.image_url && (
+            // eslint-disable-next-line @next/next/no-img-element
             <img src={a.image_url} alt="" className="w-20 h-14 object-cover shrink-0" />
           )}
           <div className="min-w-0">

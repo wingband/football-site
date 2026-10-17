@@ -101,7 +101,6 @@ export default function KoreanAbroadWidget() {
 
   const big5 = players.filter((p) => p.tier === 1)
   const etc = players.filter((p) => p.tier === 2)
-  const displayed = activeTab === "big5" ? big5 : activeTab === "etc" ? etc : players
 
   return (
     <div className="bg-turf/40 border border-turf-line/50 overflow-hidden">

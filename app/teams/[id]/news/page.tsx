@@ -34,7 +34,11 @@ export default async function TeamNewsPage({ params }: { params: Promise<{ id: s
               rel="noopener noreferrer"
               className="block bg-turf/40 border border-turf-line/40 rounded-md overflow-hidden hover:bg-turf-line/20 transition-colors"
             >
-              {hero.image_url && <img src={hero.image_url} alt="" className="w-full h-64 object-cover" />}
+              {/* 외부 뉴스 썸네일(출처 도메인이 제각각)이라 next/image 최적화 비용을 피해 <img>를 그대로 쓴다 */}
+              {hero.image_url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={hero.image_url} alt="" className="w-full h-64 object-cover" />
+              )}
               <div className="p-5">
                 <p className="text-lg font-medium leading-snug">{hero.title}</p>
                 <p className="text-xs text-floodlight/40 mt-2">
@@ -58,7 +62,10 @@ export default async function TeamNewsPage({ params }: { params: Promise<{ id: s
                       {a.source_name} · {new Date(a.pubDate).toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul" })}
                     </p>
                   </div>
-                  {a.image_url && <img src={a.image_url} alt="" className="w-24 h-16 object-cover shrink-0 rounded" />}
+                  {a.image_url && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={a.image_url} alt="" className="w-24 h-16 object-cover shrink-0 rounded" />
+                  )}
                 </a>
               ))}
             </div>
@@ -81,7 +88,10 @@ export default async function TeamNewsPage({ params }: { params: Promise<{ id: s
                     {a.source_name} · {new Date(a.pubDate).toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul" })}
                   </p>
                 </div>
-                {a.image_url && <img src={a.image_url} alt="" className="w-24 h-16 object-cover shrink-0 rounded" />}
+                {a.image_url && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={a.image_url} alt="" className="w-24 h-16 object-cover shrink-0 rounded" />
+                )}
               </a>
             ))}
           </div>

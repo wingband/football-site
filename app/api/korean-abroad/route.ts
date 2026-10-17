@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { KOREAN_PLAYERS_ABROAD } from "@/lib/koreanPlayersAbroad"
-import { saveCachedPlayerStat, getCachedPlayerStat } from "@/lib/playerStatCache"
+import { saveCachedPlayerStat, getCachedPlayerStat, type CachedPlayerStat } from "@/lib/playerStatCache"
 import { fetchApiFootball } from "@/lib/apiFootballClient"
 
 const NATIONAL_KW = ["World Cup", "AFC", "Asian", "Olympic", "Friendlies", "Qualification", "Nations", "Copa", "EURO"]
@@ -24,12 +24,12 @@ const PLAYER_STAT_REVALIDATE = 21600 // 6시간
 // Next의 6시간 fetch 캐시에 그대로 박제됨). fetchApiFootball()로 통합해 errors
 // 체크/재시도를 적용한다. 여기서 실패는 null로 처리해 기존 폴백 경로
 // (전 시즌 재조회 → DB에 저장해둔 마지막 정상 스탯)를 그대로 탄다.
-async function fetchStat(playerId: number, season: number): Promise<any | null> {
+async function fetchStat(playerId: number, season: number): Promise<CachedPlayerStat | null> {
   try {
     const response = await fetchApiFootball(`/players?id=${playerId}&season=${season}`, {
       revalidate: PLAYER_STAT_REVALIDATE,
     })
-    return response[0] ?? null
+    return (response[0] as CachedPlayerStat | undefined) ?? null
   } catch {
     return null
   }

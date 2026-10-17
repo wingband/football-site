@@ -6,7 +6,6 @@ import { useEffect, useState, useMemo } from "react"
 import type { Article } from "@/lib/articles"
 import Logo from "@/components/Logo"
 import { teamKo, leagueKo } from "@/lib/koreanNames"
-import { withJosa } from "@/lib/josa"
 
 type ArticleWithLogos = Article & { homeLogo: string | null; awayLogo: string | null }
 
@@ -64,20 +63,6 @@ function TeamBadge({ name, logo, size = "sm" }: { name: string; logo?: string | 
   )
 }
 
-// 한 줄 요약 생성 (팀·리그 이름은 한글로)
-function oneLiner(a: Article): string {
-  const home = teamKo(a.homeTeam)
-  const away = teamKo(a.awayTeam)
-  const league = leagueKo(a.leagueName)
-  if (a.homeScore !== null && a.awayScore !== null) {
-    const score = `${a.homeScore}-${a.awayScore}`
-    const winner = a.homeScore > a.awayScore ? home : a.awayScore > a.homeScore ? away : null
-    if (winner) return `${withJosa(winner, "이", "가")} ${score}로 승리한 ${league} 경기입니다.`
-    return `${home} ${score} ${away} — 두 팀이 팽팽하게 맞선 ${league} 경기입니다.`
-  }
-  return `${home} vs ${away} ${league} 경기 리뷰입니다.`
-}
-
 const DAYS = ["일", "월", "화", "수", "목", "금", "토"]
 function kstDate(iso: string) {
   return new Date(new Date(iso).getTime() + 9 * 3600_000)
@@ -87,10 +72,8 @@ function dateLabel(iso: string) {
   return `${d.getUTCMonth() + 1}월 ${d.getUTCDate()}일 (${DAYS[d.getUTCDay()]})`
 }
 
-function shortDate(iso: string) {
-  const d = new Date(new Date(iso).getTime() + 9 * 3600_000)
-  return `${d.getUTCMonth() + 1}월 ${d.getUTCDate()}일`
-}
+// 탭에 있는 리그 이름 집합 (FEATURED_TABS가 모듈 상수라 한 번만 만들면 됨)
+const featuredLabels = new Set(FEATURED_TABS.map((t) => t.label))
 
 export default function StoriesPage() {
   const [articles, setArticles] = useState<ArticleWithLogos[]>([])
@@ -113,7 +96,6 @@ export default function StoriesPage() {
   }, [])
 
   // 탭에 없는 리그들 → "그 외"
-  const featuredLabels = new Set(FEATURED_TABS.map((t) => t.label))
   const hasOther = articles.some((a) => !featuredLabels.has(a.leagueName))
 
   const displayed = useMemo(() => {
@@ -135,7 +117,6 @@ export default function StoriesPage() {
   }, [displayed, shown])
 
   // 실제 존재하는 리그만 탭에 표시
-  const existingLeagues = new Set(articles.map((a) => a.leagueName))
   const visibleTabs = FEATURED_TABS.filter((t) =>
     articles.some((a) => a.leagueName.includes(t.label) || t.label.includes(a.leagueName.split(" ")[0]))
   )

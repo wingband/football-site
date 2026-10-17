@@ -172,7 +172,6 @@ function LeagueLink({
   isFavoriteLeague,
   onToggleFavorite,
   size = "sm",
-  noMatchToday = false,
 }: {
   id: number | null
   logo: string | null
@@ -180,6 +179,7 @@ function LeagueLink({
   isFavoriteLeague: boolean
   onToggleFavorite: () => void
   size?: "sm" | "xs"
+  // noMatchToday는 호출부 호환을 위해 타입에만 남겨둔다 (표시 제거됨)
   noMatchToday?: boolean
 }) {
   const content = (
@@ -218,7 +218,7 @@ export default function MatchesExplorer({ fixtures, userCountry }: { fixtures: F
   const [sortByTime, setSortByTime] = useState(false)
   const [query, setQuery] = useState("")
   const [collapsed, setCollapsed] = useState<Set<number>>(new Set())
-  const { favorites, toggleFavorite, isFavorite } = useFavorites()
+  const { toggleFavorite, isFavorite } = useFavorites()
 
   const { featured, restByCountry } = useMemo(() => {
     const seen = new Map<number, { id: number; name: string; country: string; logo: string }>()
@@ -276,7 +276,7 @@ export default function MatchesExplorer({ fixtures, userCountry }: { fixtures: F
         })),
         (id) => isFavorite(id)
       ),
-    [featured, fixtures, favorites]
+    [featured, fixtures, isFavorite]
   )
 
   const filtered = useMemo(() => {
@@ -359,7 +359,7 @@ export default function MatchesExplorer({ fixtures, userCountry }: { fixtures: F
 
       return a.league.name.localeCompare(b.league.name)
     })
-  }, [filtered, favorites])
+  }, [filtered, isFavorite, userCountry])
 
   function toggleCollapse(leagueId: number) {
     setCollapsed((prev) => {

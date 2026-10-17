@@ -267,41 +267,6 @@ function OddsCard({
   )
 }
 
-function WhoWinsCard({
-  homeLogo,
-  awayLogo,
-  homePct,
-  drawPct,
-  awayPct,
-}: {
-  homeLogo: string
-  awayLogo: string
-  homePct: string
-  drawPct: string
-  awayPct: string
-}) {
-  return (
-    <div className="bg-turf/40 border border-turf-line/40 rounded-md p-4">
-      <p className="text-center text-sm font-medium mb-4">누가 이길까요?</p>
-      <div className="flex items-center justify-around">
-        <div className="flex flex-col items-center gap-1.5">
-          <Logo src={homeLogo} alt="" className="w-9 h-9" />
-          <span className="font-data font-bold text-score-amber">{homePct}</span>
-        </div>
-        <div className="flex flex-col items-center gap-1.5">
-          <span className="text-floodlight/40 text-lg">X</span>
-          <span className="font-data text-floodlight/60">{drawPct}</span>
-        </div>
-        <div className="flex flex-col items-center gap-1.5">
-          <Logo src={awayLogo} alt="" className="w-9 h-9" />
-          <span className="font-data font-bold text-floodlight/90">{awayPct}</span>
-        </div>
-      </div>
-      <p className="text-center text-xs text-floodlight/30 mt-3">승부 예측 기반</p>
-    </div>
-  )
-}
-
 export default function MatchSidebar({
   homeTeamName,
   awayTeamName,
@@ -314,7 +279,6 @@ export default function MatchSidebar({
   roundFixtures,
   currentFixtureId,
   insights,
-  prediction,
   homeInjuries = [],
   awayInjuries = [],
   odds = null,
@@ -331,6 +295,7 @@ export default function MatchSidebar({
   roundFixtures: SidebarFixture[]
   currentFixtureId: number
   insights: Insight[]
+  // prediction은 호출부 호환을 위해 타입에만 남겨둔다 (사이드바에서 더 이상 그리지 않음)
   prediction: { home: string; draw: string; away: string } | null
   homeInjuries?: InjuredPlayer[]
   awayInjuries?: InjuredPlayer[]

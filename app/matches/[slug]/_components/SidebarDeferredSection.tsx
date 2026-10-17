@@ -27,8 +27,6 @@ export default async function SidebarDeferredSection({
   venueName,
   venueCity,
   isFinished,
-  kickoffAt,
-  isStarted,
 }: {
   homeTeamId: number
   awayTeamId: number
@@ -46,6 +44,7 @@ export default async function SidebarDeferredSection({
   venueName: string
   venueCity: string
   isFinished: boolean
+  // kickoffAt/isStarted는 호출부 호환을 위해 타입에만 남겨둔다 (현재 본문에서 쓰지 않음)
   kickoffAt: string
   isStarted: boolean
 }) {

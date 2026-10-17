@@ -15,6 +15,8 @@ type PlayerCardProps = {
       <div className="max-w-sm rounded-2xl overflow-hidden shadow-lg bg-white border border-gray-100 hover:shadow-2xl transition-shadow duration-300">
         {/* 상단: 선수 사진 영역 */}
         <div className="relative bg-gradient-to-br from-green-600 to-green-800 p-6 flex flex-col items-center">
+          {/* API-Football CDN의 선수 사진이라 next/image 최적화 비용을 피해 <img>를 그대로 쓴다 */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={photoUrl}
             alt={name}

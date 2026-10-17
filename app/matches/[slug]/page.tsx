@@ -141,6 +141,12 @@ function identityRevalidateFromSlug(slug: string): { revalidate: number; useDbCa
   return daysSince > 2 ? { revalidate: 86400, useDbCache: true } : { revalidate: 60, useDbCache: false }
 }
 
+// 킥오프로부터 지난 시간(ms). 서버 컴포넌트 본문에서 Date.now()를 직접 부르면
+// react-hooks/purity 규칙에 걸리므로 일반 함수로 빼둔다 (의미는 동일)
+function msSinceKickoff(kickoffDate: string) {
+  return Date.now() - new Date(kickoffDate).getTime()
+}
+
 function getTopRatedPlayers(playerStats: PlayerStat[], count: number) {
   const all = playerStats.flatMap((team) =>
     team.players.map((p) => ({
@@ -263,7 +269,7 @@ export default async function MatchDetailPage({
   // (2026-09-09, 여러 리그의 지난 시즌 전체 경기를 라운드 1부터 46까지 순서대로
   // 스탯/라인업/이벤트/선수/예측까지 훑어가는 대규모 크롤링 확인)
   const OLD_MATCH_THRESHOLD_MS = 45 * 24 * 60 * 60 * 1000
-  const matchAgeMs = Date.now() - new Date(match.fixture.date).getTime()
+  const matchAgeMs = msSinceKickoff(match.fixture.date)
   const isOldArchiveMatch = matchAgeMs > OLD_MATCH_THRESHOLD_MS
   if (isOldArchiveMatch) {
     const hasInternalRef = (await headers()).get("x-match-ref-internal") === "1"
@@ -343,7 +349,7 @@ export default async function MatchDetailPage({
     </div>
   )
 
-  const sectionSkeleton = (title: string) => (
+  const sectionSkeleton = () => (
     <div className="mt-5 animate-pulse">
       <div className="h-4 bg-floodlight/10 rounded w-24 mb-3" />
       <div className="space-y-2">
@@ -351,18 +357,6 @@ export default async function MatchDetailPage({
           <div key={i} className="h-3 bg-floodlight/10 rounded" style={{ width: `${70 + i * 8}%` }} />
         ))}
       </div>
-    </div>
-  )
-
-  const standingsSkeleton = (
-    <div className="mt-5 animate-pulse space-y-2">
-      {[1, 2, 3, 4, 5].map((i) => (
-        <div key={i} className="flex gap-2">
-          <div className="h-4 bg-floodlight/10 rounded w-6" />
-          <div className="h-4 bg-floodlight/10 rounded flex-1" />
-          <div className="h-4 bg-floodlight/10 rounded w-8" />
-        </div>
-      ))}
     </div>
   )
 
@@ -433,7 +427,7 @@ export default async function MatchDetailPage({
       </Section>
 
       {/* 팀 최근 폼 + 다음 경기 — 캐시된 API 호출이지만 첫 로드 병목 해소 */}
-      <Suspense fallback={sectionSkeleton("팀 기록")}>
+      <Suspense fallback={sectionSkeleton()}>
         <RecentFormSection
           homeTeamId={match.teams.home.id}
           awayTeamId={match.teams.away.id}
@@ -442,7 +436,7 @@ export default async function MatchDetailPage({
       </Suspense>
 
       {/* 뉴스 — 외부 API, 느릴 수 있으므로 분리 */}
-      <Suspense fallback={sectionSkeleton("뉴스")}>
+      <Suspense fallback={sectionSkeleton()}>
         <NewsSection
           homeTeam={match.teams.home.name}
           awayTeam={match.teams.away.name}

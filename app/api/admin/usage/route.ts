@@ -31,7 +31,7 @@ export async function GET() {
       LIMIT 14
     `
 
-    const history = rows.map((r: any) => {
+    const history = rows.map((r) => {
       const count = r.call_count as number
       const percent = Math.round((count / DAILY_LIMIT) * 1000) / 10
       return {

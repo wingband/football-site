@@ -287,7 +287,7 @@ export default function ColumnEditor({ initial }: { initial: Initial }) {
 
         {content.includes(OPINION_PLACEHOLDER) && (
           <p className="text-xs text-score-amber mt-2 leading-relaxed">
-            ✍️ AI가 만든 초안이에요. 본문의 「{OPINION_PLACEHOLDER}」 자리를 내 생각으로 바꿔야 공개할 수 있어요.
+            ✍️ 자동으로 만든 초안이에요. 본문의 「{OPINION_PLACEHOLDER}」 자리를 내 생각으로 바꿔야 공개할 수 있어요.
             틀린 내용이 없는지도 한 번 확인해 주세요.
           </p>
         )}

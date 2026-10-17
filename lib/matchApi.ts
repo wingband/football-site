@@ -56,21 +56,8 @@ export type NewsArticle = {
   description: string | null
 }
 
-// API-Football/외부 API가 쿼터 소진·혼잡 등으로 응답을 늦게 주거나 안 줄 때
-// 기본 fetch는 타임아웃이 없어 함수가 몇 분씩 붙잡혀 있게 된다 (Vercel 함수 지속시간
-// 낭비 + 동시성 점유의 핵심 원인으로 확인됨, 2026-09-07). AbortController로 강제 컷오프.
-const API_TIMEOUT_MS = 8000
-
-async function fetchWithTimeout(url: string, init: RequestInit): Promise<Response> {
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), API_TIMEOUT_MS)
-  try {
-    return await fetch(url, { ...init, signal: controller.signal })
-  } finally {
-    clearTimeout(timer)
-  }
-}
-
+// 타임아웃 처리는 lib/apiFootballClient.ts의 fetchWithTimeout으로 통합됐다
+// (이 파일에 남아 있던 중복 구현은 사용처가 없어 제거)
 export async function apiFetch(path: string, revalidate?: number): Promise<unknown> {
   if (process.env.USE_MOCK_DATA === "true") {
     if (path.startsWith("/fixtures?id=")) return MOCK_MATCH_DETAIL.fixture

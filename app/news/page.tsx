@@ -1,5 +1,4 @@
 import type { Metadata } from "next"
-import Link from "next/link"
 import Logo from "@/components/Logo"
 import { fetchNewsData } from "@/lib/newsData"
 
@@ -60,6 +59,8 @@ function HeroSection({ articles }: { articles: Article[] }) {
         className="relative block overflow-hidden group">
         {hero.image_url ? (
           <div className="relative aspect-[16/9] overflow-hidden">
+            {/* 외부 뉴스 썸네일(출처 도메인이 제각각)이라 next/image 최적화 비용을 피해 <img>를 그대로 쓴다 */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={hero.image_url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-5">
@@ -88,6 +89,7 @@ function HeroSection({ articles }: { articles: Article[] }) {
                 <p className="text-xs text-floodlight/40 mt-1">{a.source_name} · {timeAgo(a.pubDate)}</p>
               </div>
               {a.image_url && (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img src={a.image_url} alt="" className="w-16 h-12 object-cover shrink-0" />
               )}
             </a>
@@ -150,6 +152,7 @@ function LeagueSection({
                 <p className="text-xs text-floodlight/40 mt-1.5">{a.source_name} · {timeAgo(a.pubDate)}</p>
               </div>
               {a.image_url && (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img src={a.image_url} alt="" className="w-20 h-14 object-cover shrink-0" />
               )}
             </a>
@@ -164,6 +167,7 @@ function LeagueSection({
           <a href={hero.link} target="_blank" rel="noopener noreferrer" className="relative block group overflow-hidden min-h-[280px]">
             {hero.image_url ? (
               <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={hero.image_url} alt="" className="w-full h-full object-cover absolute inset-0 group-hover:scale-105 transition-transform duration-500" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-5">

@@ -20,13 +20,6 @@ function plain(s: string) {
     .trim()
 }
 
-function cut(s: string, max: number) {
-  if (s.length <= max) return s
-  const sliced = s.slice(0, max)
-  const lastStop = Math.max(sliced.lastIndexOf("다."), sliced.lastIndexOf(". "))
-  return lastStop > max * 0.6 ? sliced.slice(0, lastStop + (sliced[lastStop] === "다" ? 2 : 1)) : sliced.replace(/\s+\S*$/, "") + "…"
-}
-
 export function columnCardInfo(c: { title: string; summary: string; content: string }): ColumnCardInfo {
   const head = c.title.match(HEAD)
   let title = head ? c.title.slice(head[0].length) : c.title

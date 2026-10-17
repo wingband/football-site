@@ -4,7 +4,6 @@ import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import MobileTabBar from "@/components/MobileTabBar";
-import AdSlot from "@/components/AdSlot";
 import KakaoAdBanner from "@/components/KakaoAdBanner";
 import PageCoupang from "@/components/PageCoupang";
 import Script from "next/script";

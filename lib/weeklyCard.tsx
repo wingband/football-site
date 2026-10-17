@@ -234,7 +234,7 @@ export async function renderPlayerCard(d: PlayerCardData, fontOverride?: FontOve
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 14 }}>
           {d.photo && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={d.photo} width={150} height={150} style={{ width: 150, height: 150, borderRadius: 75, objectFit: "cover", marginRight: 28, border: `3px solid ${GOLD}`, backgroundColor: PANEL }} />
+            <img src={d.photo} alt="" width={150} height={150} style={{ width: 150, height: 150, borderRadius: 75, objectFit: "cover", marginRight: 28, border: `3px solid ${GOLD}`, backgroundColor: PANEL }} />
           )}
           <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
             <div style={{ display: "flex", alignItems: "baseline" }}>

@@ -295,7 +295,11 @@ export default async function LeagueOverviewPage({ params, searchParams }: { par
                       {a.source_name} · {new Date(a.pubDate).toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul" })}
                     </p>
                   </div>
-                  {a.image_url && <img src={a.image_url} alt="" className="w-24 h-16 object-cover shrink-0 rounded" />}
+                  {/* 외부 뉴스 썸네일(출처 도메인이 제각각)이라 next/image 최적화 비용을 피해 <img>를 그대로 쓴다 */}
+                  {a.image_url && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={a.image_url} alt="" className="w-24 h-16 object-cover shrink-0 rounded" />
+                  )}
                 </a>
               ))}
             </div>

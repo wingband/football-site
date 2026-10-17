@@ -57,7 +57,9 @@ export default async function LeagueNewsPage({
               rel="noopener noreferrer"
               className="block bg-turf/40 border border-turf-line/40 rounded-md overflow-hidden hover:bg-turf-line/20 transition-colors"
             >
+              {/* 외부 뉴스 썸네일(출처 도메인이 제각각)이라 next/image 최적화 비용을 피해 <img>를 그대로 쓴다 */}
               {hero.image_url && (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img src={hero.image_url} alt="" className="w-full h-64 object-cover" />
               )}
               <div className="p-5">
@@ -85,6 +87,7 @@ export default async function LeagueNewsPage({
                     </p>
                   </div>
                   {a.image_url && (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img src={a.image_url} alt="" className="w-24 h-16 object-cover shrink-0 rounded" />
                   )}
                 </a>
@@ -111,6 +114,7 @@ export default async function LeagueNewsPage({
                   </p>
                 </div>
                 {a.image_url && (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img src={a.image_url} alt="" className="w-24 h-16 object-cover shrink-0 rounded" />
                 )}
               </a>
