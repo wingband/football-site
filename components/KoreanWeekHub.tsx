@@ -1,26 +1,11 @@
-import Link from "next/link"
-import PlayerAvatar from "@/components/PlayerAvatar"
 import { matchLinkHref } from "@/lib/slug"
+import KoreanRecentRow, { type RecentRowData } from "@/components/KoreanRecentRow"
 import UpcomingList, { type UpcomingRow } from "@/components/UpcomingList"
 import { koTeam, koLeague, type PlayerWeek } from "@/lib/koreanWeekly"
 
 // 해외파 허브: "이번 주 경기 일정" + "최근 7일 활약". /korean-players 상단에 들어간다.
 // (2026-10-10) "손흥민 오늘 경기", "이강인 경기 일정" 같은 매일 반복되는 검색을
 // 한 페이지에서 받기 위한 섹션 — 다른 사이트엔 이렇게 모아둔 곳이 없다.
-
-const RESULT_STYLE: Record<string, string> = {
-  W: "bg-emerald-500/20 text-emerald-300",
-  D: "bg-floodlight/10 text-floodlight/60",
-  L: "bg-red-500/20 text-red-300",
-}
-const RESULT_LABEL: Record<string, string> = { W: "승", D: "무", L: "패" }
-
-function ratingColor(r: number | null) {
-  if (r === null) return "text-floodlight/60"
-  if (r >= 7.5) return "text-emerald-300"
-  if (r >= 6.8) return "text-score-amber"
-  return "text-floodlight/70"
-}
 
 const CARD = "border-t border-turf-line/50 pt-4"
 const photo = (id: number) => `https://media.api-sports.io/football/players/${id}.png`
@@ -91,35 +76,28 @@ export default function KoreanWeekHub({ weeks }: { weeks: PlayerWeek[] }) {
                 <p className="text-xs font-bold text-score-amber mb-1">{d.label}</p>
                 <ul className="divide-y divide-turf-line/40 border-t border-turf-line/40">
                   {d.items.map(({ w, m }) => {
-                    const mine = w.teamNameKo
-                    const opp = koTeam(m.opponentName)
-                    const myScore = m.isHome ? m.homeScore : m.awayScore
-                    const oppScore = m.isHome ? m.awayScore : m.homeScore
-                    return (
-                      <li key={`${w.player.id}-${m.fixtureId}`}>
-                        <Link href={matchLinkHref(m.slugSource)} className="flex items-center gap-3 py-2.5 group">
-                          <PlayerAvatar src={photo(w.player.id)} alt={w.player.name} className="w-10 h-10 rounded-full ring-2 ring-score-amber/60 shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm text-floodlight group-hover:text-score-amber transition-colors truncate">
-                              <span className="font-semibold">{w.player.name}</span>
-                              <span className="ml-1.5 text-floodlight/50">{mine}</span>
-                              {m.goals > 0 && <span className="ml-1.5 text-emerald-300">⚽{m.goals}</span>}
-                              {m.assists > 0 && <span className="ml-1.5 text-sky-300">🅰️{m.assists}</span>}
-                              {m.red > 0 && <span className="ml-1.5">🟥</span>}
-                            </p>
-                            <p className="text-sm text-floodlight/75 truncate">
-                              {m.result && <span className={`mr-1.5 px-1.5 rounded text-xs font-bold ${RESULT_STYLE[m.result]}`}>{RESULT_LABEL[m.result]}</span>}
-                              <span className="font-data">{myScore}:{oppScore}</span> {opp}
-                              <span className="text-floodlight/45"> ({m.isHome ? "홈" : "원정"}) · {koLeague(m.leagueName)}</span>
-                            </p>
-                          </div>
-                          <div className="text-right shrink-0 leading-tight">
-                            <p className={`font-data text-base font-bold ${ratingColor(m.rating)}`}>{m.rating !== null ? m.rating.toFixed(1) : "-"}</p>
-                            <p className="text-xs text-floodlight/65">{m.substitute ? "교체 " : "선발 "}{m.minutes}분</p>
-                          </div>
-                        </Link>
-                      </li>
-                    )
+                    const r: RecentRowData = {
+                      playerId: w.player.id,
+                      name: w.player.name,
+                      teamKo: w.teamNameKo,
+                      photo: photo(w.player.id),
+                      goals: m.goals,
+                      assists: m.assists,
+                      red: m.red,
+                      yellow: m.yellow,
+                      result: m.result,
+                      myScore: m.isHome ? m.homeScore : m.awayScore,
+                      oppScore: m.isHome ? m.awayScore : m.homeScore,
+                      oppKo: koTeam(m.opponentName),
+                      isHome: m.isHome,
+                      leagueKo: koLeague(m.leagueName),
+                      rating: m.rating,
+                      minutes: m.minutes,
+                      substitute: m.substitute,
+                      matchHref: matchLinkHref(m.slugSource),
+                      detail: m.detail,
+                    }
+                    return <KoreanRecentRow key={`${w.player.id}-${m.fixtureId}`} r={r} />
                   })}
                 </ul>
               </div>
