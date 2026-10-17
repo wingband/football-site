@@ -11,7 +11,7 @@ const TABS = [
   { key: "table",       label: "순위",          path: "/table" },
   { key: "fixtures",    label: "경기",          path: "/fixtures" },
   { key: "playerstats", label: "플레이어 통계", path: "/playerstats" },
-  { key: "topscorers",  label: "득점 순위",     path: "/topscorers" },
+  { key: "topscorers",  label: "선수 순위",     path: "/topscorers" },
   { key: "news",        label: "뉴스",          path: "/news" },
 ] as const
 

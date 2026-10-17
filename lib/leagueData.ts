@@ -52,7 +52,8 @@ export type ScorerEntry = {
   statistics: {
     team: { name: string; logo: string }
     goals: { total: number | null; assists: number | null }
-    games: { appearences: number | null; rating: string | null }
+    games: { appearences: number | null; rating: string | null; minutes?: number | null }
+    cards?: { yellow: number | null; yellowred?: number | null; red: number | null }
   }[]
 }
 
@@ -151,6 +152,18 @@ export async function getLeagueTopAssists(leagueId: string, season: number): Pro
     return await getCachedOrFetch<ScorerEntry[]>(path, 21600, async () => (await fetchApiFootball(path, { revalidate: DEFAULT_REVALIDATE })) as ScorerEntry[])
   } catch (err) {
     console.error("getLeagueTopAssists fetch 실패:", err instanceof Error ? err.message : err)
+    return []
+  }
+}
+
+// (2026-10-17) 선수 순위 탭: 경고·퇴장 순위 (호출당 1콜, 6시간 캐시)
+export async function getLeagueTopCards(leagueId: string, season: number, kind: "yellow" | "red"): Promise<ScorerEntry[]> {
+  if (process.env.USE_MOCK_DATA === "true") return []
+  try {
+    const path = `/players/top${kind}cards?league=${leagueId}&season=${season}`
+    return await getCachedOrFetch<ScorerEntry[]>(path, 21600, async () => (await fetchApiFootball(path, { revalidate: DEFAULT_REVALIDATE })) as ScorerEntry[])
+  } catch (err) {
+    console.error(`getLeagueTopCards(${kind}) fetch 실패:`, err instanceof Error ? err.message : err)
     return []
   }
 }
