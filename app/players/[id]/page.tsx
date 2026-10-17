@@ -7,6 +7,7 @@ import PlayerAvatar from "@/components/PlayerAvatar"
 import Logo from "@/components/Logo"
 import PlayerCareerRecent from "@/components/PlayerCareerRecent"
 import SeasonDetailStats from "@/components/SeasonDetailStats"
+import PlayerLeagueCompare from "@/components/PlayerLeagueCompare"
 import { KOREAN_PLAYERS_ABROAD } from "@/lib/koreanPlayersAbroad"
 import { TEAM_NAME_KO } from "@/lib/koreanNames"
 import {
@@ -373,6 +374,9 @@ export default async function PlayerPage({
 
         {/* ── 시즌 상세 통계 (합계 / 90분당) ── */}
         {stat && <SeasonDetailStats stat={stat} season={season} />}
+
+        {/* ── 리그 내 비교 (주 1회 갱신되는 분포 표에서만 읽음) ── */}
+        {stat && <PlayerLeagueCompare stat={stat} season={season} />}
 
         {/* ── 최근 경기 + 경력 (마운트 후 지연 로딩) ── */}
         <PlayerCareerRecent
