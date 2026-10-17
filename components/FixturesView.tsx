@@ -11,7 +11,7 @@ type Mode = "date" | "round" | "team"
 
 function FixtureRow({ fx }: { fx: LeagueFixture }) {
   const finished = FINISHED_CODES.includes(fx.fixture.status.short)
-  const timeText = new Date(fx.fixture.date).toLocaleTimeString("ko-KR", { timeZone: "Asia/Seoul", hour: "2-digit", minute: "2-digit" })
+  const timeText = new Date(fx.fixture.date).toLocaleTimeString("ko-KR", { timeZone: "Asia/Seoul", hour: "2-digit", minute: "2-digit", hour12: false })
   return (
     <Link
       href={matchLinkHref(fx)} prefetch={false}
