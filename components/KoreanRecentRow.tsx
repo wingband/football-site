@@ -45,35 +45,47 @@ function ratingColor(r: number | null) {
   return "text-floodlight/70"
 }
 
-// 기록 하나를 "수치 + 설명"으로. 값이 없으면(null) 표시하지 않는다.
-function stat(label: string, value: string | null, strong = false) {
-  if (value === null) return null
-  return { label, value, strong }
-}
+// (2026-10-17) 표 대신 "큰 숫자 + 작은 라벨" 타일을 공격/수비/기타 묶음으로. 0인 항목은 숨겨 눈에 띄는 것만 남긴다.
+type Tile = { label: string; value: string; strong: boolean }
+type Group = { title: string; tiles: Tile[] }
 
-function buildStats(r: RecentRowData) {
+function buildGroups(r: RecentRowData): Group[] {
   const d = r.detail
   if (!d) return []
-  const n = (v: number | null) => (v === null ? null : String(v))
-  const ratio = (a: number | null, b: number | null) => (a === null && b === null ? null : `${a ?? 0}/${b ?? 0}`)
   const isGk = d.position === "G"
-  const list = [
-    r.goals + r.assists > 0 ? stat("공격 포인트", `${r.goals}골 ${r.assists}도움`, true) : null,
-    isGk ? stat("선방", n(d.saves), (d.saves ?? 0) >= 4) : null,
-    isGk ? stat("실점", n(d.conceded)) : null,
-    stat("슈팅 (유효/전체)", ratio(d.shotsOn, d.shots), (d.shotsOn ?? 0) >= 2),
-    stat("키패스", n(d.keyPasses), (d.keyPasses ?? 0) >= 2),
-    stat("패스", n(d.passes)),
-    stat("드리블 (성공/시도)", ratio(d.dribbleSuccess, d.dribbleAttempts), (d.dribbleSuccess ?? 0) >= 2),
-    stat("경합 (승/전체)", ratio(d.duelsWon, d.duels)),
-    stat("태클", n(d.tackles), (d.tackles ?? 0) >= 3),
-    stat("가로채기", n(d.interceptions), (d.interceptions ?? 0) >= 2),
-    stat("블록", n(d.blocks)),
-    stat("파울 유도", n(d.foulsDrawn)),
-    stat("파울", n(d.foulsCommitted)),
-    r.yellow + r.red > 0 ? stat("카드", `${r.yellow > 0 ? `경고 ${r.yellow}` : ""}${r.yellow > 0 && r.red > 0 ? " · " : ""}${r.red > 0 ? "퇴장" : ""}`, r.red > 0) : null,
-  ]
-  return list.filter((x): x is NonNullable<typeof x> => x !== null)
+  const num = (label: string, v: number | null, strongAt = Infinity): Tile | null =>
+    v === null || v === 0 ? null : { label, value: String(v), strong: v >= strongAt }
+  const ratio = (label: string, a: number | null, b: number | null, strongAt = Infinity): Tile | null =>
+    (a ?? 0) === 0 && (b ?? 0) === 0 ? null : { label, value: `${a ?? 0}/${b ?? 0}`, strong: (a ?? 0) >= strongAt }
+  const keep = (t: (Tile | null)[]) => t.filter((x): x is Tile => x !== null)
+
+  const attack = keep([
+    r.goals > 0 ? { label: "골", value: String(r.goals), strong: true } : null,
+    r.assists > 0 ? { label: "도움", value: String(r.assists), strong: true } : null,
+    ratio("슈팅 유효/전체", d.shotsOn, d.shots, 2),
+    num("키패스", d.keyPasses, 2),
+    ratio("드리블 성공/시도", d.dribbleSuccess, d.dribbleAttempts, 2),
+    num("파울 유도", d.foulsDrawn, 3),
+  ])
+  const defense = keep([
+    isGk ? num("선방", d.saves, 4) : null,
+    isGk ? (d.conceded === null ? null : { label: "실점", value: String(d.conceded), strong: false }) : null,
+    num("태클", d.tackles, 3),
+    num("가로채기", d.interceptions, 2),
+    num("블록", d.blocks, 2),
+    ratio("경합 승/전체", d.duelsWon, d.duels, 6),
+  ])
+  const etc = keep([
+    num("패스", d.passes),
+    num("파울", d.foulsCommitted),
+    r.yellow > 0 ? { label: "경고", value: String(r.yellow), strong: false } : null,
+    r.red > 0 ? { label: "퇴장", value: "1", strong: true } : null,
+  ])
+  return [
+    { title: "공격", tiles: attack },
+    { title: "수비", tiles: defense },
+    { title: "기타", tiles: etc },
+  ].filter((g) => g.tiles.length > 0)
 }
 
 // 데이터로만 뽑는 한 줄 요약 (판단 없이, 눈에 띄는 수치만 나열)
@@ -96,7 +108,7 @@ function headline(r: RecentRowData) {
 
 export default function KoreanRecentRow({ r }: { r: RecentRowData }) {
   const [open, setOpen] = useState(false)
-  const stats = buildStats(r)
+  const groups = buildGroups(r)
   const head = headline(r)
   const pos = r.detail?.position ? POS_KO[r.detail.position] ?? r.detail.position : null
 
@@ -131,22 +143,32 @@ export default function KoreanRecentRow({ r }: { r: RecentRowData }) {
       </button>
 
       {open && (
-        <div className="mb-3 ml-[3.25rem] pl-3 border-l-2 border-score-amber/50">
-          {head && <p className="text-sm font-semibold text-floodlight mb-2 break-keep">{head}</p>}
-          {pos && <p className="text-xs text-floodlight/55 mb-2">{pos}{r.detail?.captain ? " · 주장" : ""}{r.substitute ? " · 교체 투입" : " · 선발"}</p>}
-          {stats.length > 0 ? (
-            <dl className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1.5 text-sm">
-              {stats.map((s) => (
-                <div key={s.label} className="flex items-baseline justify-between gap-2 border-b border-turf-line/30 pb-1">
-                  <dt className="text-floodlight/60 text-xs">{s.label}</dt>
-                  <dd className={`font-data ${s.strong ? "text-score-amber font-bold" : "text-floodlight/85"}`}>{s.value}</dd>
+        <div className="mb-4 ml-0 sm:ml-[3.25rem] pl-3 border-l-2 border-score-amber/50">
+          {head && <p className="text-base font-bold text-floodlight mb-1 break-keep">{head}</p>}
+          {pos && <p className="text-xs text-floodlight/55 mb-3">{pos}{r.detail?.captain ? " · 주장" : ""}{r.substitute ? " · 교체 투입" : " · 선발"}</p>}
+          {groups.length > 0 ? (
+            <div className="space-y-3">
+              {groups.map((g) => (
+                <div key={g.title}>
+                  <p className="text-[11px] font-bold tracking-wider text-floodlight/45 mb-1.5">{g.title}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {g.tiles.map((t) => (
+                      <div
+                        key={t.label}
+                        className={`min-w-[4.5rem] px-3 py-1.5 border ${t.strong ? "border-score-amber/60 bg-score-amber/10" : "border-turf-line/60 bg-turf/30"}`}
+                      >
+                        <p className={`font-data text-lg leading-tight ${t.strong ? "text-score-amber font-bold" : "text-floodlight"}`}>{t.value}</p>
+                        <p className="text-[11px] text-floodlight/60 whitespace-nowrap">{t.label}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ))}
-            </dl>
+            </div>
           ) : (
             <p className="text-sm text-floodlight/55">이 경기는 선수별 세부 기록이 제공되지 않아요.</p>
           )}
-          <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1 text-xs">
+          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs">
             <Link href={r.matchHref} className="text-score-amber hover:underline">경기 상세 보기 →</Link>
             <Link href={`/players/${r.playerId}`} className="text-floodlight/60 hover:text-floodlight">선수 페이지 →</Link>
           </div>
