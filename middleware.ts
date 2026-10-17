@@ -44,6 +44,11 @@ const isPublicRoute = createRouteMatcher([
   "/api/articles(.*)",
   "/api/korean-abroad(.*)",
   "/api/league-board(.*)",
+  // (2026-10-17) 경기 상세의 xG·순위·역대전적 탭이 부르는 API. 공개 목록에 없어서 로그인 안 한 방문자에겐
+  // 404가 떨어져 탭이 빈 채로 보였다 (관리자는 항상 로그인 상태라 못 알아챘던 문제).
+  "/api/xg(.*)",
+  "/api/match-standings(.*)",
+  "/api/match-h2h(.*)",
   "/schedule(.*)",
   "/search(.*)",
   "/api/player-search(.*)",
@@ -67,7 +72,9 @@ const isPublicRoute = createRouteMatcher([
 // 봇이 분당 최대 360콜까지 뽑아갈 수 있었다. 실제 사용자가 분당 경기 15개 넘게
 // 볼 일은 없다 (2026-09-09, 시즌 전체를 라운드별로 순회하며 훑는 크롤러 확인)
 const RATE_LIMIT_RULES: { pattern: RegExp; max: number }[] = [
-  { pattern: /^\/matches\//, max: 15 },
+  // (2026-10-17) 15 → 30. 한국 이동통신은 여러 사용자가 IP를 같이 쓰는 경우가 많아, 한 IP 기준 15/분은
+  // 경기 많은 주말에 평범한 방문자끼리도 한도를 나눠 쓰다 막힐 수 있다. 크롤러는 어차피 API 게이트(x-api-live:0)로 비용을 막는다.
+  { pattern: /^\/matches\//, max: 30 },
   { pattern: /^\/players\//, max: 40 },
   { pattern: /^\/teams\//, max: 40 },
   { pattern: /^\/leagues\//, max: 40 },
