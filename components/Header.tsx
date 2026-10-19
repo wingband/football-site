@@ -19,6 +19,10 @@ const NAV_LINKS = [
 ]
 
 // (2026-09-21) NewsData.io 크레딧 소진으로 뉴스 페이지는 메뉴에서 숨김. 복구되면 { href: "/news", label: "뉴스" } 추가.
+// (2026-10-19) "더보기"(회사소개·광고하기) 메뉴 숨김. 다시 보이게 하려면 true로 바꾸면 된다.
+// 페이지(/company, /advertise) 자체는 그대로 있어서 주소로 직접 들어가면 열린다.
+const SHOW_MORE_MENU = false
+
 const INFO_LINKS = [
   { href: "/company", label: "회사소개" },
   { href: "/advertise", label: "광고하기" },
@@ -79,6 +83,7 @@ export default function Header() {
               {badge(link.href)}
             </Link>
           ))}
+          {SHOW_MORE_MENU && (
           <div className="relative">
             <button
               onClick={() => setInfoOpen((v) => !v)}
@@ -103,6 +108,7 @@ export default function Header() {
               </div>
             )}
           </div>
+          )}
         </nav>
 
         {/* 데스크톱 검색창 */}
@@ -213,6 +219,7 @@ export default function Header() {
               </Link>
             ))}
           </nav>
+          {SHOW_MORE_MENU && (
           <div className="pt-2 border-t border-turf-line/30">
             <p className="px-2 pb-1 text-xs text-floodlight/30 uppercase tracking-wide">정보</p>
             <nav className="flex flex-col gap-1 text-sm">
@@ -228,6 +235,7 @@ export default function Header() {
               ))}
             </nav>
           </div>
+          )}
         </div>
       )}
     </header>
