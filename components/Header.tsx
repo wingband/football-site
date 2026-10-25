@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import IntentLink from "@/components/IntentLink"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { usePathname } from "next/navigation"
@@ -73,7 +74,7 @@ export default function Header() {
         {/* 데스크톱 메뉴 */}
         <nav className="hidden md:flex items-center gap-5 text-sm text-floodlight/70 shrink-0">
           {NAV_LINKS.map((link) => (
-            <Link
+            <IntentLink
               key={link.href}
               href={link.href}
               className={`hover:text-floodlight transition-colors ${pathname.startsWith(link.href) ? "text-score-amber" : ""}`}
@@ -81,7 +82,7 @@ export default function Header() {
               <span className="mr-1.5 text-base align-[-1px] hidden lg:inline" aria-hidden="true">{link.icon}</span>
               {link.label}
               {badge(link.href)}
-            </Link>
+            </IntentLink>
           ))}
           {SHOW_MORE_MENU && (
           <div className="relative">
@@ -207,7 +208,7 @@ export default function Header() {
           </form>
           <nav className="flex flex-col gap-1 text-sm">
             {NAV_LINKS.map((link) => (
-              <Link
+              <IntentLink
                 key={link.href}
                 href={link.href}
                 onClick={() => setMenuOpen(false)}
@@ -216,7 +217,7 @@ export default function Header() {
                 <span className="mr-2" aria-hidden="true">{link.icon}</span>
                 {link.label}
                 {badge(link.href)}
-              </Link>
+              </IntentLink>
             ))}
           </nav>
           {SHOW_MORE_MENU && (

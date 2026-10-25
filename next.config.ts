@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // (2026-10-26) 한 번 본 페이지는 60초 동안 다시 눌러도 바로 뜨게(서버에 다시 묻지 않음).
+  // 메뉴에 마우스를 올리거나 손가락이 닿을 때 미리 받은 페이지는 5분 재사용(components/IntentLink.tsx).
+  experimental: {
+    staleTimes: { dynamic: 60, static: 300 },
+  },
   // 예측 랭킹 페이지는 없앴다 — 옛 링크는 메인으로
   async redirects() {
     return [{ source: "/predictions", destination: "/", permanent: true },

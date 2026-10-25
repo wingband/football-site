@@ -1,6 +1,7 @@
 "use client"
 
-import Link, { useLinkStatus } from "next/link"
+import { useLinkStatus } from "next/link"
+import IntentLink from "@/components/IntentLink"
 import { usePathname } from "next/navigation"
 
 // 모바일 하단 고정 탭 (2026-10-11 메인 개편). 데스크톱에선 숨김.
@@ -36,12 +37,12 @@ export default function MobileTabBar() {
           const active = t.href === "/" ? pathname === "/" : pathname.startsWith(t.href)
           return (
             <li key={t.href}>
-              <Link
+              <IntentLink
                 href={t.href}
                 className={`block py-2 text-center text-sm ${active ? "text-score-amber" : "text-floodlight/70"}`}
               >
                 <TabLabel icon={t.icon} label={t.label} />
-              </Link>
+              </IntentLink>
             </li>
           )
         })}
