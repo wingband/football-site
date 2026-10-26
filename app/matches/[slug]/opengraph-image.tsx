@@ -2,6 +2,7 @@ import { ImageResponse } from "next/og"
 import { parseFixtureId, parseSlugDate } from "@/lib/slug"
 import { MOCK_MATCH_DETAIL } from "@/lib/mockData"
 import { fetchApiFootball } from "@/lib/apiFootballClient"
+import { getCachedOrFetch } from "@/lib/apiCache"
 
 export const alt = "경기 스코어 — GoalLine"
 export const size = { width: 1200, height: 630 }
@@ -36,7 +37,9 @@ async function getFixture(fixtureId: number, revalidate: number): Promise<OgFixt
   // fetchApiFootball()로 교체하되, OG 이미지가 500이 되면 공유 카드에 깨진 이미지가
   // 뜨므로 실패해도 기본 이미지(fallbackImage)로 넘어가는 기존 동작은 그대로 유지한다.
   try {
-    const response = await fetchApiFootball(`/fixtures?id=${fixtureId}`, { revalidate })
+    // (2026-10-26) DB 캐시 경유 — 같은 경기 이미지를 여러 봇이 반복 요청해도 API는 10분에 한 번만
+    const path = `/fixtures?id=${fixtureId}`
+    const response = await getCachedOrFetch<unknown[]>(path, revalidate, async () => fetchApiFootball(path, { revalidate }))
     return (response[0] as OgFixture | undefined) ?? null
   } catch {
     return null
