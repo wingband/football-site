@@ -1,3 +1,4 @@
+import { AI_ENABLED } from "@/lib/siteConfig"
 import { put } from "@vercel/blob"
 
 // 자동 칼럼 초안 공통 엔진 (2026-10-11).
@@ -27,6 +28,7 @@ export const COMMON_RULES = `[절대 규칙]
 그다음 본문 (소제목은 ## / ###). "한 줄 총평"이나 "내 의견" 섹션은 만들지 마라.`
 
 export async function callOpenAI(prompt: string, maxTokens = 3000): Promise<string> {
+  if (!AI_ENABLED) throw new Error("초안 생성 기능이 꺼져 있습니다")
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },

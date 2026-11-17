@@ -1,3 +1,4 @@
+import { AI_ENABLED } from "@/lib/siteConfig"
 type PreviewInput = {
   homeTeam: string
   awayTeam: string
@@ -10,6 +11,7 @@ type PreviewInput = {
 
 export async function generateMatchPreview(input: PreviewInput): Promise<{ title: string; content: string } | null> {
   if (process.env.USE_MOCK_DATA === "true") return null
+  if (!AI_ENABLED) return null
 
   const kickoff = new Date(input.kickoffAt).toLocaleString("ko-KR", {
     month: "long", day: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Seoul"

@@ -1,3 +1,4 @@
+import { AI_ENABLED } from "@/lib/siteConfig"
 import { neon } from "@neondatabase/serverless"
 
 // 선수 영문 이름 → 한국 언론식 한글 표기 (2026-10-11).
@@ -32,6 +33,7 @@ export type NameHint = { name: string | null | undefined; team?: string }
 export type KoName = (name: string | null | undefined) => string
 
 async function askAI(items: { name: string; team?: string }[]): Promise<Record<string, string>> {
+  if (!AI_ENABLED) return {}
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },

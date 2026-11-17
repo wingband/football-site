@@ -1,3 +1,4 @@
+import { AI_ENABLED } from "@/lib/siteConfig"
 type ArticleInput = {
   homeTeam: string
   awayTeam: string
@@ -24,6 +25,7 @@ const BASE_MIN_LENGTH = 1300
 const KOREAN_PLAYER_MIN_LENGTH = 2000
 
 async function callOpenAI(prompt: string, maxTokens: number): Promise<string> {
+  if (!AI_ENABLED) return ""
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {

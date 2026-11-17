@@ -7,4 +7,9 @@ export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://goalline.me
 // (2026-10-17) 광고 전체 켜기/끄기 스위치. false면 카카오 애드핏(상단 배너·스크립트), 쿠팡 파트너스 배너,
 // 빈 광고 자리(AdSlot)가 모두 화면에서 빠진다. 다시 켜려면 true로 바꾸고 배포하면 된다.
 // ads.txt(애드센스 인증 파일)는 이 스위치와 무관하게 그대로 둔다.
-export const ADS_ENABLED = true
+export const ADS_ENABLED = false
+
+// (2026-11-17) 유료 AI(OpenAI) 호출 전체 켜기/끄기 스위치. 운영 중단(비용 0원 유지) 결정으로 끔.
+// false면 경기 요약·리뷰·프리뷰·칼럼 초안·선수 이름 변환이 OpenAI를 부르지 않는다
+// (이미 DB에 저장된 글은 그대로 보인다). 다시 켜려면 true로 바꾸고 배포하면 된다.
+export const AI_ENABLED = false

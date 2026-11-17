@@ -1,3 +1,4 @@
+import { AI_ENABLED } from "@/lib/siteConfig"
 import { getCachedStory, saveCachedStory } from "@/lib/storyCache"
 
 const FAILED_MESSAGE = "스토리를 생성하지 못했습니다."
@@ -26,6 +27,7 @@ export async function generateMatchStory(input: StoryInput): Promise<string> {
   // 먼저 DB 캐시. 있으면 GPT를 아예 호출하지 않는다
   const cached = await getCachedStory(input.matchId)
   if (cached) return cached
+  if (!AI_ENABLED) return FAILED_MESSAGE
 
   const prompt = `너는 스포츠 전문 기자야. 아래 경기 데이터를 바탕으로, 3문장짜리 흥미로운 경기 요약 스토리를 한국어로 써줘.
 과장하지 말고, 데이터에 근거해서 이 경기의 핵심 포인트(승부처, 눈에 띄는 스탯)를 짚어줘.
