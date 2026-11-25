@@ -7,12 +7,21 @@ import { getTodayStr } from "@/lib/dateUtils"
 // 없으면 새로고침할 때마다 올라가서 "방문자 수"가 아니라 새로고침 횟수가 된다
 const COUNTED_KEY = (date: string) => `football-site:pageview-counted:${date}`
 
+// (2026-11-25) 페이지를 여는 것만으로는 세지 않는다 — 일반 브라우저인 척하는 수집 봇이
+// 페이지마다 새 브라우저로 들어와 하루 130명씩 찍혔다(같은 날 GA는 2~4명).
+// 터치·스크롤·키 입력 같은 "사람의 첫 조작"이 일어났을 때 한 번 센다.
+// 페이지가 열린 것 자체는 서버에 기록만 남긴다(app/api/pageview/route.ts).
+const HUMAN_EVENTS = ["pointerdown", "touchstart", "keydown", "wheel", "scroll"] as const
+
 export default function VisitorCount() {
   const [count, setCount] = useState<number | null>(null)
 
   useEffect(() => {
     const today = getTodayStr()
     const key = COUNTED_KEY(today)
+    const show = (d: { count?: unknown }) => {
+      if (typeof d?.count === "number") setCount(d.count)
+    }
 
     let alreadyCounted = false
     try {
@@ -21,30 +30,42 @@ export default function VisitorCount() {
       // 사파리 프라이빗 모드 등에서 localStorage가 막히면 그냥 카운트한다
     }
 
-    // 요청을 보내기 "전에" 표시해둔다.
-    // React 개발 모드는 effect를 두 번 실행하므로, 응답을 기다렸다 표시하면 두 번 카운트된다
-    if (!alreadyCounted) {
+    if (alreadyCounted) {
+      fetch("/api/pageview").then((r) => r.json()).then(show).catch(() => {})
+      return
+    }
+
+    // 자동화 도구로 조종되는 브라우저는 스스로 표시를 달고 있다
+    const automated = navigator.webdriver === true
+    const post = (phase: "load" | "human", source?: string | null) =>
+      fetch("/api/pageview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phase, automated, ...(source ? { source } : {}) }),
+      })
+        .then((r) => r.json())
+        .then(show)
+        .catch(() => {})
+
+    post("load")
+
+    let done = false
+    const onHuman = () => {
+      if (done) return
+      done = true
+      cleanup()
+      // 요청을 보내기 "전에" 표시해둔다 (중복 카운트 방지)
       try {
         localStorage.setItem(key, "1")
       } catch {}
+      // 커뮤니티 홍보 링크(?utm_source=fmkorea 등)로 들어왔으면 채널별 통계에도 반영
+      post("human", new URLSearchParams(window.location.search).get("utm_source"))
     }
-
-    // 커뮤니티 홍보 링크(?utm_source=fmkorea 등)로 들어왔으면 채널별 통계에도 반영.
-    // 오늘 이미 카운트된 방문(alreadyCounted)이면 GET만 보내므로 이번 방문의 소스는
-    // 못 잡는다 — 완벽한 어트리뷰션보다 "대략 어느 채널이 먹히는지" 파악이 목적이라 이 정도로 충분
-    const source = alreadyCounted ? null : new URLSearchParams(window.location.search).get("utm_source")
-
-    fetch("/api/pageview", {
-      method: alreadyCounted ? "GET" : "POST",
-      ...(source && !alreadyCounted
-        ? { headers: { "Content-Type": "application/json" }, body: JSON.stringify({ source }) }
-        : {}),
-    })
-      .then((r) => r.json())
-      .then((d) => {
-        if (typeof d?.count === "number") setCount(d.count)
-      })
-      .catch(() => {})
+    const cleanup = () => {
+      for (const ev of HUMAN_EVENTS) window.removeEventListener(ev, onHuman)
+    }
+    for (const ev of HUMAN_EVENTS) window.addEventListener(ev, onHuman, { passive: true })
+    return cleanup
   }, [])
 
   // 아직 못 받았거나 DB 오류면 아무것도 그리지 않는다 (푸터에 깨진 값이 보이지 않게)

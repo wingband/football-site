@@ -112,3 +112,69 @@ export async function getUtmStats(days = 14): Promise<{ source: string; total: n
     return []
   }
 }
+
+// (2026-11-25) 방문 기록 로그. 하단 카운터(130명)와 구글 애널리틱스(하루 2~4명)가 크게 어긋나서,
+// "누가 들어왔는지"를 브라우저 종류(User-Agent)·국가·분류별로 묶어 날짜마다 쌓는다.
+// IP 같은 개인정보는 저장하지 않는다. 확인: /api/admin/visit-log?days=3
+// kind: human(사람으로 보고 카운트함) / load(페이지만 열고 아무 조작 없음) / crawler(알려진 크롤러) / automation(자동화 브라우저)
+export type VisitKind = "human" | "load" | "crawler" | "automation"
+
+let visitLogReady: Promise<unknown> | null = null
+
+function ensureVisitLogTable() {
+  if (!visitLogReady) {
+    const sql = getSql()
+    visitLogReady = sql`
+      CREATE TABLE IF NOT EXISTS visit_log (
+        date TEXT NOT NULL,
+        kind TEXT NOT NULL,
+        ua TEXT NOT NULL,
+        country TEXT NOT NULL,
+        count INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (date, kind, ua, country)
+      )
+    `
+  }
+  return visitLogReady.catch((e: unknown) => { visitLogReady = null; throw e })
+}
+
+export async function logVisit(kind: VisitKind, userAgent: string | null, country: string | null): Promise<void> {
+  try {
+    await ensureVisitLogTable()
+    const sql = getSql()
+    const ua = (userAgent || "(없음)").slice(0, 200)
+    const c = (country || "??").slice(0, 8)
+    await sql`
+      INSERT INTO visit_log (date, kind, ua, country, count)
+      VALUES (${getTodayStr()}, ${kind}, ${ua}, ${c}, 1)
+      ON CONFLICT (date, kind, ua, country)
+      DO UPDATE SET count = visit_log.count + 1
+    `
+  } catch (err) {
+    console.error("방문 로그 기록 실패:", err)
+  }
+}
+
+export async function getVisitLog(days = 3) {
+  try {
+    await ensureVisitLogTable()
+    const sql = getSql()
+    const cutoff = new Date()
+    cutoff.setDate(cutoff.getDate() - days)
+    const cutoffStr = toDateStr(cutoff)
+    const totals = await sql`
+      SELECT date, kind, SUM(count)::int AS total
+      FROM visit_log WHERE date >= ${cutoffStr}
+      GROUP BY date, kind ORDER BY date DESC, total DESC
+    `
+    const top = await sql`
+      SELECT date, kind, country, ua, count
+      FROM visit_log WHERE date >= ${cutoffStr}
+      ORDER BY date DESC, count DESC LIMIT 200
+    `
+    return { totals, top }
+  } catch (err) {
+    console.error("방문 로그 조회 실패:", err)
+    return { totals: [], top: [] }
+  }
+}
